@@ -1,0 +1,8 @@
+stages: [check]
+
+hello:
+  stage: check
+  image: node:24-alpine
+  script:
+    - node --version
+    - echo "Runner OK"
