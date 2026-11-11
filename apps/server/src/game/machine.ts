@@ -19,7 +19,7 @@ export type GameEvent =
   | { type: "TIMER_END" }
   | { type: "RESTART" };
 
-// "Éléphant " → "elephant" : on compare sans accents, sans majuscules, sans espaces
+// "Éléphant " → "elephant": compare without accents, case or surrounding spaces
 export const normalize = (text: string) =>
   text
     .normalize("NFD")

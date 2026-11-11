@@ -12,7 +12,7 @@ createRoot(document.getElementById("root")!).render(
         <Route path="/" element={<Navigate to="/host" replace />} />
         <Route path="/host" element={<HostPage />} />
         <Route path="/play/:code" element={<PlayPage />} />
-        <Route path="*" element={<p className="p-8">Page introuvable</p>} />
+        <Route path="*" element={<p className="p-8">Page not found</p>} />
       </Routes>
     </BrowserRouter>
   </StrictMode>,

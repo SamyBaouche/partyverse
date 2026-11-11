@@ -1,13 +1,13 @@
 import { z } from "zod";
 
-// ---------- Briques de base ----------
-export const RoomCode = z.string().regex(/^[A-Z]{4}$/, "Code à 4 lettres majuscules");
+// ---------- Building blocks ----------
+export const RoomCode = z.string().regex(/^[A-Z]{4}$/, "Room code must be 4 uppercase letters");
 export const PlayerName = z.string().trim().min(1).max(16);
 export const PlayerId = z.string().min(1).max(64);
 
 export const Phase = z.enum(["lobby", "drawing", "reveal", "scores"]);
 
-// Coordonnées normalisées : 0 = bord gauche/haut, 1 = bord droit/bas
+// Normalized coordinates: 0 = left/top edge, 1 = right/bottom edge
 export const Point = z.object({
   x: z.number().min(0).max(1),
   y: z.number().min(0).max(1),
@@ -23,7 +23,7 @@ export const Player = z.object({
   score: z.number().int().min(0),
 });
 
-// ---------- Téléphone / télé → serveur ----------
+// ---------- Phone / TV → server ----------
 export const ClientMessage = z.discriminatedUnion("type", [
   z.object({ type: z.literal("join"), code: RoomCode, name: PlayerName }),
   z.object({ type: z.literal("startGame") }),
@@ -32,7 +32,7 @@ export const ClientMessage = z.discriminatedUnion("type", [
   z.object({ type: z.literal("guess"), text: z.string().trim().min(1).max(50) }),
 ]);
 
-// ---------- Serveur → téléphones / télé ----------
+// ---------- Server → phones / TV ----------
 export const ServerMessage = z.discriminatedUnion("type", [
   z.object({ type: z.literal("playerJoined"), player: Player }),
   z.object({ type: z.literal("playerLeft"), playerId: PlayerId }),
@@ -44,7 +44,7 @@ export const ServerMessage = z.discriminatedUnion("type", [
   z.object({ type: z.literal("error"), message: z.string() }),
 ]);
 
-// ---------- Types TypeScript générés automatiquement ----------
+// ---------- TypeScript types inferred from schemas ----------
 export type RoomCode = z.infer<typeof RoomCode>;
 export type Phase = z.infer<typeof Phase>;
 export type Point = z.infer<typeof Point>;
