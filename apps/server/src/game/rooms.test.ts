@@ -66,4 +66,25 @@ describe("RoomManager", () => {
     rooms.kick(code, hostId, momo.id);
     expect(rooms.players(code)).toEqual([]);
   });
+
+  it("removes a player who leaves", () => {
+    const rooms = new RoomManager(["cat"]);
+    const { code } = rooms.createRoom();
+    const samy = rooms.join(code, "Samy");
+    rooms.leave(code, samy.id);
+    expect(rooms.players(code)).toEqual([]);
+  });
+
+  it("deletes a room", () => {
+    const rooms = new RoomManager(["cat"]);
+    const { code } = rooms.createRoom();
+    rooms.deleteRoom(code);
+    expect(errorCode(() => rooms.getRoom(code))).toBe("ROOM_NOT_FOUND");
+  });
+
+  it("fails when no unique code can be generated", () => {
+    const rooms = new RoomManager(["cat"], () => 0);
+    rooms.createRoom();
+    expect(() => rooms.createRoom()).toThrow("Could not generate a unique room code");
+  });
 });
