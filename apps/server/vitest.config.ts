@@ -6,7 +6,7 @@ export default defineConfig({
       provider: "v8",
       include: ["src/game/**/*.ts"],
       exclude: ["src/**/*.test.ts"],
-      reporter: ["text", "html"],
+      reporter: ["text", "html", "cobertura"],
     },
   },
 });

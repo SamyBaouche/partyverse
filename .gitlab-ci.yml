@@ -1,8 +1,51 @@
-stages: [check]
+# Run on merge requests and on main, without duplicate pipelines
+workflow:
+  rules:
+    - if: $CI_PIPELINE_SOURCE == "merge_request_event"
+    - if: $CI_COMMIT_BRANCH && $CI_OPEN_MERGE_REQUESTS
+      when: never
+    - if: $CI_COMMIT_BRANCH
 
-hello:
-  stage: check
+stages: [quality, test, build]
+
+default:
   image: node:24-alpine
-  script:
-    - node --version
-    - echo "Runner OK"
+  cache:
+    key:
+      files: [pnpm-lock.yaml]
+    paths: [.pnpm-store]
+  before_script:
+    - corepack enable
+    - pnpm config set store-dir .pnpm-store
+    - pnpm install --frozen-lockfile
+
+format:
+  stage: quality
+  script: pnpm format:check
+
+lint:
+  stage: quality
+  script: pnpm lint
+
+typecheck:
+  stage: quality
+  script: pnpm typecheck
+
+test:
+  stage: test
+  script: pnpm --filter @partyverse/server test:coverage
+  coverage: '/All files\s*\|\s*([\d.]+)/'
+  artifacts:
+    when: always
+    reports:
+      coverage_report:
+        coverage_format: cobertura
+        path: apps/server/coverage/cobertura-coverage.xml
+
+build-web:
+  stage: build
+  script: pnpm --filter @partyverse/web build
+
+build-server:
+  stage: build
+  script: pnpm --filter @partyverse/server build
