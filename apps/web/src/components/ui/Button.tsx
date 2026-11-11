@@ -17,11 +17,11 @@ type ButtonProps = Omit<
 
 const variantClasses: Record<ButtonVariant, string> = {
   primary:
-    "bg-brand text-white neon-border-pink hover:bg-brand-hover shadow-[0_4px_0_#8a0070] active:translate-y-1 active:shadow-[0_1px_0_#8a0070]",
+    "bg-brand text-white border-2 border-white/15 shadow-[0_5px_0_#2347a8] hover:bg-brand-hover active:translate-y-1 active:shadow-[0_2px_0_#2347a8]",
   secondary:
-    "bg-surface-raised text-accent neon-border hover:bg-[#2f0058] shadow-[0_4px_0_#0a4a55] active:translate-y-1 active:shadow-[0_1px_0_#0a4a55]",
+    "bg-surface-raised text-ink border-2 border-white/10 shadow-[0_5px_0_#0b1220] hover:bg-[#273352] active:translate-y-1 active:shadow-[0_2px_0_#0b1220]",
   ghost:
-    "bg-transparent text-neon-yellow border border-neon-yellow/50 hover:bg-surface-raised/60 shadow-[0_3px_0_rgb(255_230_0_/_0.25)] active:translate-y-1 active:shadow-none",
+    "bg-white/5 text-ink border-2 border-white/15 shadow-[0_4px_0_rgb(0_0_0_/_0.35)] hover:bg-white/10 active:translate-y-1 active:shadow-none",
 };
 
 const sizeClasses: Record<ButtonSize, string> = {
@@ -46,12 +46,12 @@ export function Button({
     <motion.button
       type={type}
       disabled={disabled}
-      whileTap={disabled || reduceMotion ? undefined : { scale: 0.95 }}
+      whileTap={disabled || reduceMotion ? undefined : { scale: 0.96 }}
       className={cn(
-        "inline-flex items-center justify-center rounded-md font-display uppercase tracking-wide",
+        "inline-flex items-center justify-center rounded-2xl font-display uppercase tracking-wide",
         "transition-[transform,box-shadow,background-color] duration-150",
-        "focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-accent",
-        "disabled:cursor-not-allowed disabled:opacity-50 disabled:active:translate-y-0 disabled:active:shadow-[0_4px_0_#8a0070]",
+        "focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-brand",
+        "disabled:cursor-not-allowed disabled:opacity-50 disabled:active:translate-y-0 disabled:active:shadow-[0_5px_0_#2347a8]",
         variantClasses[variant],
         sizeClasses[size],
         fullWidth && "w-full",

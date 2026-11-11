@@ -44,19 +44,19 @@ export function PressStart({ onStart }: PressStartProps) {
       exit={reduceMotion ? undefined : { opacity: 0 }}
       transition={{ duration: 0.35 }}
     >
-      <p className="font-display text-sm uppercase tracking-[0.4em] text-accent neon-text-cyan">
-        Partyverse
-      </p>
-      <p
-        className={`font-display text-3xl uppercase leading-relaxed text-white neon-text sm:text-5xl ${
-          reduceMotion ? "" : "blink-soft"
-        }`}
-      >
-        Press Start
-      </p>
-      <p className="font-body text-sm text-slate-300">
-        Click or press Enter / Space to enter the lobby
-      </p>
+      <div className="toy-panel rounded-3xl px-8 py-10 sm:px-12">
+        <p className="font-display text-sm uppercase tracking-[0.4em] text-brand">Partyverse</p>
+        <p
+          className={`font-display mt-4 text-3xl uppercase leading-relaxed text-ink sm:text-5xl ${
+            reduceMotion ? "" : "blink-soft"
+          }`}
+        >
+          Press Start
+        </p>
+        <p className="font-body mt-4 text-sm text-muted">
+          Click or press Enter / Space to enter the lobby
+        </p>
+      </div>
     </motion.button>
   );
 }

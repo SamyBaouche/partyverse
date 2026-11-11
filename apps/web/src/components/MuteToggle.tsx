@@ -6,7 +6,7 @@ export function MuteToggle() {
   return (
     <button
       type="button"
-      className="fixed top-4 right-4 z-50 inline-flex h-11 w-11 items-center justify-center rounded-md border border-accent/50 bg-surface/90 text-accent neon-border backdrop-blur-sm focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-accent"
+      className="fixed top-4 right-4 z-50 inline-flex h-11 w-11 items-center justify-center rounded-2xl border border-white/10 bg-surface/90 text-brand shadow-[0_4px_0_rgb(0_0_0_/_0.35)] backdrop-blur-sm focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-brand"
       aria-label={muted ? "Unmute sound" : "Mute sound"}
       aria-pressed={muted}
       onClick={() => {
@@ -17,7 +17,7 @@ export function MuteToggle() {
       }}
     >
       {muted ? (
-        <span aria-hidden className="font-display text-[10px]">
+        <span aria-hidden className="font-display text-[10px] text-ink">
           OFF
         </span>
       ) : (
