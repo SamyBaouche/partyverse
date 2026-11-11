@@ -1,8 +1,9 @@
-import { useEffect, useState } from "react";
+import { useEffect, useRef } from "react";
 import type { Player } from "@partyverse/shared";
+import { AnimatePresence, motion, useReducedMotion } from "motion/react";
 import { QRCodeSVG } from "qrcode.react";
 import { Button, Card, PlayerAvatar } from "../../components/ui";
-import { cn } from "../../lib/cn";
+import { useSound } from "../../lib/audio";
 
 type HostLobbyProps = {
   code: string;
@@ -13,34 +14,44 @@ type HostLobbyProps = {
 };
 
 function LobbyPlayerRow({ player }: { player: Player }) {
-  const [visible, setVisible] = useState(false);
-
-  useEffect(() => {
-    const frameId = requestAnimationFrame(() => {
-      setVisible(true);
-    });
-    return () => cancelAnimationFrame(frameId);
-  }, []);
+  const reduceMotion = useReducedMotion();
 
   return (
-    <li
-      className={cn(
-        "flex items-center gap-3 rounded-xl border border-accent/20 bg-surface-raised/70 px-3 py-2 transition-all duration-300",
-        visible ? "scale-100 opacity-100" : "scale-95 opacity-0",
-      )}
+    <motion.li
+      layout={!reduceMotion}
+      initial={reduceMotion ? false : { opacity: 0, scale: 0.8, y: 12 }}
+      animate={{ opacity: 1, scale: 1, y: 0 }}
+      exit={reduceMotion ? undefined : { opacity: 0, scale: 0.9 }}
+      transition={reduceMotion ? { duration: 0 } : { type: "spring", stiffness: 420, damping: 22 }}
+      className="flex items-center gap-3 rounded-xl border border-accent/20 bg-surface-raised/70 px-3 py-2"
     >
       <PlayerAvatar name={player.name} size="md" />
       <span className="font-body text-lg font-medium text-white">{player.name}</span>
-    </li>
+    </motion.li>
   );
 }
 
 export function HostLobby({ code, joinUrl, players, maxPlayers, onStart }: HostLobbyProps) {
   const emptySlots = Math.max(0, maxPlayers - players.length);
   const canStart = players.length >= 2;
+  const { play } = useSound();
+  const previousCount = useRef(players.length);
+  const reduceMotion = useReducedMotion();
+
+  useEffect(() => {
+    if (players.length > previousCount.current) {
+      play("join");
+    }
+    previousCount.current = players.length;
+  }, [players.length, play]);
 
   return (
-    <div className="flex w-full max-w-6xl flex-col gap-10 px-6">
+    <motion.div
+      className="flex w-full max-w-6xl flex-col gap-10 px-6"
+      initial={reduceMotion ? false : { opacity: 0, y: 16 }}
+      animate={{ opacity: 1, y: 0 }}
+      transition={{ duration: reduceMotion ? 0 : 0.35 }}
+    >
       <div className="grid items-start gap-10 lg:grid-cols-2">
         <section className="flex flex-col items-center gap-6 text-center">
           <p className="font-display text-[10px] uppercase tracking-[0.35em] text-accent neon-text-cyan">
@@ -69,9 +80,11 @@ export function HostLobby({ code, joinUrl, players, maxPlayers, onStart }: HostL
               Players ({players.length}/{maxPlayers})
             </h2>
             <ul className="flex flex-col gap-2">
-              {players.map((player) => (
-                <LobbyPlayerRow key={player.id} player={player} />
-              ))}
+              <AnimatePresence initial={false}>
+                {players.map((player) => (
+                  <LobbyPlayerRow key={player.id} player={player} />
+                ))}
+              </AnimatePresence>
               {Array.from({ length: emptySlots }, (_, index) => (
                 <li
                   key={`empty-${index}`}
@@ -93,6 +106,6 @@ export function HostLobby({ code, joinUrl, players, maxPlayers, onStart }: HostL
           <p className="font-body text-sm text-slate-300">At least 2 players needed</p>
         ) : null}
       </div>
-    </div>
+    </motion.div>
   );
 }

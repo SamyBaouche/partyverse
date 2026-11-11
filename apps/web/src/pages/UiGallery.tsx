@@ -1,6 +1,12 @@
+import { useState } from "react";
 import { Button, Card, Input, PlayerAvatar } from "../components/ui";
+import { Countdown, celebrate } from "../components/effects";
+import { SOUND_NAMES, useSound } from "../lib/audio";
 
 export default function UiGallery() {
+  const { play, startMusic, stopMusic } = useSound();
+  const [showCountdown, setShowCountdown] = useState(false);
+
   return (
     <main className="mx-auto flex max-w-3xl flex-col gap-10 p-8">
       <header>
@@ -60,6 +66,50 @@ export default function UiGallery() {
           <PlayerAvatar name="Samy" size="lg" />
         </Card>
       </section>
+
+      <section className="flex flex-col gap-4">
+        <h2 className="font-display text-sm uppercase text-accent">Sound & effects</h2>
+        <Card className="flex flex-col gap-6">
+          <div className="flex flex-wrap gap-3">
+            {SOUND_NAMES.map((name) => (
+              <Button key={name} variant="secondary" onClick={() => play(name)}>
+                {name}
+              </Button>
+            ))}
+          </div>
+          <div className="flex flex-wrap gap-3">
+            <Button onClick={() => startMusic()}>Start music</Button>
+            <Button variant="ghost" onClick={() => stopMusic()}>
+              Stop music
+            </Button>
+            <Button
+              variant="secondary"
+              onClick={() => {
+                setShowCountdown(true);
+              }}
+            >
+              Countdown
+            </Button>
+            <Button
+              onClick={() => {
+                celebrate();
+                play("win");
+              }}
+            >
+              Celebrate
+            </Button>
+          </div>
+        </Card>
+      </section>
+
+      {showCountdown ? (
+        <Countdown
+          onDone={() => {
+            setShowCountdown(false);
+            celebrate();
+          }}
+        />
+      ) : null}
     </main>
   );
 }
