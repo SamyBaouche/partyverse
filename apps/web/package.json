@@ -3,6 +3,8 @@
   "version": "0.0.0",
   "private": true,
   "dependencies": {
+    "@fontsource-variable/inter": "^5.3.0",
+    "@fontsource/press-start-2p": "^5.3.0",
     "@partyverse/shared": "workspace:*",
     "clsx": "^2.1.1",
     "qrcode.react": "^4.2.0",

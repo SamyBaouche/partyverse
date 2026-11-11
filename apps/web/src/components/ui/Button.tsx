@@ -11,14 +11,17 @@ type ButtonProps = ButtonHTMLAttributes<HTMLButtonElement> & {
 };
 
 const variantClasses: Record<ButtonVariant, string> = {
-  primary: "bg-brand text-white hover:bg-brand-hover",
-  secondary: "bg-surface-raised text-white hover:bg-zinc-700",
-  ghost: "bg-transparent text-white hover:bg-surface-raised",
+  primary:
+    "bg-brand text-white neon-border-pink hover:bg-brand-hover shadow-[0_4px_0_#8a0070] active:translate-y-1 active:shadow-[0_1px_0_#8a0070]",
+  secondary:
+    "bg-surface-raised text-accent neon-border hover:bg-[#2f0058] shadow-[0_4px_0_#0a4a55] active:translate-y-1 active:shadow-[0_1px_0_#0a4a55]",
+  ghost:
+    "bg-transparent text-neon-yellow border border-neon-yellow/50 hover:bg-surface-raised/60 shadow-[0_3px_0_rgb(255_230_0_/_0.25)] active:translate-y-1 active:shadow-none",
 };
 
 const sizeClasses: Record<ButtonSize, string> = {
-  md: "h-10 px-4 text-sm",
-  lg: "h-12 px-6 text-base",
+  md: "h-10 px-4 text-[10px] leading-none",
+  lg: "h-12 px-6 text-xs leading-none",
 };
 
 export function Button({
@@ -35,9 +38,10 @@ export function Button({
       type={type}
       disabled={disabled}
       className={cn(
-        "inline-flex items-center justify-center rounded-xl font-semibold transition-colors",
+        "inline-flex items-center justify-center rounded-md font-display uppercase tracking-wide",
+        "transition-[transform,box-shadow,background-color] duration-150",
         "focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-accent",
-        "disabled:cursor-not-allowed disabled:opacity-50",
+        "disabled:cursor-not-allowed disabled:opacity-50 disabled:active:translate-y-0 disabled:active:shadow-[0_4px_0_#8a0070]",
         variantClasses[variant],
         sizeClasses[size],
         fullWidth && "w-full",
