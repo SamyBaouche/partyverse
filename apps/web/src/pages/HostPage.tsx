@@ -23,7 +23,7 @@ export default function HostPage() {
             animate={{ opacity: 1, y: 0 }}
             transition={{ duration: reduceMotion ? 0 : 0.4 }}
           >
-            <h1 className="font-display text-lg uppercase tracking-widest text-white neon-text sm:text-xl">
+            <h1 className="font-display text-lg uppercase tracking-widest text-ink sm:text-xl">
               Partyverse
             </h1>
             <HostLobby

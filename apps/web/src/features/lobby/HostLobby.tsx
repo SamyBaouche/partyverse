@@ -23,10 +23,10 @@ function LobbyPlayerRow({ player }: { player: Player }) {
       animate={{ opacity: 1, scale: 1, y: 0 }}
       exit={reduceMotion ? undefined : { opacity: 0, scale: 0.9 }}
       transition={reduceMotion ? { duration: 0 } : { type: "spring", stiffness: 420, damping: 22 }}
-      className="flex items-center gap-3 rounded-xl border border-accent/20 bg-surface-raised/70 px-3 py-2"
+      className="flex items-center gap-3 rounded-2xl border border-white/8 bg-surface-raised px-3 py-2"
     >
       <PlayerAvatar name={player.name} size="md" />
-      <span className="font-body text-lg font-medium text-white">{player.name}</span>
+      <span className="font-body text-lg font-semibold text-ink">{player.name}</span>
     </motion.li>
   );
 }
@@ -54,29 +54,29 @@ export function HostLobby({ code, joinUrl, players, maxPlayers, onStart }: HostL
     >
       <div className="grid items-start gap-10 lg:grid-cols-2">
         <section className="flex flex-col items-center gap-6 text-center">
-          <p className="font-display text-[10px] uppercase tracking-[0.35em] text-accent neon-text-cyan">
+          <p className="font-display text-[10px] uppercase tracking-[0.35em] text-muted">
             Room code
           </p>
           <p
-            className="blink-soft neon-text font-display text-4xl leading-tight text-white sm:text-5xl md:text-6xl"
+            className="room-code font-display text-4xl leading-tight sm:text-5xl md:text-6xl"
             aria-label={`Room code ${code}`}
           >
             {code}
           </p>
-          <div className="rounded-2xl border border-accent/50 bg-white p-4 neon-border">
+          <div className="toy-panel rounded-3xl bg-white p-4">
             <QRCodeSVG value={joinUrl} size={220} aria-label="Scan to join" />
           </div>
           <div className="space-y-2">
-            <p className="font-display text-[11px] uppercase tracking-widest text-neon-yellow neon-text-cyan">
+            <p className="font-display text-[11px] uppercase tracking-widest text-accent">
               Scan to join
             </p>
-            <p className="font-body break-all text-sm text-slate-300">{joinUrl}</p>
+            <p className="font-body break-all text-sm text-muted">{joinUrl}</p>
           </div>
         </section>
 
         <section>
           <Card className="flex flex-col gap-4">
-            <h2 className="font-display text-sm uppercase leading-relaxed text-white neon-text-cyan sm:text-base">
+            <h2 className="font-display text-sm uppercase leading-relaxed text-ink sm:text-base">
               Players ({players.length}/{maxPlayers})
             </h2>
             <ul className="flex flex-col gap-2">
@@ -88,7 +88,7 @@ export function HostLobby({ code, joinUrl, players, maxPlayers, onStart }: HostL
               {Array.from({ length: emptySlots }, (_, index) => (
                 <li
                   key={`empty-${index}`}
-                  className="flex h-14 items-center justify-center rounded-xl border border-dashed border-accent/30 font-body text-sm text-slate-400"
+                  className="flex h-14 items-center justify-center rounded-2xl border border-dashed border-white/15 font-body text-sm text-muted"
                 >
                   Waiting for player…
                 </li>
@@ -103,7 +103,7 @@ export function HostLobby({ code, joinUrl, players, maxPlayers, onStart }: HostL
           Start game
         </Button>
         {!canStart ? (
-          <p className="font-body text-sm text-slate-300">At least 2 players needed</p>
+          <p className="font-body text-sm text-muted">At least 2 players needed</p>
         ) : null}
       </div>
     </motion.div>

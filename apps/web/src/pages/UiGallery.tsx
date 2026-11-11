@@ -10,10 +10,10 @@ export default function UiGallery() {
   return (
     <main className="mx-auto flex max-w-3xl flex-col gap-10 p-8">
       <header>
-        <h1 className="font-display text-xl uppercase leading-relaxed text-white neon-text">
+        <h1 className="font-display text-xl uppercase leading-relaxed text-ink neon-text">
           UI Gallery
         </h1>
-        <p className="font-body mt-2 text-slate-300">Design system playground (development only)</p>
+        <p className="font-body mt-2 text-muted">Design system playground (development only)</p>
       </header>
 
       <section className="flex flex-col gap-4">

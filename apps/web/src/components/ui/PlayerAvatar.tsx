@@ -9,14 +9,14 @@ type PlayerAvatarProps = Omit<HTMLAttributes<HTMLDivElement>, "children"> & {
 };
 
 const AVATAR_COLORS = [
-  "bg-red-500",
-  "bg-orange-500",
-  "bg-amber-500",
-  "bg-emerald-500",
-  "bg-cyan-500",
-  "bg-blue-500",
-  "bg-violet-500",
-  "bg-pink-500",
+  "bg-[#ff5a6a]",
+  "bg-[#ff9f43]",
+  "bg-[#ffd23f]",
+  "bg-[#3ddc84]",
+  "bg-[#4ea1ff]",
+  "bg-[#7c6cff]",
+  "bg-[#ff5ac8]",
+  "bg-[#2dd4bf]",
 ] as const;
 
 const sizeClasses: Record<AvatarSize, string> = {
@@ -43,8 +43,8 @@ export function PlayerAvatar({ name, size = "md", className, ...props }: PlayerA
       aria-label={name}
       title={name}
       className={cn(
-        "inline-flex animate-pop-in items-center justify-center rounded-full font-semibold text-white",
-        "ring-2 ring-accent/80 shadow-[0_0_12px_rgb(0_240_255_/_0.55)]",
+        "inline-flex animate-pop-in items-center justify-center rounded-2xl font-bold text-white",
+        "border-2 border-white shadow-[0_4px_0_rgb(15_23_42_/_0.12)]",
         sizeClasses[size],
         color,
         className,
