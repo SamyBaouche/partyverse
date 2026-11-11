@@ -2,14 +2,16 @@ import { Button, Card, Input, PlayerAvatar } from "../components/ui";
 
 export default function UiGallery() {
   return (
-    <main className="mx-auto flex max-w-3xl flex-col gap-10 p-8 text-white">
+    <main className="mx-auto flex max-w-3xl flex-col gap-10 p-8">
       <header>
-        <h1 className="text-3xl font-bold">UI Gallery</h1>
-        <p className="mt-1 text-zinc-400">Design system playground (development only)</p>
+        <h1 className="font-display text-xl uppercase leading-relaxed text-white neon-text">
+          UI Gallery
+        </h1>
+        <p className="font-body mt-2 text-slate-300">Design system playground (development only)</p>
       </header>
 
       <section className="flex flex-col gap-4">
-        <h2 className="text-xl font-semibold">Buttons</h2>
+        <h2 className="font-display text-sm uppercase text-accent">Buttons</h2>
         <Card className="flex flex-col gap-6">
           <div className="flex flex-wrap items-center gap-3">
             <Button variant="primary">Primary</Button>
@@ -36,7 +38,7 @@ export default function UiGallery() {
       </section>
 
       <section className="flex flex-col gap-4">
-        <h2 className="text-xl font-semibold">Inputs</h2>
+        <h2 className="font-display text-sm uppercase text-accent">Inputs</h2>
         <Card className="flex flex-col gap-6">
           <Input label="Nickname" placeholder="Your nickname" />
           <Input
@@ -49,7 +51,7 @@ export default function UiGallery() {
       </section>
 
       <section className="flex flex-col gap-4">
-        <h2 className="text-xl font-semibold">Player avatars</h2>
+        <h2 className="font-display text-sm uppercase text-accent">Player avatars</h2>
         <Card className="flex flex-wrap items-end gap-4">
           <PlayerAvatar name="Samy" />
           <PlayerAvatar name="Momo" />

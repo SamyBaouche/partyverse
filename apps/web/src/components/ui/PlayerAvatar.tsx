@@ -43,7 +43,8 @@ export function PlayerAvatar({ name, size = "md", className, ...props }: PlayerA
       aria-label={name}
       title={name}
       className={cn(
-        "inline-flex items-center justify-center rounded-full font-semibold text-white",
+        "inline-flex animate-pop-in items-center justify-center rounded-full font-semibold text-white",
+        "ring-2 ring-accent/80 shadow-[0_0_12px_rgb(0_240_255_/_0.55)]",
         sizeClasses[size],
         color,
         className,

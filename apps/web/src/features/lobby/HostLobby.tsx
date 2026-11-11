@@ -25,12 +25,12 @@ function LobbyPlayerRow({ player }: { player: Player }) {
   return (
     <li
       className={cn(
-        "flex items-center gap-3 rounded-xl bg-surface-raised px-3 py-2 transition-all duration-300",
+        "flex items-center gap-3 rounded-xl border border-accent/20 bg-surface-raised/70 px-3 py-2 transition-all duration-300",
         visible ? "scale-100 opacity-100" : "scale-95 opacity-0",
       )}
     >
       <PlayerAvatar name={player.name} size="md" />
-      <span className="text-lg font-medium text-white">{player.name}</span>
+      <span className="font-body text-lg font-medium text-white">{player.name}</span>
     </li>
   );
 }
@@ -43,20 +43,29 @@ export function HostLobby({ code, joinUrl, players, maxPlayers, onStart }: HostL
     <div className="flex w-full max-w-6xl flex-col gap-10 px-6">
       <div className="grid items-start gap-10 lg:grid-cols-2">
         <section className="flex flex-col items-center gap-6 text-center">
-          <p className="text-sm uppercase tracking-[0.35em] text-zinc-400">Room code</p>
-          <p className="text-7xl font-black tracking-[0.35em] text-white sm:text-8xl">{code}</p>
-          <div className="rounded-2xl bg-white p-4 shadow-lg">
+          <p className="font-display text-[10px] uppercase tracking-[0.35em] text-accent neon-text-cyan">
+            Room code
+          </p>
+          <p
+            className="blink-soft neon-text font-display text-4xl leading-tight text-white sm:text-5xl md:text-6xl"
+            aria-label={`Room code ${code}`}
+          >
+            {code}
+          </p>
+          <div className="rounded-2xl border border-accent/50 bg-white p-4 neon-border">
             <QRCodeSVG value={joinUrl} size={220} aria-label="Scan to join" />
           </div>
-          <div className="space-y-1">
-            <p className="text-xl font-semibold text-white">Scan to join</p>
-            <p className="break-all text-sm text-zinc-400">{joinUrl}</p>
+          <div className="space-y-2">
+            <p className="font-display text-[11px] uppercase tracking-widest text-neon-yellow neon-text-cyan">
+              Scan to join
+            </p>
+            <p className="font-body break-all text-sm text-slate-300">{joinUrl}</p>
           </div>
         </section>
 
         <section>
           <Card className="flex flex-col gap-4">
-            <h2 className="text-2xl font-semibold text-white">
+            <h2 className="font-display text-sm uppercase leading-relaxed text-white neon-text-cyan sm:text-base">
               Players ({players.length}/{maxPlayers})
             </h2>
             <ul className="flex flex-col gap-2">
@@ -66,7 +75,7 @@ export function HostLobby({ code, joinUrl, players, maxPlayers, onStart }: HostL
               {Array.from({ length: emptySlots }, (_, index) => (
                 <li
                   key={`empty-${index}`}
-                  className="flex h-14 items-center justify-center rounded-xl border border-dashed border-zinc-700 text-sm text-zinc-500"
+                  className="flex h-14 items-center justify-center rounded-xl border border-dashed border-accent/30 font-body text-sm text-slate-400"
                 >
                   Waiting for player…
                 </li>
@@ -77,10 +86,12 @@ export function HostLobby({ code, joinUrl, players, maxPlayers, onStart }: HostL
       </div>
 
       <div className="flex flex-col items-center gap-2">
-        <Button size="lg" className="min-w-64 px-10 text-xl" disabled={!canStart} onClick={onStart}>
+        <Button size="lg" className="min-w-64 px-10" disabled={!canStart} onClick={onStart}>
           Start game
         </Button>
-        {!canStart ? <p className="text-sm text-zinc-400">At least 2 players needed</p> : null}
+        {!canStart ? (
+          <p className="font-body text-sm text-slate-300">At least 2 players needed</p>
+        ) : null}
       </div>
     </div>
   );
