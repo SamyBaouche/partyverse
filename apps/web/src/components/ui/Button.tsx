@@ -1,10 +1,15 @@
 import type { ButtonHTMLAttributes } from "react";
+import { motion, useReducedMotion } from "motion/react";
 import { cn } from "../../lib/cn";
+import { useSound } from "../../lib/audio";
 
 type ButtonVariant = "primary" | "secondary" | "ghost";
 type ButtonSize = "md" | "lg";
 
-type ButtonProps = ButtonHTMLAttributes<HTMLButtonElement> & {
+type ButtonProps = Omit<
+  ButtonHTMLAttributes<HTMLButtonElement>,
+  "onDrag" | "onDragStart" | "onDragEnd" | "onAnimationStart" | "onAnimationEnd"
+> & {
   variant?: ButtonVariant;
   size?: ButtonSize;
   fullWidth?: boolean;
@@ -31,12 +36,17 @@ export function Button({
   className,
   type = "button",
   disabled,
+  onClick,
   ...props
 }: ButtonProps) {
+  const { play } = useSound();
+  const reduceMotion = useReducedMotion();
+
   return (
-    <button
+    <motion.button
       type={type}
       disabled={disabled}
+      whileTap={disabled || reduceMotion ? undefined : { scale: 0.95 }}
       className={cn(
         "inline-flex items-center justify-center rounded-md font-display uppercase tracking-wide",
         "transition-[transform,box-shadow,background-color] duration-150",
@@ -47,6 +57,12 @@ export function Button({
         fullWidth && "w-full",
         className,
       )}
+      onClick={(event) => {
+        if (!disabled) {
+          play("click");
+        }
+        onClick?.(event);
+      }}
       {...props}
     />
   );
