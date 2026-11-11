@@ -1,17 +1,21 @@
 import { useParams } from "react-router";
+import { Button, Card, Input } from "../components/ui";
 
 export default function PlayPage() {
   const { code } = useParams();
 
   return (
-    <main className="flex min-h-screen flex-col items-center justify-center gap-4 p-6">
-      <p className="text-zinc-400">Room</p>
-      <p className="text-4xl font-black tracking-widest">{code}</p>
-      <input
-        className="w-full max-w-xs rounded-lg bg-zinc-800 p-3 text-center"
-        placeholder="Your nickname"
-      />
-      <button className="w-full max-w-xs rounded-lg bg-violet-600 p-3 font-bold">Join</button>
+    <main className="flex min-h-screen items-center justify-center p-6 text-white">
+      <Card className="flex w-full max-w-sm flex-col gap-6">
+        <div className="text-center">
+          <p className="text-sm text-zinc-400">Room</p>
+          <p className="mt-1 text-4xl font-black tracking-widest">{code}</p>
+        </div>
+        <Input label="Nickname" placeholder="Your nickname" maxLength={16} />
+        <Button fullWidth size="lg">
+          Join
+        </Button>
+      </Card>
     </main>
   );
 }
