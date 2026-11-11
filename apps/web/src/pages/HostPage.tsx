@@ -1,12 +1,22 @@
-import { APP_NAME } from "@partyverse/shared";
+import { HostLobby } from "../features/lobby/HostLobby";
+import { useMockLobby } from "../features/lobby/useMockLobby";
 
 export default function HostPage() {
+  const { code, players } = useMockLobby();
+  const joinUrl = `${window.location.origin}/play/${code}`;
+
   return (
-    <main className="flex min-h-screen flex-col items-center justify-center gap-6">
-      <h1 className="text-5xl font-bold">{APP_NAME}</h1>
-      <p className="text-zinc-400">Room code</p>
-      <p className="text-7xl font-black tracking-widest">ABCD</p>
-      <p className="text-zinc-500">Waiting for players…</p>
+    <main className="flex min-h-screen flex-col items-center gap-8 bg-zinc-950 px-4 py-8 text-white">
+      <h1 className="text-2xl font-bold tracking-wide text-zinc-300">Partyverse</h1>
+      <HostLobby
+        code={code}
+        joinUrl={joinUrl}
+        players={players}
+        maxPlayers={8}
+        onStart={() => {
+          console.log("Start game");
+        }}
+      />
     </main>
   );
 }
