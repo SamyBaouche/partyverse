@@ -1,5 +1,7 @@
 import { MUTE_STORAGE_KEY, type SoundName } from "./types";
 
+const MASTER_VOLUME = 0.35;
+
 function readStoredMute(): boolean {
   try {
     return window.localStorage.getItem(MUTE_STORAGE_KEY) === "1";
@@ -20,14 +22,22 @@ function midiToFreq(midi: number): number {
   return 440 * 2 ** ((midi - 69) / 12);
 }
 
+function createAudioContext(): AudioContext {
+  const AudioContextCtor =
+    window.AudioContext ||
+    (window as unknown as { webkitAudioContext: typeof AudioContext }).webkitAudioContext;
+  return new AudioContextCtor();
+}
+
 class AudioEngine {
   private ctx: AudioContext | null = null;
   private master: GainNode | null = null;
-  private muted = readStoredMute();
+  private muted = typeof window === "undefined" ? false : readStoredMute();
   private musicPlaying = false;
   private musicTimer: number | null = null;
   private nextMusicTime = 0;
   private musicStep = 0;
+  private unlockPromise: Promise<void> | null = null;
 
   isMuted(): boolean {
     return this.muted;
@@ -37,18 +47,28 @@ class AudioEngine {
     this.muted = muted;
     writeStoredMute(muted);
     if (this.master) {
-      this.master.gain.value = muted ? 0 : 0.15;
+      this.master.gain.value = muted ? 0 : MASTER_VOLUME;
     }
     if (muted) {
       this.stopMusic();
     }
   }
 
+  /** Must be called from a user gesture (click / keydown). */
   async unlock(): Promise<void> {
     const ctx = this.ensureContext();
-    if (ctx.state === "suspended") {
-      await ctx.resume();
+    if (ctx.state === "running") {
+      return;
     }
+    if (!this.unlockPromise) {
+      this.unlockPromise = ctx
+        .resume()
+        .then(() => undefined)
+        .finally(() => {
+          this.unlockPromise = null;
+        });
+    }
+    await this.unlockPromise;
   }
 
   async play(name: SoundName): Promise<void> {
@@ -57,23 +77,26 @@ class AudioEngine {
     }
     await this.unlock();
     const ctx = this.ensureContext();
-    const now = ctx.currentTime;
+    if (ctx.state !== "running") {
+      return;
+    }
+    const now = ctx.currentTime + 0.01;
 
     switch (name) {
       case "click":
-        this.beep(now, 880, 0.05, "square", 0.12);
+        this.beep(now, 880, 0.06, "square", 0.22);
         break;
       case "join":
         this.playJoin(now);
         break;
       case "correct":
-        this.playArpeggio(now, [60, 64, 67, 72], 0.08, "square", 0.14);
+        this.playArpeggio(now, [60, 64, 67, 72], 0.08, "square", 0.22);
         break;
       case "wrong":
         this.playWrong(now);
         break;
       case "tick":
-        this.beep(now, 660, 0.07, "square", 0.16);
+        this.beep(now, 660, 0.08, "square", 0.24);
         break;
       case "go":
         this.playGo(now);
@@ -85,11 +108,17 @@ class AudioEngine {
   }
 
   async startMusic(): Promise<void> {
-    if (this.muted || this.musicPlaying) {
+    if (this.muted) {
       return;
     }
     await this.unlock();
     const ctx = this.ensureContext();
+    if (ctx.state !== "running") {
+      return;
+    }
+    if (this.musicPlaying) {
+      return;
+    }
     this.musicPlaying = true;
     this.musicStep = 0;
     this.nextMusicTime = ctx.currentTime + 0.05;
@@ -106,9 +135,9 @@ class AudioEngine {
 
   private ensureContext(): AudioContext {
     if (!this.ctx) {
-      this.ctx = new AudioContext();
+      this.ctx = createAudioContext();
       this.master = this.ctx.createGain();
-      this.master.gain.value = this.muted ? 0 : 0.15;
+      this.master.gain.value = this.muted ? 0 : MASTER_VOLUME;
       this.master.connect(this.ctx.destination);
     }
     return this.ctx;
@@ -123,23 +152,28 @@ class AudioEngine {
   ): void {
     const ctx = this.ensureContext();
     const master = this.master;
-    if (!master) {
+    if (!master || this.muted) {
       return;
     }
 
-    const osc = ctx.createOscillator();
-    const gain = ctx.createGain();
-    osc.type = type;
-    osc.frequency.setValueAtTime(frequency, start);
+    try {
+      const osc = ctx.createOscillator();
+      const gain = ctx.createGain();
+      osc.type = type;
+      osc.frequency.setValueAtTime(frequency, start);
 
-    gain.gain.setValueAtTime(0.0001, start);
-    gain.gain.exponentialRampToValueAtTime(peak, start + 0.01);
-    gain.gain.exponentialRampToValueAtTime(0.0001, start + duration);
+      // linearRamp is more reliable than exponentialRamp across browsers
+      gain.gain.setValueAtTime(0, start);
+      gain.gain.linearRampToValueAtTime(peak, start + 0.012);
+      gain.gain.linearRampToValueAtTime(0, start + duration);
 
-    osc.connect(gain);
-    gain.connect(master);
-    osc.start(start);
-    osc.stop(start + duration + 0.02);
+      osc.connect(gain);
+      gain.connect(master);
+      osc.start(start);
+      osc.stop(start + duration + 0.03);
+    } catch {
+      // Ignore transient Web Audio scheduling errors
+    }
   }
 
   private beep(
@@ -153,9 +187,9 @@ class AudioEngine {
   }
 
   private playJoin(start: number): void {
-    this.tone(start, 520, 0.07, "triangle", 0.14);
-    this.tone(start + 0.05, 780, 0.09, "sine", 0.12);
-    this.tone(start + 0.1, 1040, 0.1, "triangle", 0.08);
+    this.tone(start, 520, 0.08, "triangle", 0.24);
+    this.tone(start + 0.05, 780, 0.1, "sine", 0.2);
+    this.tone(start + 0.1, 1040, 0.12, "triangle", 0.16);
   }
 
   private playWrong(start: number): void {
@@ -164,18 +198,22 @@ class AudioEngine {
     if (!master) {
       return;
     }
-    const osc = ctx.createOscillator();
-    const gain = ctx.createGain();
-    osc.type = "sawtooth";
-    osc.frequency.setValueAtTime(180, start);
-    osc.frequency.exponentialRampToValueAtTime(70, start + 0.28);
-    gain.gain.setValueAtTime(0.0001, start);
-    gain.gain.exponentialRampToValueAtTime(0.16, start + 0.02);
-    gain.gain.exponentialRampToValueAtTime(0.0001, start + 0.3);
-    osc.connect(gain);
-    gain.connect(master);
-    osc.start(start);
-    osc.stop(start + 0.32);
+    try {
+      const osc = ctx.createOscillator();
+      const gain = ctx.createGain();
+      osc.type = "sawtooth";
+      osc.frequency.setValueAtTime(180, start);
+      osc.frequency.linearRampToValueAtTime(70, start + 0.28);
+      gain.gain.setValueAtTime(0, start);
+      gain.gain.linearRampToValueAtTime(0.28, start + 0.02);
+      gain.gain.linearRampToValueAtTime(0, start + 0.3);
+      osc.connect(gain);
+      gain.connect(master);
+      osc.start(start);
+      osc.stop(start + 0.32);
+    } catch {
+      // Ignore transient Web Audio scheduling errors
+    }
   }
 
   private playArpeggio(
@@ -192,18 +230,18 @@ class AudioEngine {
 
   private playGo(start: number): void {
     [60, 64, 67].forEach((midi) => {
-      this.tone(start, midiToFreq(midi), 0.28, "square", 0.1);
+      this.tone(start, midiToFreq(midi), 0.32, "square", 0.18);
     });
-    this.tone(start + 0.12, midiToFreq(72), 0.22, "square", 0.12);
+    this.tone(start + 0.12, midiToFreq(72), 0.25, "square", 0.2);
   }
 
   private playWin(start: number): void {
     const notes = [60, 64, 67, 72, 76, 79, 84];
     notes.forEach((midi, index) => {
-      this.tone(start + index * 0.07, midiToFreq(midi), 0.12, "square", 0.12);
+      this.tone(start + index * 0.07, midiToFreq(midi), 0.14, "square", 0.2);
     });
     [72, 76, 79].forEach((midi) => {
-      this.tone(start + 0.55, midiToFreq(midi), 0.35, "square", 0.1);
+      this.tone(start + 0.55, midiToFreq(midi), 0.4, "square", 0.18);
     });
   }
 
@@ -213,9 +251,16 @@ class AudioEngine {
     }
 
     const ctx = this.ensureContext();
+    if (ctx.state !== "running") {
+      this.musicTimer = window.setTimeout(() => {
+        this.scheduleMusic();
+      }, 100);
+      return;
+    }
+
     // 120 BPM → quarter = 0.5s; 16th = 0.125s
     const stepDuration = 0.125;
-    const lookAhead = 0.2;
+    const lookAhead = 0.25;
 
     while (this.nextMusicTime < ctx.currentTime + lookAhead) {
       this.playMusicStep(this.nextMusicTime, this.musicStep % 64);
@@ -225,7 +270,7 @@ class AudioEngine {
 
     this.musicTimer = window.setTimeout(() => {
       this.scheduleMusic();
-    }, 50);
+    }, 40);
   }
 
   private playMusicStep(time: number, step: number): void {
@@ -235,18 +280,18 @@ class AudioEngine {
 
     const bassMidi = bassPattern[step % bassPattern.length] ?? 0;
     if (bassMidi > 0) {
-      this.tone(time, midiToFreq(bassMidi), 0.11, "square", 0.07);
+      this.tone(time, midiToFreq(bassMidi), 0.12, "square", 0.16);
     }
 
     if (step % 2 === 0) {
       const arpMidi = arpPattern[(step / 2) % arpPattern.length] ?? 0;
       if (arpMidi > 0) {
-        this.tone(time, midiToFreq(arpMidi), 0.09, "square", 0.045);
+        this.tone(time, midiToFreq(arpMidi), 0.1, "square", 0.1);
       }
     }
 
     if (step % 8 === 0) {
-      this.tone(time, 180, 0.03, "triangle", 0.04);
+      this.tone(time, 180, 0.04, "triangle", 0.08);
     }
   }
 }
