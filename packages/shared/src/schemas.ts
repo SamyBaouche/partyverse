@@ -7,6 +7,16 @@ export const PlayerId = z.string().min(1).max(64);
 
 export const Phase = z.enum(["lobby", "drawing", "reveal", "scores"]);
 
+export const RoomErrorCode = z.enum([
+  "INVALID_INPUT",
+  "ROOM_NOT_FOUND",
+  "ROOM_FULL",
+  "GAME_STARTED",
+  "NAME_TAKEN",
+  "NOT_HOST",
+  "PLAYER_NOT_FOUND",
+]);
+
 // Normalized coordinates: 0 = left/top edge, 1 = right/bottom edge
 export const Point = z.object({
   x: z.number().min(0).max(1),
@@ -47,6 +57,7 @@ export const ServerMessage = z.discriminatedUnion("type", [
 // ---------- TypeScript types inferred from schemas ----------
 export type RoomCode = z.infer<typeof RoomCode>;
 export type Phase = z.infer<typeof Phase>;
+export type RoomErrorCode = z.infer<typeof RoomErrorCode>;
 export type Point = z.infer<typeof Point>;
 export type Stroke = z.infer<typeof Stroke>;
 export type Player = z.infer<typeof Player>;

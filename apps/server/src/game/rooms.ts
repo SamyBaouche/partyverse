@@ -1,20 +1,13 @@
 import { randomUUID } from "node:crypto";
 import { createActor, type Actor } from "xstate";
-import { PlayerName, RoomCode, type Player } from "@partyverse/shared";
+import { PlayerName, RoomCode, type Player, type RoomErrorCode } from "@partyverse/shared";
 import { gameMachine } from "./machine.js";
 
 // No I or O to avoid confusion with 1 and 0
 const ALPHABET = "ABCDEFGHJKLMNPQRSTUVWXYZ";
 export const MAX_PLAYERS = 8;
 
-export type RoomErrorCode =
-  | "INVALID_INPUT"
-  | "ROOM_NOT_FOUND"
-  | "ROOM_FULL"
-  | "GAME_STARTED"
-  | "NAME_TAKEN"
-  | "NOT_HOST"
-  | "PLAYER_NOT_FOUND";
+export type { RoomErrorCode };
 
 export class RoomError extends Error {
   readonly code: RoomErrorCode;
