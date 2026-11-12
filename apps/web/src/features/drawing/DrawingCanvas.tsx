@@ -1,4 +1,4 @@
-import { useRef, useState, type PointerEvent as ReactPointerEvent } from "react";
+import { useEffect, useRef, useState, type PointerEvent as ReactPointerEvent } from "react";
 import type { Point, Stroke } from "@partyverse/shared";
 import { Button } from "../../components/ui";
 import { cn } from "../../lib/cn";
@@ -7,6 +7,8 @@ import { StrokeLayer } from "./StrokeLayer";
 
 const CHUNK_INTERVAL_MS = 50;
 const MAX_POINTS_PER_CHUNK = 500;
+/** Ignore micro-jitter from fat-finger samples (normalized space). */
+const MIN_POINT_DISTANCE = 0.003;
 
 type DrawingCanvasProps = {
   onStrokeChunk: (stroke: Stroke) => void;
@@ -29,6 +31,15 @@ function createStrokeId(): string {
   return `stroke-${Date.now().toString(36)}-${Math.random().toString(36).slice(2, 10)}`;
 }
 
+function isFarEnough(previous: Point | undefined, next: Point): boolean {
+  if (!previous) {
+    return true;
+  }
+  const dx = next.x - previous.x;
+  const dy = next.y - previous.y;
+  return dx * dx + dy * dy >= MIN_POINT_DISTANCE * MIN_POINT_DISTANCE;
+}
+
 export function DrawingCanvas({
   onStrokeChunk,
   onClear,
@@ -37,9 +48,31 @@ export function DrawingCanvas({
 }: DrawingCanvasProps) {
   const surfaceRef = useRef<HTMLDivElement>(null);
   const activeRef = useRef<ActiveStroke | null>(null);
+  const livePointsRef = useRef<Point[]>([]);
+  const liveIdRef = useRef<string | null>(null);
+  const rafRef = useRef<number | null>(null);
   const [chunks, setChunks] = useState<Stroke[]>([]);
   const [livePoints, setLivePoints] = useState<Point[]>([]);
   const [liveId, setLiveId] = useState<string | null>(null);
+
+  useEffect(() => {
+    return () => {
+      if (rafRef.current !== null) {
+        cancelAnimationFrame(rafRef.current);
+      }
+    };
+  }, []);
+
+  function scheduleLivePaint() {
+    if (rafRef.current !== null) {
+      return;
+    }
+    rafRef.current = requestAnimationFrame(() => {
+      rafRef.current = null;
+      setLiveId(liveIdRef.current);
+      setLivePoints(livePointsRef.current.slice());
+    });
+  }
 
   function flushChunks(force: boolean) {
     const active = activeRef.current;
@@ -82,16 +115,25 @@ export function DrawingCanvas({
     if (!rect || !active) {
       return;
     }
-    active.points.push(toNormalized(clientX, clientY, rect));
-    setLivePoints(active.points.slice());
+
+    const point = toNormalized(clientX, clientY, rect);
+    const previous = active.points[active.points.length - 1];
+    if (!isFarEnough(previous, point)) {
+      return;
+    }
+
+    active.points.push(point);
+    livePointsRef.current = active.points;
+    scheduleLivePaint();
     flushChunks(false);
   }
 
   function handlePointerDown(event: ReactPointerEvent<HTMLDivElement>) {
-    if (disabled || event.button !== 0) {
+    if (disabled || !event.isPrimary || event.button !== 0) {
       return;
     }
     event.preventDefault();
+    event.stopPropagation();
     event.currentTarget.setPointerCapture(event.pointerId);
 
     const rect = surfaceRef.current?.getBoundingClientRect();
@@ -107,31 +149,47 @@ export function DrawingCanvas({
       emittedCount: 0,
       lastEmitAt: 0,
     };
-    setLiveId(id);
-    setLivePoints([point]);
+    liveIdRef.current = id;
+    livePointsRef.current = [point];
+    scheduleLivePaint();
     flushChunks(true);
   }
 
   function handlePointerMove(event: ReactPointerEvent<HTMLDivElement>) {
-    if (disabled || !activeRef.current) {
+    if (disabled || !activeRef.current || !event.isPrimary) {
       return;
     }
-    if (!event.currentTarget.hasPointerCapture(event.pointerId) && event.buttons !== 1) {
+    if (!event.currentTarget.hasPointerCapture(event.pointerId)) {
       return;
     }
     event.preventDefault();
-    appendPoint(event.clientX, event.clientY);
+    event.stopPropagation();
+
+    const coalesced = event.nativeEvent.getCoalescedEvents?.() ?? [event.nativeEvent];
+    for (const sample of coalesced) {
+      appendPoint(sample.clientX, sample.clientY);
+    }
   }
 
   function endStroke(event: ReactPointerEvent<HTMLDivElement>) {
-    if (!activeRef.current) {
+    if (!activeRef.current || !event.isPrimary) {
       return;
     }
     event.preventDefault();
+    event.stopPropagation();
+
+    // Capture any final samples before closing the gesture.
+    const coalesced = event.nativeEvent.getCoalescedEvents?.() ?? [];
+    for (const sample of coalesced) {
+      appendPoint(sample.clientX, sample.clientY);
+    }
+
     flushChunks(true);
     activeRef.current = null;
-    setLiveId(null);
-    setLivePoints([]);
+    liveIdRef.current = null;
+    livePointsRef.current = [];
+    scheduleLivePaint();
+
     if (event.currentTarget.hasPointerCapture(event.pointerId)) {
       event.currentTarget.releasePointerCapture(event.pointerId);
     }
@@ -139,6 +197,8 @@ export function DrawingCanvas({
 
   function handleClear() {
     activeRef.current = null;
+    liveIdRef.current = null;
+    livePointsRef.current = [];
     setChunks([]);
     setLiveId(null);
     setLivePoints([]);
@@ -156,16 +216,18 @@ export function DrawingCanvas({
       <div
         ref={surfaceRef}
         className={cn(
-          "relative aspect-[4/3] w-full touch-none overflow-hidden rounded-3xl",
+          "relative aspect-[4/3] w-full touch-none overflow-hidden rounded-3xl select-none",
           "border-2 border-white/10 bg-[#070d18]",
           "shadow-[inset_0_0_40px_rgb(91_157_255_/_0.08)]",
+          "[-webkit-touch-callout:none] [-webkit-user-select:none]",
           disabled ? "cursor-not-allowed opacity-60" : "cursor-crosshair",
         )}
-        style={{ touchAction: "none" }}
+        style={{ touchAction: "none", overscrollBehavior: "none" }}
         onPointerDown={handlePointerDown}
         onPointerMove={handlePointerMove}
         onPointerUp={endStroke}
         onPointerCancel={endStroke}
+        onContextMenu={(event) => event.preventDefault()}
       >
         <StrokeLayer strokes={displayStrokes} className="pointer-events-none absolute inset-0" />
       </div>
