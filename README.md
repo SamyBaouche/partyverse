@@ -44,36 +44,7 @@ A TV (or laptop) shows the game; players scan a QR code and draw, guess and comp
 
 > Target architecture for `v1.0` — not deployed yet.
 
-```mermaid
-flowchart TB
-    players["TV + phones"]
-
-    subgraph azure["Azure — rg-partyverse"]
-        swa["Static Web Apps<br/>React front-end"]
-        wps["Web PubSub<br/>Real-time"]
-        aca["Container Apps<br/>Node.js game server"]
-        sb["Service Bus<br/>Round timers"]
-        fn["Functions<br/>Round end"]
-        blob["Blob Storage<br/>Drawings"]
-        cosmos["Cosmos DB<br/>Games, scores"]
-        kv["Key Vault<br/>+ Managed Identity"]
-        ai["App Insights<br/>Monitoring"]
-    end
-
-    gitlab["GitLab CI/CD"]
-
-    players --> swa
-    players <--> wps
-    players --> aca
-    wps <--> aca
-    aca --> sb --> fn
-    aca --> blob
-    aca --> cosmos
-    aca -.-> kv
-    aca -.-> ai
-    gitlab -- "deploy (OIDC)" --> swa
-    gitlab -- "deploy (OIDC)" --> aca
-```
+![Partyverse Azure target architecture](docs/architecture/overview.drawio.svg)
 
 Architecture decisions are documented as ADRs in [`docs/adr`](docs/adr).
 
@@ -100,8 +71,9 @@ partyverse/
 ├── packages/
 │   └── shared/       # Zod schemas and shared types
 ├── docs/
-│   ├── metrics.md    # Measured metrics and how they were measured
-│   └── adr/          # Architecture Decision Records
+│   ├── metrics.md              # Measured metrics and how they were measured
+│   ├── architecture/           # Target Azure architecture diagrams
+│   └── adr/                    # Architecture Decision Records
 ├── .gitlab-ci.yml
 ├── .node-version     # 24
 └── pnpm-workspace.yaml
