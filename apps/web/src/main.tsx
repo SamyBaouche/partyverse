@@ -8,6 +8,7 @@ import { ArcadeShell } from "./components/ArcadeShell";
 import { MuteToggle } from "./components/MuteToggle";
 import { SoundProvider } from "./lib/audio";
 import BackgroundPicker from "./pages/BackgroundPicker";
+import DrawDemo from "./pages/DrawDemo";
 import HostPage from "./pages/HostPage";
 import PlayPage from "./pages/PlayPage";
 import UiGallery from "./pages/UiGallery";
@@ -23,7 +24,12 @@ createRoot(document.getElementById("root")!).render(
             <Route path="/host" element={<HostPage />} />
             <Route path="/play/:code" element={<PlayPage />} />
             <Route path="/backgrounds" element={<BackgroundPicker />} />
-            {import.meta.env.DEV ? <Route path="/ui" element={<UiGallery />} /> : null}
+            {import.meta.env.DEV ? (
+              <>
+                <Route path="/ui" element={<UiGallery />} />
+                <Route path="/draw-demo" element={<DrawDemo />} />
+              </>
+            ) : null}
             <Route path="*" element={<p className="p-8 font-body">Page not found</p>} />
           </Routes>
         </ArcadeShell>
