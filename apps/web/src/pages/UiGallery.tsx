@@ -14,6 +14,11 @@ export default function UiGallery() {
           UI Gallery
         </h1>
         <p className="font-body mt-2 text-muted">Design system playground (development only)</p>
+        <p className="font-body mt-3">
+          <a href="/draw-demo" className="text-brand underline-offset-4 hover:underline">
+            Drawing canvas demo →
+          </a>
+        </p>
       </header>
 
       <section className="flex flex-col gap-4">

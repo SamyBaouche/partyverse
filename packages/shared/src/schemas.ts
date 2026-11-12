@@ -24,6 +24,7 @@ export const Point = z.object({
 });
 
 export const Stroke = z.object({
+  id: z.string().min(1).max(64),
   points: z.array(Point).min(1).max(500),
 });
 
