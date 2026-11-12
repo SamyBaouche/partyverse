@@ -7,14 +7,16 @@ import { getSvgPathFromStroke } from "./geometry";
 const VIEW_WIDTH = 4;
 const VIEW_HEIGHT = 3;
 
-/** Stable finger-friendly stroke: less thinning so touch input doesn't look blotchy. */
+/**
+ * Keep streamline low: high values make the ink lag and reshape under a finger,
+ * which feels like random scribbling on touch devices.
+ */
 const STROKE_OPTIONS = {
-  size: 0.16,
-  thinning: 0.15,
-  smoothing: 0.65,
-  streamline: 0.55,
-  simulatePressure: true,
-  last: true,
+  size: 0.14,
+  thinning: 0,
+  smoothing: 0.4,
+  streamline: 0.2,
+  simulatePressure: false,
   start: { cap: true, taper: 0 },
   end: { cap: true, taper: 0 },
 } as const;
@@ -22,6 +24,8 @@ const STROKE_OPTIONS = {
 type StrokeLayerProps = {
   strokes: Stroke[];
   className?: string;
+  /** Stroke ids that are still being drawn — tip stays open (`last: false`). */
+  activeStrokeIds?: ReadonlySet<string>;
 };
 
 type RenderPath =
@@ -50,7 +54,7 @@ function ensureRenderableInput(points: Point[]): number[][] {
   const origin = mapped[0] ?? [0, 0];
   const x = origin[0] ?? 0;
   const y = origin[1] ?? 0;
-  const jitter = 0.02;
+  const jitter = 0.015;
   return [
     [x, y],
     [x + jitter, y],
@@ -59,7 +63,7 @@ function ensureRenderableInput(points: Point[]): number[][] {
   ];
 }
 
-export function StrokeLayer({ strokes, className }: StrokeLayerProps) {
+export function StrokeLayer({ strokes, className, activeStrokeIds }: StrokeLayerProps) {
   const paths = useMemo(() => {
     return groupPointsById(strokes).flatMap(({ id, points }): RenderPath[] => {
       if (points.length === 0) {
@@ -67,7 +71,10 @@ export function StrokeLayer({ strokes, className }: StrokeLayerProps) {
       }
 
       const input = ensureRenderableInput(points);
-      const outline = getStroke(input, STROKE_OPTIONS);
+      const outline = getStroke(input, {
+        ...STROKE_OPTIONS,
+        last: !activeStrokeIds?.has(id),
+      });
       const d = getSvgPathFromStroke(outline);
       if (d) {
         return [{ id, kind: "path", d }];
@@ -87,7 +94,7 @@ export function StrokeLayer({ strokes, className }: StrokeLayerProps) {
         },
       ];
     });
-  }, [strokes]);
+  }, [strokes, activeStrokeIds]);
 
   return (
     <svg

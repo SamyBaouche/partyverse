@@ -244,11 +244,11 @@ export function DrawingCanvas({
     onClear();
   }
 
-  // Avoid duplicating the in-progress stroke: replace its emitted chunks with full live points.
-  const displayStrokes: Stroke[] =
-    liveId && livePoints.length > 0
-      ? [...chunks.filter((chunk) => chunk.id !== liveId), { id: liveId, points: livePoints }]
-      : chunks;
+  // Finished ink only — the in-progress gesture is drawn as a raw polyline under the finger.
+  const finishedStrokes = liveId !== null ? chunks.filter((chunk) => chunk.id !== liveId) : chunks;
+
+  const livePolyline =
+    livePoints.length > 0 ? livePoints.map((point) => `${point.x},${point.y}`).join(" ") : null;
 
   return (
     <div className={cn("flex w-full flex-col gap-4", className)}>
@@ -278,7 +278,33 @@ export function DrawingCanvas({
           onLostPointerCapture={handleLostPointerCapture}
           onContextMenu={(event) => event.preventDefault()}
         >
-          <StrokeLayer strokes={displayStrokes} className="pointer-events-none absolute inset-0" />
+          <StrokeLayer strokes={finishedStrokes} className="pointer-events-none absolute inset-0" />
+          {livePolyline ? (
+            <svg
+              viewBox="0 0 1 1"
+              preserveAspectRatio="none"
+              className="pointer-events-none absolute inset-0 h-full w-full"
+              aria-hidden
+            >
+              {livePoints.length === 1 ? (
+                <circle
+                  cx={livePoints[0]?.x ?? 0}
+                  cy={livePoints[0]?.y ?? 0}
+                  r={0.014}
+                  fill="#f8fbff"
+                />
+              ) : (
+                <polyline
+                  points={livePolyline}
+                  fill="none"
+                  stroke="#f8fbff"
+                  strokeWidth={0.028}
+                  strokeLinecap="round"
+                  strokeLinejoin="round"
+                />
+              )}
+            </svg>
+          ) : null}
         </div>
       </div>
       <Button type="button" variant="secondary" disabled={disabled} onClick={handleClear}>
