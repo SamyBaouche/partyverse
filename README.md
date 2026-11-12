@@ -1,103 +1,207 @@
-# partyverse
+# Partyverse — A real-time multiplayer party game where your phone is the controller.
 
-## Getting started
+[![pipeline status](https://gitlab.com/SamyBaouche/partyverse/badges/main/pipeline.svg)](https://gitlab.com/SamyBaouche/partyverse/-/pipelines)
+[![coverage report](https://gitlab.com/SamyBaouche/partyverse/badges/main/coverage.svg)](https://gitlab.com/SamyBaouche/partyverse/-/pipelines)
+[![license: MIT](https://img.shields.io/badge/license-MIT-blue.svg)](LICENSE)
 
-To make it easy for you to get started with GitLab, here's a list of recommended next steps.
+A TV (or laptop) shows the game; players scan a QR code and draw, guess and compete from their phones. No app install, no account.
 
-Already a pro? Just edit this README.md and make it your own. Want to make it easy? [Use the template at the bottom](#editing-this-readme)!
-
-## Add your files
-
-- [Create](https://docs.gitlab.com/user/project/repository/web_editor/#create-a-file) or [upload](https://docs.gitlab.com/user/project/repository/web_editor/#upload-a-file) files
-- [Add files using the command line](https://docs.gitlab.com/topics/git/add_files/#add-files-to-a-git-repository) or push an existing Git repository with the following command:
-
-```
-cd existing_repo
-git remote add origin https://gitlab.com/SamyBaouche/partyverse.git
-git branch -M main
-git push -uf origin main
-```
-
-## Integrate with your tools
-
-- [Set up project integrations](https://gitlab.com/SamyBaouche/partyverse/-/settings/integrations)
-
-## Collaborate with your team
-
-- [Invite team members and collaborators](https://docs.gitlab.com/user/project/members/)
-- [Create a new merge request](https://docs.gitlab.com/user/project/merge_requests/creating_merge_requests/)
-- [Automatically close issues from merge requests](https://docs.gitlab.com/user/project/issues/managing_issues/#closing-issues-automatically)
-- [Enable merge request approvals](https://docs.gitlab.com/user/project/merge_requests/approvals/)
-- [Set auto-merge](https://docs.gitlab.com/user/project/merge_requests/auto_merge/)
-
-## Test and Deploy
-
-Use the built-in continuous integration in GitLab.
-
-- [Get started with GitLab CI/CD](https://docs.gitlab.com/ci/quick_start/)
-- [Analyze your code for known vulnerabilities with Static Application Security Testing (SAST)](https://docs.gitlab.com/user/application_security/sast/)
-- [Deploy to Kubernetes, Amazon EC2, or Amazon ECS using Auto Deploy](https://docs.gitlab.com/topics/autodevops/requirements/)
-- [Use pull-based deployments for improved Kubernetes management](https://docs.gitlab.com/user/clusters/agent/)
-- [Set up protected environments](https://docs.gitlab.com/ci/environments/protected_environments/)
+> Development, CI/CD and issue tracking happen on **GitLab**: [gitlab.com/SamyBaouche/partyverse](https://gitlab.com/SamyBaouche/partyverse).
+> The GitHub repository is a **read-only mirror**.
 
 ---
 
-# Editing this README
+## Status
 
-When you're ready to make this README your own, just edit this file and use the handy template below (or feel free to structure it however you want - this is just a starting point!). Thanks to [makeareadme.com](https://www.makeareadme.com/) for this template.
+|                     |                                                                          |
+| ------------------- | ------------------------------------------------------------------------ |
+| **Current release** | `v0.1` — Sprint 1: foundations, game engine, arcade UI and first screens |
+| **Next milestone**  | Sprint 2 — complete front-end and real-time wiring with Azure Web PubSub |
+| **Target**          | `v1.0` deployed on Azure by January 2027                                 |
 
-## Suggestions for a good README
+## Features
 
-Every project is different, so consider which of these sections apply to yours. The sections used in the template are suggestions for most open source projects. Also keep in mind that while a README can be too long and detailed, too long is better than too short. If you think your README is too long, consider utilizing another form of documentation rather than cutting out information.
+### Available today (local, mock mode)
 
-## Name
+- **Drawing game engine**: XState state machine (`lobby → drawing → reveal → scores`), turn rotation, accent- and case-insensitive guessing, scoring (`apps/server/src/game/machine.ts`).
+- **Game rooms**: 4-letter room codes (alphabet without `I`/`O`), join / leave / host-only kick, 8 players max, duplicate nickname protection (`apps/server/src/game/rooms.ts`).
+- **Shared message contract**: client and server messages validated with Zod in `@partyverse/shared` (never trust the client).
+- **Arcade UI**: dark sandbox theme with selectable arcade backgrounds, Press Start 2P + Inter fonts, synthesized 8-bit SFX and chiptune music (Web Audio API, no audio files), confetti and countdown.
+- **TV lobby**: room code, QR code (`qrcode.react`), live mock player list, press-start gate.
+- **Phone join flow**: Zod-validated nickname, waiting screen, friendly `RoomErrorCode` messages (mock join).
+- **Drawing canvas**: perfect-freehand strokes, normalized coordinates, 50 ms live chunking, Clear button, `/draw-demo` TV mirror.
+- **HTTP health endpoint** on the Fastify server (`GET /health`).
 
-Choose a self-explaining name for your project.
+### Planned
 
-## Description
+- Real-time play across devices with **Azure Web PubSub**.
+- Cloud deployment on **Azure** (Static Web Apps, Container Apps, Cosmos DB, Service Bus, Functions, Blob Storage, Key Vault, App Insights).
+- Wiring the game engine and rooms to live network transport (today they run locally / under tests).
+- Stateless, crash-resilient engine with persisted snapshots.
+- Load testing, observability, and GitLab CI/CD deploy to Azure with OIDC.
 
-Let people know what your project can do specifically. Provide context and add a link to any reference visitors might be unfamiliar with. A list of Features or a Background subsection can also be added here. If there are alternatives to your project, this is a good place to list differentiating factors.
+## Architecture (target)
 
-## Badges
+> Target architecture for `v1.0` — not deployed yet.
 
-On some READMEs, you may see small images that convey metadata, such as whether or not all the tests are passing for the project. You can use Shields to add some to your README. Many services also have instructions for adding a badge.
+```mermaid
+flowchart TB
+    players["TV + phones"]
 
-## Visuals
+    subgraph azure["Azure — rg-partyverse"]
+        swa["Static Web Apps<br/>React front-end"]
+        wps["Web PubSub<br/>Real-time"]
+        aca["Container Apps<br/>Node.js game server"]
+        sb["Service Bus<br/>Round timers"]
+        fn["Functions<br/>Round end"]
+        blob["Blob Storage<br/>Drawings"]
+        cosmos["Cosmos DB<br/>Games, scores"]
+        kv["Key Vault<br/>+ Managed Identity"]
+        ai["App Insights<br/>Monitoring"]
+    end
 
-Depending on what you are making, it can be a good idea to include screenshots or even a video (you'll frequently see GIFs rather than actual videos). Tools like ttygif can help, but check out Asciinema for a more sophisticated method.
+    gitlab["GitLab CI/CD"]
 
-## Installation
+    players --> swa
+    players <--> wps
+    players --> aca
+    wps <--> aca
+    aca --> sb --> fn
+    aca --> blob
+    aca --> cosmos
+    aca -.-> kv
+    aca -.-> ai
+    gitlab -- "deploy (OIDC)" --> swa
+    gitlab -- "deploy (OIDC)" --> aca
+```
 
-Within a particular ecosystem, there may be a common way of installing things, such as using Yarn, NuGet, or Homebrew. However, consider the possibility that whoever is reading your README is a novice and would like more guidance. Listing specific steps helps remove ambiguity and gets people to using your project as quickly as possible. If it only runs in a specific context like a particular programming language version or operating system or has dependencies that have to be installed manually, also add a Requirements subsection.
+Architecture decisions are documented as ADRs in [`docs/adr`](docs/adr).
 
-## Usage
+## Tech stack
 
-Use examples liberally, and show the expected output if you can. It's helpful to have inline the smallest example of usage that you can demonstrate, while providing links to more sophisticated examples if they are too long to reasonably include in the README.
+| Layer           | Technologies                                                                                                                                     |
+| --------------- | ------------------------------------------------------------------------------------------------------------------------------------------------ |
+| Front-end       | React 19, TypeScript, Vite 8, Tailwind CSS v4, React Router, Motion, perfect-freehand, qrcode.react, canvas-confetti, Web Audio API              |
+| Back-end        | Node.js 24, Fastify 5, XState 5                                                                                                                  |
+| Shared          | `@partyverse/shared` — Zod 4 schemas and inferred TypeScript types                                                                               |
+| Testing         | Vitest, `@vitest/coverage-v8`                                                                                                                    |
+| Tooling         | pnpm workspaces (`pnpm@12.18.0`), ESLint, Prettier, TypeScript strict mode                                                                       |
+| CI/CD           | GitLab CI (`.gitlab-ci.yml`), self-hosted GitLab Runner with Docker executor (`node:24-alpine`)                                                  |
+| Cloud (planned) | Azure Container Apps, Static Web Apps, Web PubSub, Cosmos DB, Service Bus, Functions, Blob Storage, Key Vault, App Insights, Bicep, OIDC deploys |
 
-## Support
+## Repository structure
 
-Tell people where they can go to for help. It can be any combination of an issue tracker, a chat room, an email address, etc.
+```
+partyverse/
+├── apps/
+│   ├── web/          # React front-end (TV + phone screens)
+│   ├── server/       # Fastify game server (rooms, XState engine, /health)
+│   └── functions/    # Azure Functions package stub (planned)
+├── packages/
+│   └── shared/       # Zod schemas and shared types
+├── docs/
+│   ├── metrics.md    # Measured metrics and how they were measured
+│   └── adr/          # Architecture Decision Records
+├── .gitlab-ci.yml
+├── .node-version     # 24
+└── pnpm-workspace.yaml
+```
+
+## Getting started
+
+### Prerequisites
+
+- **Node.js 24** (see `.node-version`; `engines.node` is `>=24`)
+- **pnpm** pinned via `packageManager`: `pnpm@12.18.0` (Corepack: `corepack enable`)
+
+### Install and run
+
+```bash
+pnpm install
+
+# Front-end — http://localhost:5173
+pnpm --filter @partyverse/web dev
+
+# Game server — http://localhost:3000/health
+pnpm --filter @partyverse/server dev
+```
+
+To try the UI on a phone, open the **Network** URL printed by Vite (same Wi-Fi as your computer), for example `http://<your-lan-ip>:5173/play/ABCD`. Do not use `localhost` in the QR / phone URL.
+
+## Development pages
+
+Routes from `apps/web/src/main.tsx`:
+
+| Route          | Purpose                                                  | Availability |
+| -------------- | -------------------------------------------------------- | ------------ |
+| `/`            | Redirects to `/host`                                     | Always       |
+| `/host`        | TV lobby (press start, room code, QR, mock players)      | Always       |
+| `/play/:code`  | Phone join flow                                          | Always       |
+| `/backgrounds` | Arcade background picker                                 | Always       |
+| `/ui`          | Design-system and effects gallery                        | **Dev only** |
+| `/draw-demo`   | Drawing canvas + live “TV mirror” and Zod chunk counters | **Dev only** |
+
+## Scripts
+
+| Command                                          | Description                                  |
+| ------------------------------------------------ | -------------------------------------------- |
+| `pnpm dev`                                       | Run all package `dev` scripts in parallel    |
+| `pnpm build`                                     | Build every package that defines `build`     |
+| `pnpm lint`                                      | ESLint on the whole monorepo                 |
+| `pnpm format` / `pnpm format:check`              | Format with Prettier / check formatting      |
+| `pnpm typecheck`                                 | TypeScript `--noEmit` in every package       |
+| `pnpm test`                                      | Run all package tests                        |
+| `pnpm --filter @partyverse/web dev`              | Vite dev server for the web app              |
+| `pnpm --filter @partyverse/web build`            | Typecheck + production build for the web app |
+| `pnpm --filter @partyverse/server dev`           | Fastify server with `tsx watch`              |
+| `pnpm --filter @partyverse/server test`          | Server Vitest suite                          |
+| `pnpm --filter @partyverse/server test:coverage` | Server tests with v8 coverage report         |
+
+## Quality and CI
+
+Every merge request runs a GitLab pipeline on a **self-hosted GitLab Runner** (Docker executor, image `node:24-alpine`):
+
+| Stage     | Jobs                                                                           |
+| --------- | ------------------------------------------------------------------------------ |
+| `quality` | `format`, `lint`, `typecheck` (parallel)                                       |
+| `test`    | `pnpm --filter @partyverse/server test:coverage` (Cobertura in merge requests) |
+| `build`   | `build-web`, `build-server`                                                    |
+
+`main` is protected: changes land only through merge requests with a **green pipeline**.
+
+## Metrics
+
+All metrics are measured, dated and reproducible — see [`docs/metrics.md`](docs/metrics.md).
+
+| Metric                            | Value | As of      |
+| --------------------------------- | ----- | ---------- |
+| Game engine test coverage (lines) | 98%   | 2026-11-10 |
 
 ## Roadmap
 
-If you have ideas for releases in the future, it is a good idea to list them in the README.
+| Sprint | Dates        | Focus                                                            | Status        |
+| ------ | ------------ | ---------------------------------------------------------------- | ------------- |
+| 0      | Nov 7–8      | Accounts, tooling, GitLab, self-hosted runner                    | Done          |
+| 1      | Nov 9–15     | Monorepo, game engine, tests, CI, arcade UI, first screens       | Done (`v0.1`) |
+| 2      | Nov 16–22    | Complete front-end, real-time with Web PubSub, architecture docs | In progress   |
+| 3      | Nov 23–29    | Docker, Bicep, first Azure deployment                            | Planned       |
+| 4      | Nov 30–Dec 6 | Full CI/CD with OIDC, dev and prod environments                  | Planned       |
+| 5      | Dec 7–13     | Stateless engine, Service Bus timers, resilience                 | Planned       |
+| 6      | Dec 14–20    | Blue-green releases, observability, E2E tests                    | Planned       |
+| 7      | Dec 21–27    | Load testing and performance                                     | Planned       |
+| 8      | Dec 28–Jan 1 | Documentation, demo and `v1.0`                                   | Planned       |
 
-## Contributing
+## Contributing workflow
 
-State if you are open to contributions and what your requirements are for accepting them.
+1. Pick an issue on the GitLab board and move it to **Doing**.
+2. Create a branch from an up-to-date `main` (`feat/<issue>-<short-name>`).
+3. Use [Conventional Commits](https://www.conventionalcommits.org/) (`feat:`, `fix:`, `test:`, `ci:`, `docs:`).
+4. Open a merge request with `Closes #<issue>` and merge once the pipeline is green.
 
-For people who want to make changes to your project, it's helpful to have some documentation on how to get started. Perhaps there is a script that they should run or some environment variables that they need to set. Make these steps explicit. These instructions could also be useful to your future self.
+## Credits
 
-You can also document commands to lint the code or run tests. These steps help to ensure high code quality and reduce the likelihood that the changes inadvertently break something. Having instructions for running tests is especially helpful if it requires external setup, such as starting a Selenium server for testing in a browser.
-
-## Authors and acknowledgment
-
-Show your appreciation to those who have contributed to the project.
+Fonts and audio credits are listed in [`apps/web/CREDITS.md`](apps/web/CREDITS.md). All sounds and music are generated in code with the Web Audio API (no external audio files).
 
 ## License
 
-For open source projects, say how it is licensed.
-
-## Project status
-
-If you have run out of energy or time for your project, put a note at the top of the README saying that development has slowed down or stopped completely. Someone may choose to fork your project or volunteer to step in as a maintainer or owner, allowing your project to keep going. You can also make an explicit request for maintainers.
+[MIT](LICENSE) © Samy Baouche
