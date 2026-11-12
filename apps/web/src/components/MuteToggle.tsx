@@ -1,7 +1,7 @@
 import { useSound } from "../lib/audio";
 
 export function MuteToggle() {
-  const { muted, toggleMute, play } = useSound();
+  const { muted, toggleMute, play, unlock, startMusic } = useSound();
 
   return (
     <button
@@ -10,10 +10,15 @@ export function MuteToggle() {
       aria-label={muted ? "Unmute sound" : "Mute sound"}
       aria-pressed={muted}
       onClick={() => {
-        toggleMute();
-        if (muted) {
-          play("click");
-        }
+        void (async () => {
+          const wasMuted = muted;
+          toggleMute();
+          if (wasMuted) {
+            await unlock();
+            await play("click");
+            await startMusic();
+          }
+        })();
       }}
     >
       {muted ? (

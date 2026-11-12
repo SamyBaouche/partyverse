@@ -3,9 +3,10 @@ import { audioEngine } from "./AudioEngine";
 import type { SoundName } from "./types";
 
 type SoundContextValue = {
-  play: (name: SoundName) => void;
-  startMusic: () => void;
+  play: (name: SoundName) => Promise<void>;
+  startMusic: () => Promise<void>;
   stopMusic: () => void;
+  unlock: () => Promise<void>;
   muted: boolean;
   toggleMute: () => void;
 };
@@ -15,12 +16,16 @@ const SoundContext = createContext<SoundContextValue | null>(null);
 export function SoundProvider({ children }: { children: ReactNode }) {
   const [muted, setMuted] = useState(() => audioEngine.isMuted());
 
-  const play = useCallback((name: SoundName) => {
-    void audioEngine.play(name);
+  const unlock = useCallback(async () => {
+    await audioEngine.unlock();
   }, []);
 
-  const startMusic = useCallback(() => {
-    void audioEngine.startMusic();
+  const play = useCallback(async (name: SoundName) => {
+    await audioEngine.play(name);
+  }, []);
+
+  const startMusic = useCallback(async () => {
+    await audioEngine.startMusic();
   }, []);
 
   const stopMusic = useCallback(() => {
@@ -36,8 +41,8 @@ export function SoundProvider({ children }: { children: ReactNode }) {
   }, []);
 
   const value = useMemo(
-    () => ({ play, startMusic, stopMusic, muted, toggleMute }),
-    [play, startMusic, stopMusic, muted, toggleMute],
+    () => ({ play, startMusic, stopMusic, unlock, muted, toggleMute }),
+    [play, startMusic, stopMusic, unlock, muted, toggleMute],
   );
 
   return <SoundContext.Provider value={value}>{children}</SoundContext.Provider>;

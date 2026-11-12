@@ -59,7 +59,7 @@ export function Button({
       )}
       onClick={(event) => {
         if (!disabled) {
-          play("click");
+          void play("click");
         }
         onClick?.(event);
       }}

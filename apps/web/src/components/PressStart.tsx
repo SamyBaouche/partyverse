@@ -1,4 +1,4 @@
-import { useEffect } from "react";
+import { useCallback, useEffect, useState } from "react";
 import { motion, useReducedMotion } from "motion/react";
 import { useSound } from "../lib/audio";
 
@@ -7,38 +7,46 @@ type PressStartProps = {
 };
 
 export function PressStart({ onStart }: PressStartProps) {
-  const { play, startMusic } = useSound();
+  const { play, startMusic, unlock } = useSound();
   const reduceMotion = useReducedMotion();
+  const [starting, setStarting] = useState(false);
+
+  const begin = useCallback(async () => {
+    if (starting) {
+      return;
+    }
+    setStarting(true);
+    try {
+      // Keep unlock in the same user-gesture turn before any long work.
+      await unlock();
+      await play("go");
+      await startMusic();
+      onStart();
+    } catch {
+      setStarting(false);
+    }
+  }, [starting, unlock, play, startMusic, onStart]);
 
   useEffect(() => {
-    function begin() {
-      play("go");
-      startMusic();
-      onStart();
-    }
-
     function onKeyDown(event: KeyboardEvent) {
       if (event.key === "Enter" || event.key === " ") {
         event.preventDefault();
-        begin();
+        void begin();
       }
     }
 
     window.addEventListener("keydown", onKeyDown);
     return () => window.removeEventListener("keydown", onKeyDown);
-  }, [onStart, play, startMusic]);
-
-  function handleStart() {
-    play("go");
-    startMusic();
-    onStart();
-  }
+  }, [begin]);
 
   return (
     <motion.button
       type="button"
       className="flex min-h-screen w-full flex-col items-center justify-center gap-6 px-6 text-center"
-      onClick={handleStart}
+      onClick={() => {
+        void begin();
+      }}
+      disabled={starting}
       initial={reduceMotion ? false : { opacity: 0 }}
       animate={{ opacity: 1 }}
       exit={reduceMotion ? undefined : { opacity: 0 }}
@@ -54,7 +62,7 @@ export function PressStart({ onStart }: PressStartProps) {
           Press Start
         </p>
         <p className="font-body mt-4 text-sm text-muted">
-          Click or press Enter / Space to enter the lobby
+          {starting ? "Starting…" : "Click or press Enter / Space to enter the lobby"}
         </p>
       </div>
     </motion.button>
