@@ -1,9 +1,11 @@
 import { useEffect, useRef, useState, type PointerEvent as ReactPointerEvent } from "react";
-import type { Point, Stroke } from "@partyverse/shared";
+import type { Point, Stroke, StrokeColor } from "@partyverse/shared";
 import { Button } from "../../components/ui";
 import { cn } from "../../lib/cn";
+import { ColorPalette } from "./ColorPalette";
+import { DEFAULT_DRAW_COLOR } from "./colors";
 import { readSurfaceRect, toNormalized, type SurfaceRect } from "./geometry";
-import { StrokeLayer } from "./StrokeLayer";
+import { INK_STROKE_WIDTH, StrokeLayer } from "./StrokeLayer";
 
 const CHUNK_INTERVAL_MS = 50;
 const MAX_POINTS_PER_CHUNK = 500;
@@ -24,6 +26,7 @@ type DrawingCanvasProps = {
 
 type ActiveStroke = {
   id: string;
+  color: StrokeColor;
   points: Point[];
   emittedCount: number;
   lastEmitAt: number;
@@ -55,10 +58,13 @@ export function DrawingCanvas({
   const activeRef = useRef<ActiveStroke | null>(null);
   const livePointsRef = useRef<Point[]>([]);
   const liveIdRef = useRef<string | null>(null);
+  const liveColorRef = useRef<StrokeColor>(DEFAULT_DRAW_COLOR);
   const rafRef = useRef<number | null>(null);
   const [chunks, setChunks] = useState<Stroke[]>([]);
   const [livePoints, setLivePoints] = useState<Point[]>([]);
   const [liveId, setLiveId] = useState<string | null>(null);
+  const [liveColor, setLiveColor] = useState<StrokeColor>(DEFAULT_DRAW_COLOR);
+  const [color, setColor] = useState<StrokeColor>(DEFAULT_DRAW_COLOR);
 
   useEffect(() => {
     return () => {
@@ -76,6 +82,7 @@ export function DrawingCanvas({
       rafRef.current = null;
       setLiveId(liveIdRef.current);
       setLivePoints(livePointsRef.current.slice());
+      setLiveColor(liveColorRef.current);
     });
   }
 
@@ -101,7 +108,7 @@ export function DrawingCanvas({
         break;
       }
 
-      const chunk: Stroke = { id: active.id, points };
+      const chunk: Stroke = { id: active.id, color: active.color, points };
       active.emittedCount += take;
       active.lastEmitAt = now;
       setChunks((previous) => [...previous, chunk]);
@@ -127,7 +134,6 @@ export function DrawingCanvas({
       if (jump < MIN_POINT_DISTANCE * MIN_POINT_DISTANCE) {
         return;
       }
-      // Reject teleports that would slash across the board.
       if (jump > MAX_POINT_JUMP * MAX_POINT_JUMP) {
         return;
       }
@@ -151,7 +157,6 @@ export function DrawingCanvas({
     if (disabled || !event.isPrimary || event.button !== 0) {
       return;
     }
-    // One stroke at a time — ignore extra fingers.
     if (activeRef.current) {
       return;
     }
@@ -171,6 +176,7 @@ export function DrawingCanvas({
 
     activeRef.current = {
       id,
+      color,
       points: [point],
       emittedCount: 0,
       lastEmitAt: 0,
@@ -178,9 +184,9 @@ export function DrawingCanvas({
       pointerId: event.pointerId,
     };
     liveIdRef.current = id;
+    liveColorRef.current = color;
     livePointsRef.current = [point];
     scheduleLivePaint();
-    // Do not flush yet — wait for movement or pointerup so a tap stays a clean dot.
   }
 
   function handlePointerMove(event: ReactPointerEvent<HTMLDivElement>) {
@@ -198,7 +204,6 @@ export function DrawingCanvas({
     event.preventDefault();
     event.stopPropagation();
 
-    // Safari iOS coalesced touch samples are unreliable and can jump to bad coords.
     if (event.pointerType === "touch") {
       appendPoint(event.clientX, event.clientY);
       return;
@@ -244,7 +249,6 @@ export function DrawingCanvas({
     onClear();
   }
 
-  // Finished ink only — the in-progress gesture is drawn as a raw polyline under the finger.
   const finishedStrokes = liveId !== null ? chunks.filter((chunk) => chunk.id !== liveId) : chunks;
 
   const livePolyline =
@@ -259,10 +263,6 @@ export function DrawingCanvas({
           "shadow-[inset_0_0_40px_rgb(91_157_255_/_0.08)]",
         )}
       >
-        {/*
-          Inner hit target matches the SVG exactly (no border in the rect),
-          which keeps the finger and the ink aligned on mobile Safari.
-        */}
         <div
           ref={surfaceRef}
           className={cn(
@@ -290,15 +290,15 @@ export function DrawingCanvas({
                 <circle
                   cx={livePoints[0]?.x ?? 0}
                   cy={livePoints[0]?.y ?? 0}
-                  r={0.014}
-                  fill="#f8fbff"
+                  r={INK_STROKE_WIDTH / 2}
+                  fill={liveColor}
                 />
               ) : (
                 <polyline
                   points={livePolyline}
                   fill="none"
-                  stroke="#f8fbff"
-                  strokeWidth={0.028}
+                  stroke={liveColor}
+                  strokeWidth={INK_STROKE_WIDTH}
                   strokeLinecap="round"
                   strokeLinejoin="round"
                 />
@@ -307,6 +307,9 @@ export function DrawingCanvas({
           ) : null}
         </div>
       </div>
+
+      <ColorPalette value={color} onChange={setColor} disabled={disabled || liveId !== null} />
+
       <Button type="button" variant="secondary" disabled={disabled} onClick={handleClear}>
         Clear
       </Button>

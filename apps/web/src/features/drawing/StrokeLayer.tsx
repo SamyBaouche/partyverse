@@ -1,130 +1,105 @@
 import { useMemo } from "react";
-import { getStroke } from "perfect-freehand";
-import type { Point, Stroke } from "@partyverse/shared";
+import type { Point, Stroke, StrokeColor } from "@partyverse/shared";
 import { cn } from "../../lib/cn";
-import { getSvgPathFromStroke } from "./geometry";
+import { DEFAULT_DRAW_COLOR } from "./colors";
 
-const VIEW_WIDTH = 4;
-const VIEW_HEIGHT = 3;
-
-/**
- * Keep streamline low: high values make the ink lag and reshape under a finger,
- * which feels like random scribbling on touch devices.
- */
-const STROKE_OPTIONS = {
-  size: 0.14,
-  thinning: 0,
-  smoothing: 0.4,
-  streamline: 0.2,
-  simulatePressure: false,
-  start: { cap: true, taper: 0 },
-  end: { cap: true, taper: 0 },
-} as const;
+/** Normalized board space — matches the live preview polyline. */
+const VIEW_SIZE = 1;
+/** Line thickness in viewBox units. */
+export const INK_STROKE_WIDTH = 0.02;
 
 type StrokeLayerProps = {
   strokes: Stroke[];
   className?: string;
-  /** Stroke ids that are still being drawn — tip stays open (`last: false`). */
-  activeStrokeIds?: ReadonlySet<string>;
 };
 
-type RenderPath =
-  | { id: string; kind: "path"; d: string }
-  | { id: string; kind: "dot"; cx: number; cy: number; r: number };
+type GroupedStroke = {
+  id: string;
+  color: StrokeColor;
+  points: Point[];
+};
 
-function groupPointsById(strokes: Stroke[]): Array<{ id: string; points: Point[] }> {
-  const map = new Map<string, Point[]>();
+type RenderItem =
+  | { id: string; kind: "path"; d: string; color: StrokeColor }
+  | { id: string; kind: "dot"; cx: number; cy: number; color: StrokeColor };
+
+function groupStrokes(strokes: Stroke[]): GroupedStroke[] {
+  const map = new Map<string, GroupedStroke>();
   for (const stroke of strokes) {
+    const color = stroke.color ?? DEFAULT_DRAW_COLOR;
     const existing = map.get(stroke.id);
     if (existing) {
-      existing.push(...stroke.points);
+      existing.points.push(...stroke.points);
     } else {
-      map.set(stroke.id, [...stroke.points]);
+      map.set(stroke.id, { id: stroke.id, color, points: [...stroke.points] });
     }
   }
-  return Array.from(map, ([id, points]) => ({ id, points }));
+  return Array.from(map.values());
 }
 
-/** A lone tap needs a few nearby samples so perfect-freehand can form a visible dot. */
-function ensureRenderableInput(points: Point[]): number[][] {
-  const mapped = points.map((point) => [point.x * VIEW_WIDTH, point.y * VIEW_HEIGHT] as number[]);
-  if (mapped.length >= 2) {
-    return mapped;
+/**
+ * Polyline path that follows the finger exactly.
+ * No filled freehand outline = no blot when the stroke ends.
+ */
+function pointsToPath(points: Point[]): string {
+  const first = points[0];
+  if (!first) {
+    return "";
   }
-  const origin = mapped[0] ?? [0, 0];
-  const x = origin[0] ?? 0;
-  const y = origin[1] ?? 0;
-  const jitter = 0.015;
-  return [
-    [x, y],
-    [x + jitter, y],
-    [x + jitter, y + jitter],
-    [x, y + jitter],
-  ];
+  let d = `M ${first.x} ${first.y}`;
+  for (let i = 1; i < points.length; i++) {
+    const point = points[i];
+    if (!point) {
+      continue;
+    }
+    d += ` L ${point.x} ${point.y}`;
+  }
+  return d;
 }
 
-export function StrokeLayer({ strokes, className, activeStrokeIds }: StrokeLayerProps) {
-  const paths = useMemo(() => {
-    return groupPointsById(strokes).flatMap(({ id, points }): RenderPath[] => {
+export function StrokeLayer({ strokes, className }: StrokeLayerProps) {
+  const items = useMemo(() => {
+    return groupStrokes(strokes).flatMap(({ id, color, points }): RenderItem[] => {
       if (points.length === 0) {
         return [];
       }
-
-      const input = ensureRenderableInput(points);
-      const outline = getStroke(input, {
-        ...STROKE_OPTIONS,
-        last: !activeStrokeIds?.has(id),
-      });
-      const d = getSvgPathFromStroke(outline);
-      if (d) {
-        return [{ id, kind: "path", d }];
+      if (points.length === 1) {
+        const only = points[0];
+        if (!only) {
+          return [];
+        }
+        return [{ id, kind: "dot", cx: only.x, cy: only.y, color }];
       }
-
-      const first = points[0];
-      if (!first) {
-        return [];
-      }
-      return [
-        {
-          id,
-          kind: "dot",
-          cx: first.x * VIEW_WIDTH,
-          cy: first.y * VIEW_HEIGHT,
-          r: STROKE_OPTIONS.size / 2,
-        },
-      ];
+      const d = pointsToPath(points);
+      return d ? [{ id, kind: "path", d, color }] : [];
     });
-  }, [strokes, activeStrokeIds]);
+  }, [strokes]);
 
   return (
     <svg
-      viewBox={`0 0 ${VIEW_WIDTH} ${VIEW_HEIGHT}`}
+      viewBox={`0 0 ${VIEW_SIZE} ${VIEW_SIZE}`}
       preserveAspectRatio="none"
       className={cn("h-full w-full", className)}
       aria-hidden
     >
-      {paths.map((item) =>
+      {items.map((item) =>
         item.kind === "path" ? (
           <path
             key={item.id}
             d={item.d}
-            fill="#f8fbff"
-            style={{
-              filter:
-                "drop-shadow(0 0 4px rgb(94 200 255 / 0.85)) drop-shadow(0 0 12px rgb(91 157 255 / 0.4))",
-            }}
+            fill="none"
+            stroke={item.color}
+            strokeWidth={INK_STROKE_WIDTH}
+            strokeLinecap="round"
+            strokeLinejoin="round"
           />
         ) : (
           <circle
             key={item.id}
             cx={item.cx}
             cy={item.cy}
-            r={item.r}
-            fill="#f8fbff"
-            style={{
-              filter:
-                "drop-shadow(0 0 4px rgb(94 200 255 / 0.85)) drop-shadow(0 0 12px rgb(91 157 255 / 0.4))",
-            }}
+            r={INK_STROKE_WIDTH / 2}
+            fill={item.color}
           />
         ),
       )}
