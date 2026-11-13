@@ -29,7 +29,7 @@ A TV (or laptop) shows the game; players scan a QR code and draw, guess and comp
 - **Arcade UI**: dark sandbox theme with selectable arcade backgrounds, Press Start 2P + Inter fonts, synthesized 8-bit SFX and chiptune music (Web Audio API, no audio files), confetti and countdown.
 - **TV lobby**: room code, QR code (`qrcode.react`), live mock player list, press-start gate.
 - **Phone join flow**: Zod-validated nickname, waiting screen, friendly `RoomErrorCode` messages (mock join).
-- **Drawing canvas**: perfect-freehand strokes, normalized coordinates, 50 ms live chunking, Clear button, `/draw-demo` TV mirror.
+- **Drawing canvas**: clean SVG strokes, color chip + picker, eraser, Clear, normalized coordinates, 50 ms live chunking, `/draw-demo` TV mirror.
 - **HTTP health endpoint** on the Fastify server (`GET /health`).
 
 ### Planned
@@ -52,7 +52,7 @@ Architecture decisions are documented as ADRs in [`docs/adr`](docs/adr).
 
 | Layer           | Technologies                                                                                                                                     |
 | --------------- | ------------------------------------------------------------------------------------------------------------------------------------------------ |
-| Front-end       | React 19, TypeScript, Vite 8, Tailwind CSS v4, React Router, Motion, perfect-freehand, qrcode.react, canvas-confetti, Web Audio API              |
+| Front-end       | React 19, TypeScript, Vite 8, Tailwind CSS v4, React Router, Motion, qrcode.react, canvas-confetti, Web Audio API                                |
 | Back-end        | Node.js 24, Fastify 5, XState 5                                                                                                                  |
 | Shared          | `@partyverse/shared` — Zod 4 schemas and inferred TypeScript types                                                                               |
 | Testing         | Vitest, `@vitest/coverage-v8`                                                                                                                    |

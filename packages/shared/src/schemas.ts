@@ -23,8 +23,19 @@ export const Point = z.object({
   y: z.number().min(0).max(1),
 });
 
+/** Hex color used for ink strokes (e.g. "#FF5A6A"). */
+export const StrokeColor = z
+  .string()
+  .regex(/^#[0-9A-Fa-f]{6}$/, "Stroke color must be a #RRGGBB hex value");
+
+export const StrokeTool = z.enum(["pen", "eraser"]);
+
 export const Stroke = z.object({
   id: z.string().min(1).max(64),
+  /** Ink color for this stroke. Defaults to near-white for older clients. */
+  color: StrokeColor.default("#F8FBFF"),
+  /** Pen draws ink; eraser paints over with the canvas background. */
+  tool: StrokeTool.default("pen"),
   points: z.array(Point).min(1).max(500),
 });
 
@@ -60,6 +71,8 @@ export type RoomCode = z.infer<typeof RoomCode>;
 export type Phase = z.infer<typeof Phase>;
 export type RoomErrorCode = z.infer<typeof RoomErrorCode>;
 export type Point = z.infer<typeof Point>;
+export type StrokeColor = z.infer<typeof StrokeColor>;
+export type StrokeTool = z.infer<typeof StrokeTool>;
 export type Stroke = z.infer<typeof Stroke>;
 export type Player = z.infer<typeof Player>;
 export type ClientMessage = z.infer<typeof ClientMessage>;

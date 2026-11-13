@@ -1,7 +1,8 @@
 import { useEffect, useRef, useState, type PointerEvent as ReactPointerEvent } from "react";
-import type { Point, Stroke } from "@partyverse/shared";
-import { Button } from "../../components/ui";
+import type { Point, Stroke, StrokeColor, StrokeTool } from "@partyverse/shared";
 import { cn } from "../../lib/cn";
+import { CANVAS_BG_COLOR, DEFAULT_DRAW_COLOR, strokeWidthForTool } from "./colors";
+import { DrawingToolbar } from "./DrawingToolbar";
 import { readSurfaceRect, toNormalized, type SurfaceRect } from "./geometry";
 import { StrokeLayer } from "./StrokeLayer";
 
@@ -24,6 +25,8 @@ type DrawingCanvasProps = {
 
 type ActiveStroke = {
   id: string;
+  color: StrokeColor;
+  tool: StrokeTool;
   points: Point[];
   emittedCount: number;
   lastEmitAt: number;
@@ -55,10 +58,16 @@ export function DrawingCanvas({
   const activeRef = useRef<ActiveStroke | null>(null);
   const livePointsRef = useRef<Point[]>([]);
   const liveIdRef = useRef<string | null>(null);
+  const liveColorRef = useRef<StrokeColor>(DEFAULT_DRAW_COLOR);
+  const liveToolRef = useRef<StrokeTool>("pen");
   const rafRef = useRef<number | null>(null);
   const [chunks, setChunks] = useState<Stroke[]>([]);
   const [livePoints, setLivePoints] = useState<Point[]>([]);
   const [liveId, setLiveId] = useState<string | null>(null);
+  const [liveColor, setLiveColor] = useState<StrokeColor>(DEFAULT_DRAW_COLOR);
+  const [liveTool, setLiveTool] = useState<StrokeTool>("pen");
+  const [color, setColor] = useState<StrokeColor>(DEFAULT_DRAW_COLOR);
+  const [tool, setTool] = useState<StrokeTool>("pen");
 
   useEffect(() => {
     return () => {
@@ -76,6 +85,8 @@ export function DrawingCanvas({
       rafRef.current = null;
       setLiveId(liveIdRef.current);
       setLivePoints(livePointsRef.current.slice());
+      setLiveColor(liveColorRef.current);
+      setLiveTool(liveToolRef.current);
     });
   }
 
@@ -101,7 +112,12 @@ export function DrawingCanvas({
         break;
       }
 
-      const chunk: Stroke = { id: active.id, points };
+      const chunk: Stroke = {
+        id: active.id,
+        color: active.color,
+        tool: active.tool,
+        points,
+      };
       active.emittedCount += take;
       active.lastEmitAt = now;
       setChunks((previous) => [...previous, chunk]);
@@ -127,7 +143,6 @@ export function DrawingCanvas({
       if (jump < MIN_POINT_DISTANCE * MIN_POINT_DISTANCE) {
         return;
       }
-      // Reject teleports that would slash across the board.
       if (jump > MAX_POINT_JUMP * MAX_POINT_JUMP) {
         return;
       }
@@ -151,7 +166,6 @@ export function DrawingCanvas({
     if (disabled || !event.isPrimary || event.button !== 0) {
       return;
     }
-    // One stroke at a time — ignore extra fingers.
     if (activeRef.current) {
       return;
     }
@@ -168,9 +182,12 @@ export function DrawingCanvas({
     const rect = readSurfaceRect(surface);
     const id = createStrokeId();
     const point = toNormalized(event.clientX, event.clientY, rect);
+    const strokeColor = tool === "eraser" ? CANVAS_BG_COLOR : color;
 
     activeRef.current = {
       id,
+      color: strokeColor,
+      tool,
       points: [point],
       emittedCount: 0,
       lastEmitAt: 0,
@@ -178,9 +195,10 @@ export function DrawingCanvas({
       pointerId: event.pointerId,
     };
     liveIdRef.current = id;
+    liveColorRef.current = strokeColor;
+    liveToolRef.current = tool;
     livePointsRef.current = [point];
     scheduleLivePaint();
-    // Do not flush yet — wait for movement or pointerup so a tap stays a clean dot.
   }
 
   function handlePointerMove(event: ReactPointerEvent<HTMLDivElement>) {
@@ -198,7 +216,6 @@ export function DrawingCanvas({
     event.preventDefault();
     event.stopPropagation();
 
-    // Safari iOS coalesced touch samples are unreliable and can jump to bad coords.
     if (event.pointerType === "touch") {
       appendPoint(event.clientX, event.clientY);
       return;
@@ -244,11 +261,13 @@ export function DrawingCanvas({
     onClear();
   }
 
-  // Finished ink only — the in-progress gesture is drawn as a raw polyline under the finger.
   const finishedStrokes = liveId !== null ? chunks.filter((chunk) => chunk.id !== liveId) : chunks;
+  const liveWidth = strokeWidthForTool(liveTool);
 
   const livePolyline =
     livePoints.length > 0 ? livePoints.map((point) => `${point.x},${point.y}`).join(" ") : null;
+
+  const toolsLocked = disabled || liveId !== null;
 
   return (
     <div className={cn("flex w-full flex-col gap-4", className)}>
@@ -259,10 +278,6 @@ export function DrawingCanvas({
           "shadow-[inset_0_0_40px_rgb(91_157_255_/_0.08)]",
         )}
       >
-        {/*
-          Inner hit target matches the SVG exactly (no border in the rect),
-          which keeps the finger and the ink aligned on mobile Safari.
-        */}
         <div
           ref={surfaceRef}
           className={cn(
@@ -290,15 +305,15 @@ export function DrawingCanvas({
                 <circle
                   cx={livePoints[0]?.x ?? 0}
                   cy={livePoints[0]?.y ?? 0}
-                  r={0.014}
-                  fill="#f8fbff"
+                  r={liveWidth / 2}
+                  fill={liveColor}
                 />
               ) : (
                 <polyline
                   points={livePolyline}
                   fill="none"
-                  stroke="#f8fbff"
-                  strokeWidth={0.028}
+                  stroke={liveColor}
+                  strokeWidth={liveWidth}
                   strokeLinecap="round"
                   strokeLinejoin="round"
                 />
@@ -307,9 +322,15 @@ export function DrawingCanvas({
           ) : null}
         </div>
       </div>
-      <Button type="button" variant="secondary" disabled={disabled} onClick={handleClear}>
-        Clear
-      </Button>
+
+      <DrawingToolbar
+        color={color}
+        tool={tool}
+        disabled={toolsLocked}
+        onColorChange={setColor}
+        onToolChange={setTool}
+        onClear={handleClear}
+      />
     </div>
   );
 }
