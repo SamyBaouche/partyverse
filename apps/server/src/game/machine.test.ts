@@ -1,6 +1,6 @@
 import { describe, expect, it } from "vitest";
 import { createActor } from "xstate";
-import { gameMachine, normalize } from "./machine.js";
+import { gameMachine } from "./machine.js";
 
 const samy = { id: "a", name: "Samy", score: 0 };
 const momo = { id: "b", name: "Momo", score: 0 };
@@ -15,12 +15,6 @@ function newGame(players = [samy, momo], maxRounds = 2) {
 
 const scoreOf = (game: ReturnType<typeof newGame>, id: string) =>
   game.getSnapshot().context.players.find((p) => p.id === id)?.score;
-
-describe("normalize", () => {
-  it("ignores case, accents and surrounding spaces", () => {
-    expect(normalize("  Éléphant ")).toBe("elephant");
-  });
-});
 
 describe("lobby", () => {
   it("starts in the lobby", () => {

@@ -1,5 +1,5 @@
 import { assign, setup } from "xstate";
-import type { Player } from "@partyverse/shared";
+import { normalize, type Player } from "@partyverse/shared";
 
 export type GameContext = {
   players: Player[];
@@ -18,14 +18,6 @@ export type GameEvent =
   | { type: "GUESS"; playerId: string; text: string }
   | { type: "TIMER_END" }
   | { type: "RESTART" };
-
-// "Éléphant " → "elephant": compare without accents, case or surrounding spaces
-export const normalize = (text: string) =>
-  text
-    .normalize("NFD")
-    .replace(/[\u0300-\u036f]/g, "")
-    .trim()
-    .toLowerCase();
 
 export const drawerId = (context: GameContext) =>
   context.players[context.drawerIndex % Math.max(context.players.length, 1)]?.id;

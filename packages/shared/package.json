@@ -4,10 +4,14 @@
   "private": true,
   "main": "src/index.ts",
   "scripts": {
-    "typecheck": "tsc --noEmit"
+    "typecheck": "tsc --noEmit",
+    "test": "vitest run"
   },
   "dependencies": {
     "zod": "^4.6.7"
   },
-  "type": "module"
+  "type": "module",
+  "devDependencies": {
+    "vitest": "^5.1.0"
+  }
 }
