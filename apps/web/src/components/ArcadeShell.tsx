@@ -8,6 +8,42 @@ type ArcadeShellProps = {
 
 function BackgroundLayers({ id }: { id: BackgroundId }) {
   switch (id) {
+    case "squabble":
+      return (
+        <div className="bg-stage bg-squabble" aria-hidden="true">
+          <div className="squabble-wash" />
+        </div>
+      );
+    case "dusk":
+      return (
+        <div className="bg-stage bg-dusk" aria-hidden="true">
+          <div className="dusk-glow dusk-glow-a" />
+          <div className="dusk-glow dusk-glow-b" />
+          <div className="dusk-grain" />
+        </div>
+      );
+    case "nardo":
+      return (
+        <div className="bg-stage bg-nardo" aria-hidden="true">
+          <div className="nardo-sheen" />
+          <div className="nardo-vignette" />
+        </div>
+      );
+    case "mauve":
+      return (
+        <div className="bg-stage bg-mauve" aria-hidden="true">
+          <div className="mauve-grid" />
+          <div className="mauve-glow mauve-glow-a" />
+          <div className="mauve-glow mauve-glow-b" />
+        </div>
+      );
+    case "friv":
+      return (
+        <div className="bg-stage bg-friv" aria-hidden="true">
+          <div className="friv-dots" />
+          <div className="friv-soft-panel" />
+        </div>
+      );
     case "sandbox":
       return (
         <div className="bg-stage bg-sandbox" aria-hidden="true">
@@ -49,10 +85,16 @@ function BackgroundLayers({ id }: { id: BackgroundId }) {
 export function ArcadeShell({ children }: ArcadeShellProps) {
   const [params] = useSearchParams();
   const backgroundId = resolveBackgroundId(params.get("bg"));
-  const showScanlines = backgroundId !== "sandbox";
+  const showScanlines =
+    backgroundId !== "sandbox" &&
+    backgroundId !== "friv" &&
+    backgroundId !== "mauve" &&
+    backgroundId !== "nardo" &&
+    backgroundId !== "dusk" &&
+    backgroundId !== "squabble";
 
   return (
-    <div className="relative min-h-screen font-body text-ink">
+    <div className="relative min-h-screen font-body text-ink" data-shell="">
       <BackgroundLayers id={backgroundId} />
       {showScanlines ? <div className="scanlines" aria-hidden="true" /> : null}
       <div className="relative z-10">{children}</div>

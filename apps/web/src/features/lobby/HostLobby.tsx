@@ -11,6 +11,7 @@ type HostLobbyProps = {
   players: Player[];
   maxPlayers: number;
   onStart: () => void;
+  startLabel?: string;
 };
 
 function LobbyPlayerRow({ player }: { player: Player }) {
@@ -23,7 +24,7 @@ function LobbyPlayerRow({ player }: { player: Player }) {
       animate={{ opacity: 1, scale: 1, y: 0 }}
       exit={reduceMotion ? undefined : { opacity: 0, scale: 0.9 }}
       transition={reduceMotion ? { duration: 0 } : { type: "spring", stiffness: 420, damping: 22 }}
-      className="flex items-center gap-3 rounded-2xl border border-white/8 bg-surface-raised px-3 py-2"
+      className="flex items-center gap-3 rounded-2xl border-[3px] border-ink bg-[#fffaf2] px-3 py-2"
     >
       <PlayerAvatar name={player.name} size="md" />
       <span className="font-body text-lg font-semibold text-ink">{player.name}</span>
@@ -31,9 +32,16 @@ function LobbyPlayerRow({ player }: { player: Player }) {
   );
 }
 
-export function HostLobby({ code, joinUrl, players, maxPlayers, onStart }: HostLobbyProps) {
+export function HostLobby({
+  code,
+  joinUrl,
+  players,
+  maxPlayers,
+  onStart,
+  startLabel = "Start game",
+}: HostLobbyProps) {
   const emptySlots = Math.max(0, maxPlayers - players.length);
-  const canStart = players.length >= 2;
+  const canStart = players.length >= 1;
   const { play } = useSound();
   const previousCount = useRef(players.length);
   const reduceMotion = useReducedMotion();
@@ -54,7 +62,7 @@ export function HostLobby({ code, joinUrl, players, maxPlayers, onStart }: HostL
     >
       <div className="grid items-start gap-10 lg:grid-cols-2">
         <section className="flex flex-col items-center gap-6 text-center">
-          <p className="font-display text-[10px] uppercase tracking-[0.35em] text-muted">
+          <p className="font-display text-[10px] uppercase tracking-[0.35em] text-ink/70">
             Room code
           </p>
           <p
@@ -63,14 +71,14 @@ export function HostLobby({ code, joinUrl, players, maxPlayers, onStart }: HostL
           >
             {code}
           </p>
-          <div className="toy-panel rounded-3xl bg-white p-4">
+          <div className="toy-panel rounded-[1.4rem] bg-white p-4">
             <QRCodeSVG value={joinUrl} size={220} aria-label="Scan to join" />
           </div>
           <div className="space-y-2">
-            <p className="font-display text-[11px] uppercase tracking-widest text-accent">
+            <p className="inline-flex rounded-full border-[3px] border-ink bg-[#ffe566] px-3 py-1 font-display text-[10px] uppercase tracking-widest text-ink">
               Scan to join
             </p>
-            <p className="font-body break-all text-sm text-muted">{joinUrl}</p>
+            <p className="font-body break-all text-sm text-ink/70">{joinUrl}</p>
           </div>
         </section>
 
@@ -88,7 +96,7 @@ export function HostLobby({ code, joinUrl, players, maxPlayers, onStart }: HostL
               {Array.from({ length: emptySlots }, (_, index) => (
                 <li
                   key={`empty-${index}`}
-                  className="flex h-14 items-center justify-center rounded-2xl border border-dashed border-white/15 font-body text-sm text-muted"
+                  className="flex h-14 items-center justify-center rounded-2xl border-[3px] border-dashed border-ink/40 font-body text-sm text-muted"
                 >
                   Waiting for player…
                 </li>
@@ -100,10 +108,10 @@ export function HostLobby({ code, joinUrl, players, maxPlayers, onStart }: HostL
 
       <div className="flex flex-col items-center gap-2">
         <Button size="lg" className="min-w-64 px-10" disabled={!canStart} onClick={onStart}>
-          Start game
+          {startLabel}
         </Button>
         {!canStart ? (
-          <p className="font-body text-sm text-muted">At least 2 players needed</p>
+          <p className="font-body text-sm text-muted">Waiting for the first player…</p>
         ) : null}
       </div>
     </motion.div>

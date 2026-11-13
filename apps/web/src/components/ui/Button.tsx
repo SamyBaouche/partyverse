@@ -17,11 +17,11 @@ type ButtonProps = Omit<
 
 const variantClasses: Record<ButtonVariant, string> = {
   primary:
-    "bg-brand text-white border-2 border-white/15 shadow-[0_5px_0_#2347a8] hover:bg-brand-hover active:translate-y-1 active:shadow-[0_2px_0_#2347a8]",
+    "bg-brand text-white border-[3px] border-line shadow-[4px_4px_0_var(--color-hard-shadow)] hover:bg-brand-hover active:translate-y-0.5 active:shadow-[2px_2px_0_var(--color-hard-shadow)]",
   secondary:
-    "bg-surface-raised text-ink border-2 border-white/10 shadow-[0_5px_0_#0b1220] hover:bg-[#273352] active:translate-y-1 active:shadow-[0_2px_0_#0b1220]",
+    "bg-panel text-ink border-[3px] border-line shadow-[4px_4px_0_var(--color-hard-shadow)] hover:bg-panel-muted active:translate-y-0.5 active:shadow-[2px_2px_0_var(--color-hard-shadow)]",
   ghost:
-    "bg-white/5 text-ink border-2 border-white/15 shadow-[0_4px_0_rgb(0_0_0_/_0.35)] hover:bg-white/10 active:translate-y-1 active:shadow-none",
+    "bg-[#ffe566] text-[#1a1a1a] border-[3px] border-line shadow-[4px_4px_0_var(--color-hard-shadow)] hover:brightness-105 active:translate-y-0.5 active:shadow-[2px_2px_0_var(--color-hard-shadow)]",
 };
 
 const sizeClasses: Record<ButtonSize, string> = {
@@ -48,10 +48,10 @@ export function Button({
       disabled={disabled}
       whileTap={disabled || reduceMotion ? undefined : { scale: 0.96 }}
       className={cn(
-        "inline-flex items-center justify-center rounded-2xl font-display uppercase tracking-wide",
+        "inline-flex items-center justify-center rounded-full font-display uppercase tracking-wide",
         "transition-[transform,box-shadow,background-color] duration-150",
         "focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-brand",
-        "disabled:cursor-not-allowed disabled:opacity-50 disabled:active:translate-y-0 disabled:active:shadow-[0_5px_0_#2347a8]",
+        "disabled:cursor-not-allowed disabled:opacity-50 disabled:active:translate-y-0 disabled:active:shadow-[4px_4px_0_var(--color-hard-shadow)]",
         variantClasses[variant],
         sizeClasses[size],
         fullWidth && "w-full",
