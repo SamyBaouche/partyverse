@@ -29,7 +29,7 @@ A TV (or laptop) shows the game; players scan a QR code and draw, guess and comp
 - **Arcade UI**: dark sandbox theme with selectable arcade backgrounds, Press Start 2P + Inter fonts, synthesized 8-bit SFX and chiptune music (Web Audio API, no audio files), confetti and countdown.
 - **TV lobby**: room code, QR code (`qrcode.react`), live mock player list, press-start gate.
 - **Phone join flow**: Zod-validated nickname, waiting screen, friendly `RoomErrorCode` messages (mock join).
-- **Drawing canvas**: clean SVG strokes with a color palette, normalized coordinates, 50 ms live chunking, Clear button, `/draw-demo` TV mirror.
+- **Drawing canvas**: clean SVG strokes, color chip + picker, eraser, Clear, normalized coordinates, 50 ms live chunking, `/draw-demo` TV mirror.
 - **HTTP health endpoint** on the Fastify server (`GET /health`).
 
 ### Planned

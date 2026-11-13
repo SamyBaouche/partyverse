@@ -1,12 +1,10 @@
 import { useMemo } from "react";
-import type { Point, Stroke, StrokeColor } from "@partyverse/shared";
+import type { Point, Stroke, StrokeColor, StrokeTool } from "@partyverse/shared";
 import { cn } from "../../lib/cn";
-import { DEFAULT_DRAW_COLOR } from "./colors";
+import { DEFAULT_DRAW_COLOR, strokeWidthForTool } from "./colors";
 
 /** Normalized board space — matches the live preview polyline. */
 const VIEW_SIZE = 1;
-/** Line thickness in viewBox units. */
-export const INK_STROKE_WIDTH = 0.02;
 
 type StrokeLayerProps = {
   strokes: Stroke[];
@@ -16,22 +14,24 @@ type StrokeLayerProps = {
 type GroupedStroke = {
   id: string;
   color: StrokeColor;
+  tool: StrokeTool;
   points: Point[];
 };
 
 type RenderItem =
-  | { id: string; kind: "path"; d: string; color: StrokeColor }
-  | { id: string; kind: "dot"; cx: number; cy: number; color: StrokeColor };
+  | { id: string; kind: "path"; d: string; color: StrokeColor; width: number }
+  | { id: string; kind: "dot"; cx: number; cy: number; color: StrokeColor; width: number };
 
 function groupStrokes(strokes: Stroke[]): GroupedStroke[] {
   const map = new Map<string, GroupedStroke>();
   for (const stroke of strokes) {
     const color = stroke.color ?? DEFAULT_DRAW_COLOR;
+    const tool = stroke.tool ?? "pen";
     const existing = map.get(stroke.id);
     if (existing) {
       existing.points.push(...stroke.points);
     } else {
-      map.set(stroke.id, { id: stroke.id, color, points: [...stroke.points] });
+      map.set(stroke.id, { id: stroke.id, color, tool, points: [...stroke.points] });
     }
   }
   return Array.from(map.values());
@@ -59,7 +59,8 @@ function pointsToPath(points: Point[]): string {
 
 export function StrokeLayer({ strokes, className }: StrokeLayerProps) {
   const items = useMemo(() => {
-    return groupStrokes(strokes).flatMap(({ id, color, points }): RenderItem[] => {
+    return groupStrokes(strokes).flatMap(({ id, color, tool, points }): RenderItem[] => {
+      const width = strokeWidthForTool(tool);
       if (points.length === 0) {
         return [];
       }
@@ -68,10 +69,10 @@ export function StrokeLayer({ strokes, className }: StrokeLayerProps) {
         if (!only) {
           return [];
         }
-        return [{ id, kind: "dot", cx: only.x, cy: only.y, color }];
+        return [{ id, kind: "dot", cx: only.x, cy: only.y, color, width }];
       }
       const d = pointsToPath(points);
-      return d ? [{ id, kind: "path", d, color }] : [];
+      return d ? [{ id, kind: "path", d, color, width }] : [];
     });
   }, [strokes]);
 
@@ -89,18 +90,12 @@ export function StrokeLayer({ strokes, className }: StrokeLayerProps) {
             d={item.d}
             fill="none"
             stroke={item.color}
-            strokeWidth={INK_STROKE_WIDTH}
+            strokeWidth={item.width}
             strokeLinecap="round"
             strokeLinejoin="round"
           />
         ) : (
-          <circle
-            key={item.id}
-            cx={item.cx}
-            cy={item.cy}
-            r={INK_STROKE_WIDTH / 2}
-            fill={item.color}
-          />
+          <circle key={item.id} cx={item.cx} cy={item.cy} r={item.width / 2} fill={item.color} />
         ),
       )}
     </svg>

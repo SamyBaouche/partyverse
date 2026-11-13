@@ -1,11 +1,10 @@
 import { useEffect, useRef, useState, type PointerEvent as ReactPointerEvent } from "react";
-import type { Point, Stroke, StrokeColor } from "@partyverse/shared";
-import { Button } from "../../components/ui";
+import type { Point, Stroke, StrokeColor, StrokeTool } from "@partyverse/shared";
 import { cn } from "../../lib/cn";
-import { ColorPalette } from "./ColorPalette";
-import { DEFAULT_DRAW_COLOR } from "./colors";
+import { CANVAS_BG_COLOR, DEFAULT_DRAW_COLOR, strokeWidthForTool } from "./colors";
+import { DrawingToolbar } from "./DrawingToolbar";
 import { readSurfaceRect, toNormalized, type SurfaceRect } from "./geometry";
-import { INK_STROKE_WIDTH, StrokeLayer } from "./StrokeLayer";
+import { StrokeLayer } from "./StrokeLayer";
 
 const CHUNK_INTERVAL_MS = 50;
 const MAX_POINTS_PER_CHUNK = 500;
@@ -27,6 +26,7 @@ type DrawingCanvasProps = {
 type ActiveStroke = {
   id: string;
   color: StrokeColor;
+  tool: StrokeTool;
   points: Point[];
   emittedCount: number;
   lastEmitAt: number;
@@ -59,12 +59,15 @@ export function DrawingCanvas({
   const livePointsRef = useRef<Point[]>([]);
   const liveIdRef = useRef<string | null>(null);
   const liveColorRef = useRef<StrokeColor>(DEFAULT_DRAW_COLOR);
+  const liveToolRef = useRef<StrokeTool>("pen");
   const rafRef = useRef<number | null>(null);
   const [chunks, setChunks] = useState<Stroke[]>([]);
   const [livePoints, setLivePoints] = useState<Point[]>([]);
   const [liveId, setLiveId] = useState<string | null>(null);
   const [liveColor, setLiveColor] = useState<StrokeColor>(DEFAULT_DRAW_COLOR);
+  const [liveTool, setLiveTool] = useState<StrokeTool>("pen");
   const [color, setColor] = useState<StrokeColor>(DEFAULT_DRAW_COLOR);
+  const [tool, setTool] = useState<StrokeTool>("pen");
 
   useEffect(() => {
     return () => {
@@ -83,6 +86,7 @@ export function DrawingCanvas({
       setLiveId(liveIdRef.current);
       setLivePoints(livePointsRef.current.slice());
       setLiveColor(liveColorRef.current);
+      setLiveTool(liveToolRef.current);
     });
   }
 
@@ -108,7 +112,12 @@ export function DrawingCanvas({
         break;
       }
 
-      const chunk: Stroke = { id: active.id, color: active.color, points };
+      const chunk: Stroke = {
+        id: active.id,
+        color: active.color,
+        tool: active.tool,
+        points,
+      };
       active.emittedCount += take;
       active.lastEmitAt = now;
       setChunks((previous) => [...previous, chunk]);
@@ -173,10 +182,12 @@ export function DrawingCanvas({
     const rect = readSurfaceRect(surface);
     const id = createStrokeId();
     const point = toNormalized(event.clientX, event.clientY, rect);
+    const strokeColor = tool === "eraser" ? CANVAS_BG_COLOR : color;
 
     activeRef.current = {
       id,
-      color,
+      color: strokeColor,
+      tool,
       points: [point],
       emittedCount: 0,
       lastEmitAt: 0,
@@ -184,7 +195,8 @@ export function DrawingCanvas({
       pointerId: event.pointerId,
     };
     liveIdRef.current = id;
-    liveColorRef.current = color;
+    liveColorRef.current = strokeColor;
+    liveToolRef.current = tool;
     livePointsRef.current = [point];
     scheduleLivePaint();
   }
@@ -250,9 +262,12 @@ export function DrawingCanvas({
   }
 
   const finishedStrokes = liveId !== null ? chunks.filter((chunk) => chunk.id !== liveId) : chunks;
+  const liveWidth = strokeWidthForTool(liveTool);
 
   const livePolyline =
     livePoints.length > 0 ? livePoints.map((point) => `${point.x},${point.y}`).join(" ") : null;
+
+  const toolsLocked = disabled || liveId !== null;
 
   return (
     <div className={cn("flex w-full flex-col gap-4", className)}>
@@ -290,7 +305,7 @@ export function DrawingCanvas({
                 <circle
                   cx={livePoints[0]?.x ?? 0}
                   cy={livePoints[0]?.y ?? 0}
-                  r={INK_STROKE_WIDTH / 2}
+                  r={liveWidth / 2}
                   fill={liveColor}
                 />
               ) : (
@@ -298,7 +313,7 @@ export function DrawingCanvas({
                   points={livePolyline}
                   fill="none"
                   stroke={liveColor}
-                  strokeWidth={INK_STROKE_WIDTH}
+                  strokeWidth={liveWidth}
                   strokeLinecap="round"
                   strokeLinejoin="round"
                 />
@@ -308,11 +323,14 @@ export function DrawingCanvas({
         </div>
       </div>
 
-      <ColorPalette value={color} onChange={setColor} disabled={disabled || liveId !== null} />
-
-      <Button type="button" variant="secondary" disabled={disabled} onClick={handleClear}>
-        Clear
-      </Button>
+      <DrawingToolbar
+        color={color}
+        tool={tool}
+        disabled={toolsLocked}
+        onColorChange={setColor}
+        onToolChange={setTool}
+        onClear={handleClear}
+      />
     </div>
   );
 }
