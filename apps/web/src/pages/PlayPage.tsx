@@ -1,8 +1,11 @@
-import { useState } from "react";
-import { useNavigate, useParams } from "react-router";
+import { useEffect, useState } from "react";
+import { useNavigate, useParams, useSearchParams } from "react-router";
 import { RoomCode, type Player } from "@partyverse/shared";
 import { AnimatePresence, motion, useReducedMotion } from "motion/react";
 import { Button, Card } from "../components/ui";
+import { DrawerScreen } from "../features/drawing/DrawerScreen";
+import { GuesserScreen } from "../features/guess/GuesserScreen";
+import { useMockGuessRound } from "../features/guess/useMockGuessRound";
 import { JoinForm } from "../features/join/JoinForm";
 import { ROOM_ERROR_MESSAGES } from "../features/join/messages";
 import { mockJoin } from "../features/join/mockJoin";
@@ -10,8 +13,10 @@ import { WaitingScreen } from "../features/join/WaitingScreen";
 import { useSound } from "../lib/audio";
 
 const NICKNAME_STORAGE_KEY = "partyverse.nickname";
+const MOCK_DRAWING_DELAY_MS = 3000;
 
-type JoinPhase = "form" | "submitting" | "joined";
+type ScreenPhase = "form" | "submitting" | "waiting" | "drawing";
+type MockRole = "drawer" | "guesser";
 
 function readStoredNickname(): string {
   try {
@@ -29,18 +34,33 @@ function saveNickname(name: string): void {
   }
 }
 
+function readMockRole(value: string | null): MockRole {
+  return value === "drawer" ? "drawer" : "guesser";
+}
+
 export default function PlayPage() {
   const { code: rawCode } = useParams();
+  const [searchParams] = useSearchParams();
   const navigate = useNavigate();
   const normalizedCode = (rawCode ?? "").toUpperCase();
   const parsedCode = RoomCode.safeParse(normalizedCode);
   const { play } = useSound();
   const reduceMotion = useReducedMotion();
+  const mockRound = useMockGuessRound();
 
-  const [phase, setPhase] = useState<JoinPhase>("form");
+  const mockRole = readMockRole(searchParams.get("role"));
+  const [phase, setPhase] = useState<ScreenPhase>("form");
   const [name, setName] = useState(readStoredNickname);
   const [player, setPlayer] = useState<Player | null>(null);
   const [serverError, setServerError] = useState<string | null>(null);
+
+  useEffect(() => {
+    if (!import.meta.env.DEV || phase !== "waiting") {
+      return;
+    }
+    const timer = window.setTimeout(() => setPhase("drawing"), MOCK_DRAWING_DELAY_MS);
+    return () => window.clearTimeout(timer);
+  }, [phase]);
 
   if (!parsedCode.success) {
     return (
@@ -78,7 +98,7 @@ export default function PlayPage() {
     setPlayer(result.player);
     setName(result.player.name);
     void play("join");
-    setPhase("joined");
+    setPhase("waiting");
   }
 
   function handleLeave() {
@@ -87,10 +107,26 @@ export default function PlayPage() {
     setPhase("form");
   }
 
+  if (phase === "drawing" && player) {
+    if (mockRole === "drawer") {
+      return <DrawerScreen secretWord={mockRound.secretWord} endsAt={mockRound.endsAt} />;
+    }
+    return (
+      <main className="flex min-h-screen justify-center">
+        <GuesserScreen
+          drawerName={mockRound.drawerName}
+          wordLength={mockRound.wordLength}
+          endsAt={mockRound.endsAt}
+          onGuess={mockRound.submitGuess}
+        />
+      </main>
+    );
+  }
+
   return (
     <main className="flex min-h-screen items-center justify-center p-6">
       <AnimatePresence mode="wait">
-        {phase === "joined" && player ? (
+        {phase === "waiting" && player ? (
           <motion.div
             key="waiting"
             className="w-full max-w-sm"
@@ -100,6 +136,11 @@ export default function PlayPage() {
             transition={{ duration: reduceMotion ? 0 : 0.3 }}
           >
             <WaitingScreen name={player.name} onLeave={handleLeave} />
+            {import.meta.env.DEV ? (
+              <p className="mt-4 text-center font-body text-xs text-muted">
+                Mock round starts in a few seconds ({mockRole})…
+              </p>
+            ) : null}
           </motion.div>
         ) : (
           <motion.div
