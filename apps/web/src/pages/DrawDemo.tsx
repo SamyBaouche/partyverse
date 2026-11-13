@@ -29,7 +29,7 @@ export default function DrawDemo() {
   }
 
   return (
-    <main className="mx-auto flex min-h-screen w-full max-w-6xl flex-col gap-6 px-4 py-8">
+    <main className="mx-auto flex min-h-screen w-full max-w-6xl flex-col gap-6 overscroll-none px-4 py-8 touch-manipulation">
       <header className="space-y-2 text-center sm:text-left">
         <p className="font-display text-[10px] uppercase tracking-[0.35em] text-muted">Draw demo</p>
         <h1 className="font-display text-sm uppercase leading-relaxed text-ink sm:text-base">
