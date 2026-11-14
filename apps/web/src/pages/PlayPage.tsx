@@ -5,9 +5,10 @@ import { AnimatePresence, motion, useReducedMotion } from "motion/react";
 import { Button, Card } from "../components/ui";
 import { ConnectFourPhone } from "../features/connectFour/ConnectFourPhone";
 import { JoinForm } from "../features/join/JoinForm";
+import { joinRoom } from "../features/join/joinRoom";
 import { ROOM_ERROR_MESSAGES } from "../features/join/messages";
 import { mockJoin } from "../features/join/mockJoin";
-import { DrawGuessSession, PartyProvider } from "../features/realtime";
+import { DrawGuessSession, PartyProvider, resolvePartyTransportMode } from "../features/realtime";
 import { RpsPhone } from "../features/rps/RpsPhone";
 import {
   fetchRoomActivity,
@@ -91,11 +92,11 @@ export default function PlayPage() {
   const reduceMotion = useReducedMotion();
 
   const mockRole = readMockRole(searchParams.get("role"));
-  const forceMock = searchParams.get("mock") === "1";
+  const forceMock = searchParams.get("mock") === "1" || resolvePartyTransportMode() === "mock";
   const [phase, setPhase] = useState<JoinPhase>("form");
   const [name, setName] = useState(readStoredNickname);
   const [player, setPlayer] = useState<Player | null>(null);
-  const [playerId] = useState(readOrCreatePlayerId);
+  const [playerId, setPlayerId] = useState(readOrCreatePlayerId);
   const [serverError, setServerError] = useState<string | null>(null);
   const [activity, setActivity] = useState<RoomActivity>({ phase: "lobby" });
 
@@ -131,16 +132,17 @@ export default function PlayPage() {
     setServerError(null);
     setPhase("submitting");
 
-    const result = await mockJoin(code, nickname);
+    const result = forceMock ? await mockJoin(code, nickname) : await joinRoom(code, nickname);
     if (!result.ok) {
       void play("wrong");
-      setServerError(ROOM_ERROR_MESSAGES[result.error]);
+      setServerError(ROOM_ERROR_MESSAGES[result.error] ?? result.error);
       setPhase("form");
       return;
     }
 
     saveNickname(result.player.name);
     setPlayer(result.player);
+    setPlayerId(result.player.id);
     setName(result.player.name);
     void play("join");
     setPhase("joined");
@@ -282,10 +284,10 @@ export default function PlayPage() {
     return (
       <PartyProvider
         code={code}
-        selfId={playerId}
+        selfId={player.id}
         selfName={player.name}
         role={mockRole}
-        mode={forceMock ? "mock" : undefined}
+        mode={forceMock ? "mock" : "pubsub"}
       >
         <DrawGuessSession
           role={mockRole}

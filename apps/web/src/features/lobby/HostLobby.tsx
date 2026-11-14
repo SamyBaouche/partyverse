@@ -47,7 +47,7 @@ export function HostLobby({
   starting = false,
 }: HostLobbyProps) {
   const emptySlots = Math.max(0, maxPlayers - players.length);
-  const canStart = players.length >= 1;
+  const canStart = players.length >= 2;
   const { play } = useSound();
   const previousCount = useRef(players.length);
   const reduceMotion = useReducedMotion();

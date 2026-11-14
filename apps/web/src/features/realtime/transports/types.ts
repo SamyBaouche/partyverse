@@ -21,5 +21,6 @@ export type MockTransportOptions = {
 
 export type PubSubTransportOptions = {
   code: string;
+  userId: string;
   negotiateUrl?: string;
 };
