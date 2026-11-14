@@ -20,6 +20,8 @@ type DrawGuessSessionProps = {
   playerName: string;
   activity: RoomActivity;
   onLeave: () => void;
+  joinUrl?: string;
+  roomCode?: string;
 };
 
 function waitForGuessResult(playerId: string): Promise<boolean> {
@@ -39,7 +41,14 @@ function waitForGuessResult(playerId: string): Promise<boolean> {
 }
 
 /** Phone session driven by the party store (mock or real transport). */
-export function DrawGuessSession({ role, playerName, activity, onLeave }: DrawGuessSessionProps) {
+export function DrawGuessSession({
+  role,
+  playerName,
+  activity,
+  onLeave,
+  joinUrl,
+  roomCode,
+}: DrawGuessSessionProps) {
   const reduceMotion = useReducedMotion();
   const party = useParty();
   const actions = usePartyActions();
@@ -156,7 +165,13 @@ export function DrawGuessSession({ role, playerName, activity, onLeave }: DrawGu
           exit={reduceMotion ? undefined : { opacity: 0, y: -12 }}
           transition={{ duration: reduceMotion ? 0 : 0.3 }}
         >
-          <WaitingScreen name={playerName} activity={activity} onLeave={onLeave} />
+          <WaitingScreen
+            name={playerName}
+            activity={activity}
+            onLeave={onLeave}
+            joinUrl={joinUrl}
+            roomCode={roomCode}
+          />
           {import.meta.env.DEV ? (
             <p className="mt-4 text-center font-body text-xs text-muted">
               Party store · {party.connection} · mock round starting…

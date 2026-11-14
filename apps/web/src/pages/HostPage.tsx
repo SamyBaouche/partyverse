@@ -264,7 +264,7 @@ export default function HostPage() {
               onClick={() => {
                 void backToCatalog();
               }}
-              className="font-display text-[10px] uppercase tracking-widest text-muted underline-offset-4 hover:text-ink hover:underline"
+              className="rounded-sm font-display text-[10px] uppercase tracking-widest text-muted underline-offset-4 hover:text-ink hover:underline focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-brand"
             >
               Back to games
             </button>

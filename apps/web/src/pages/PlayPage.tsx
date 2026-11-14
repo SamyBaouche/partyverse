@@ -92,7 +92,7 @@ export default function PlayPage() {
 
   if (!parsedCode.success) {
     return (
-      <main className="flex min-h-screen items-center justify-center p-6">
+      <main className="flex min-h-dvh items-center justify-center p-6 pb-[max(1.5rem,env(safe-area-inset-bottom))]">
         <Card className="flex w-full max-w-sm flex-col items-center gap-6 text-center">
           <div className="space-y-2">
             <h1 className="font-display text-sm uppercase text-ink">Invalid room code</h1>
@@ -191,17 +191,19 @@ export default function PlayPage() {
           playerName={player.name}
           activity={activity}
           onLeave={handleLeave}
+          joinUrl={`${window.location.origin}/play/${code}`}
+          roomCode={code}
         />
       </PartyProvider>
     );
   }
 
   return (
-    <main className="flex min-h-screen items-center justify-center p-6">
+    <main className="flex min-h-dvh items-center justify-center p-6 pb-[max(1.5rem,env(safe-area-inset-bottom))]">
       <AnimatePresence mode="wait">
         <motion.div
           key="form"
-          className="w-full max-w-sm"
+          className="w-full max-w-sm sm:max-w-md"
           initial={reduceMotion ? false : { opacity: 0, y: 16 }}
           animate={{ opacity: 1, y: 0 }}
           exit={reduceMotion ? undefined : { opacity: 0, y: -12 }}
