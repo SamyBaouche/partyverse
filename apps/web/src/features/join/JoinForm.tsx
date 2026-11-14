@@ -12,13 +12,7 @@ type JoinFormProps = {
   onSubmit: (name: string) => void;
 };
 
-export function JoinForm({
-  name,
-  onNameChange,
-  submitting,
-  serverError,
-  onSubmit,
-}: JoinFormProps) {
+export function JoinForm({ name, onNameChange, submitting, serverError, onSubmit }: JoinFormProps) {
   const [fieldError, setFieldError] = useState<string | null>(null);
 
   function handleSubmit(event: FormEvent<HTMLFormElement>) {

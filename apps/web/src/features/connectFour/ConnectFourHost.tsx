@@ -57,12 +57,7 @@ function TeamColumn({
   );
 }
 
-export function ConnectFourHost({
-  joinUrl,
-  state,
-  onStateChange,
-  onBack,
-}: ConnectFourHostProps) {
+export function ConnectFourHost({ joinUrl, state, onStateChange, onBack }: ConnectFourHostProps) {
   const capacity = state.mode === "1v1" ? 1 : 2;
   const yellow = state.players.filter((player) => player.team === "yellow").map((p) => p.name);
   const red = state.players.filter((player) => player.team === "red").map((p) => p.name);
