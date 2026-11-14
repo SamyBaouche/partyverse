@@ -10,6 +10,7 @@ const DRAWER_POINTS = 25;
 export type MockRole = "drawer" | "guesser";
 export type RoundEndReason = "correct" | "timeout";
 
+/** @deprecated Prefer `RevealResult` from reveal/RevealScreen — kept for local mock hook. */
 export type MockRoundResult = {
   word: string;
   reason: RoundEndReason;
