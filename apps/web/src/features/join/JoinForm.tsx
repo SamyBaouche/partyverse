@@ -1,5 +1,6 @@
 import { useState, type FormEvent } from "react";
 import { PlayerName } from "@partyverse/shared";
+import { PartyverseWordmark } from "../../components/brand/PartyverseWordmark";
 import { Button, Card, Input } from "../../components/ui";
 
 type JoinFormProps = {
@@ -35,18 +36,29 @@ export function JoinForm({
   const error = fieldError ?? serverError ?? undefined;
 
   return (
-    <Card className="flex w-full max-w-sm flex-col gap-6">
-      <div className="text-center">
-        <p className="font-display text-[10px] uppercase tracking-[0.35em] text-muted">Room</p>
-        <p className="room-code font-display mt-3 text-3xl" aria-label={`Room code ${code}`}>
-          {code}
-        </p>
+    <Card className="flex w-full max-w-sm flex-col gap-6 sm:max-w-md">
+      <div className="flex flex-col items-center gap-4 text-center">
+        <PartyverseWordmark className="scale-90 sm:scale-100" />
+        <div>
+          <p className="font-display text-[10px] uppercase tracking-[0.35em] text-muted">Room</p>
+          <p
+            className="room-code font-display mt-2 text-4xl leading-tight tracking-[0.12em] sm:text-5xl"
+            aria-label={`Room code ${code}`}
+          >
+            {code.split("").join(" ")}
+          </p>
+        </div>
       </div>
 
-      <form className="flex flex-col gap-6" onSubmit={handleSubmit} noValidate>
+      <form
+        className="flex flex-col gap-5"
+        onSubmit={handleSubmit}
+        noValidate
+        aria-busy={submitting || undefined}
+      >
         <Input
-          label="Nickname"
-          placeholder="Your nickname"
+          label="Your name"
+          placeholder="Nickname"
           value={name}
           onChange={(event) => {
             setFieldError(null);
@@ -54,13 +66,13 @@ export function JoinForm({
           }}
           error={error}
           autoFocus
-          autoComplete="off"
+          autoComplete="nickname"
           enterKeyHint="go"
           maxLength={16}
           disabled={submitting}
         />
-        <Button type="submit" fullWidth size="lg" disabled={submitting}>
-          {submitting ? "Joining..." : "Join"}
+        <Button type="submit" fullWidth size="lg" loading={submitting}>
+          {submitting ? "Joining…" : "Join →"}
         </Button>
       </form>
     </Card>

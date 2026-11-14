@@ -13,6 +13,8 @@ type ButtonProps = Omit<
   variant?: ButtonVariant;
   size?: ButtonSize;
   fullWidth?: boolean;
+  /** Shows busy state and sets aria-busy (still uses disabled when true). */
+  loading?: boolean;
 };
 
 const variantClasses: Record<ButtonVariant, string> = {
@@ -33,22 +35,26 @@ export function Button({
   variant = "primary",
   size = "md",
   fullWidth = false,
+  loading = false,
   className,
   type = "button",
   disabled,
+  children,
   onClick,
   ...props
 }: ButtonProps) {
   const { play } = useSound();
   const reduceMotion = useReducedMotion();
+  const busy = Boolean(disabled || loading);
 
   return (
     <motion.button
       type={type}
-      disabled={disabled}
-      whileTap={disabled || reduceMotion ? undefined : { scale: 0.96 }}
+      disabled={busy}
+      aria-busy={loading || undefined}
+      whileTap={busy || reduceMotion ? undefined : { scale: 0.96 }}
       className={cn(
-        "inline-flex items-center justify-center rounded-full font-display uppercase tracking-wide",
+        "inline-flex items-center justify-center gap-2 rounded-full font-display uppercase tracking-wide",
         "transition-[transform,box-shadow,background-color] duration-150",
         "focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-brand",
         "disabled:cursor-not-allowed disabled:opacity-50 disabled:active:translate-y-0 disabled:active:shadow-[4px_4px_0_var(--color-hard-shadow)]",
@@ -58,12 +64,20 @@ export function Button({
         className,
       )}
       onClick={(event) => {
-        if (!disabled) {
+        if (!busy) {
           void play("click");
         }
         onClick?.(event);
       }}
       {...props}
-    />
+    >
+      {loading ? (
+        <span
+          className="h-3.5 w-3.5 rounded-full border-2 border-current border-r-transparent motion-safe:animate-[spin_0.7s_linear_infinite]"
+          aria-hidden
+        />
+      ) : null}
+      {children}
+    </motion.button>
   );
 }

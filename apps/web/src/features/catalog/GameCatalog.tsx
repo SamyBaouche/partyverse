@@ -110,17 +110,50 @@ function GameCard({
 
 export function GameCatalog({ onSelect }: GameCatalogProps) {
   return (
-    <div className="mx-auto flex min-h-screen w-full max-w-6xl flex-col gap-10 px-5 py-8 sm:px-8 lg:px-10">
-      <header className="flex flex-wrap items-center gap-4">
+    <div className="mx-auto flex min-h-dvh w-full max-w-6xl flex-col gap-8 px-5 py-6 sm:gap-10 sm:px-8 sm:py-8 lg:px-10">
+      <header className="flex flex-wrap items-center justify-between gap-4">
         <PartyverseWordmark />
+        <a
+          href="/play/KXPM"
+          className="inline-flex h-10 items-center rounded-full border-[3px] border-ink bg-white px-4 font-display text-[9px] uppercase tracking-widest text-ink shadow-[3px_3px_0_var(--color-hard-shadow)] focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-brand"
+        >
+          Join a room
+        </a>
       </header>
 
-      <div className="space-y-2">
-        <h1 className="font-body text-3xl font-extrabold tracking-tight text-ink sm:text-4xl">
+      <section className="grid items-end gap-8 lg:grid-cols-[minmax(0,1.1fr)_minmax(0,0.9fr)]">
+        <div className="space-y-5">
+          <h1 className="sr-only">Partyverse living-room mini games</h1>
+          <div className="flex flex-col items-start gap-2.5" aria-hidden>
+            <span className="inline-block rounded-2xl border-[3px] border-ink bg-[#FFE566] px-3 py-2 font-body text-2xl font-extrabold tracking-tight text-ink shadow-[4px_4px_0_var(--color-hard-shadow)] sm:text-3xl md:text-4xl">
+              Pick a game.
+            </span>
+            <span className="inline-block rounded-2xl border-[3px] border-ink bg-[#86E3C2] px-3 py-2 font-body text-2xl font-extrabold tracking-tight text-ink shadow-[4px_4px_0_var(--color-hard-shadow)] sm:text-3xl md:text-4xl">
+              Send a link.
+            </span>
+            <span className="inline-block font-body text-3xl font-extrabold tracking-tight text-brand sm:text-4xl md:text-5xl">
+              Partyverse!
+            </span>
+          </div>
+          <p className="max-w-md font-body text-base leading-relaxed text-ink/75 sm:text-lg">
+            Quick mini-games for the living room — every move shows up on phones and the TV. No
+            accounts, no downloads.
+          </p>
+        </div>
+
+        <div className="hidden justify-center gap-4 lg:flex" aria-hidden>
+          <span className="mt-8 font-display text-5xl text-[#FF5A6A]">X</span>
+          <span className="font-display text-6xl text-[#5B8CFF]">O</span>
+          <span className="mt-12 h-10 w-10 rounded-full border-[4px] border-ink bg-[#FF5A6A]" />
+        </div>
+      </section>
+
+      <div className="space-y-3">
+        <h2 className="font-body text-2xl font-extrabold tracking-tight text-ink sm:text-3xl">
           Choose your battle
-        </h1>
-        <p className="max-w-xl font-body text-base text-ink/75">
-          Pick a mini-game. Invite friends with a link. Play live on every phone.
+        </h2>
+        <p className="max-w-xl font-body text-sm text-ink/70 sm:text-base">
+          Host on the TV. Friends join with a code or link.
         </p>
       </div>
 
