@@ -40,6 +40,7 @@ import { TicTacToeHost } from "../features/ticTacToe/TicTacToeHost";
 import { TicTacToeModePicker } from "../features/ticTacToe/TicTacToeModePicker";
 import { createTttLobby } from "../features/ticTacToe/logic";
 import { useSound } from "../lib/audio";
+import { getJoinUrl } from "../lib/joinOrigin";
 
 const USE_MOCK_TRANSPORT = resolvePartyTransportMode() === "mock";
 
@@ -135,7 +136,7 @@ export default function HostPage() {
   const [roomError, setRoomError] = useState<string | null>(null);
   const code = USE_MOCK_TRANSPORT ? mockLobby.code : (liveRoom?.code ?? "----");
   const players = USE_MOCK_TRANSPORT ? mockLobby.players : [];
-  const joinUrl = `${window.location.origin}/play/${code}`;
+  const joinUrl = getJoinUrl(code);
   const reduceMotion = useReducedMotion();
   const { play } = useSound();
   const navigate = useNavigate();
@@ -547,7 +548,7 @@ export default function HostPage() {
               >
                 <LiveHostLobby
                   code={liveRoom.code}
-                  joinUrl={`${window.location.origin}/play/${liveRoom.code}`}
+                  joinUrl={getJoinUrl(liveRoom.code)}
                   onBack={() => {
                     void backToCatalog();
                   }}
