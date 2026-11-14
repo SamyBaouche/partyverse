@@ -13,7 +13,6 @@ type JoinFormProps = {
 };
 
 export function JoinForm({
-  code: _code,
   name,
   onNameChange,
   submitting,

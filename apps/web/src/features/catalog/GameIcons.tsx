@@ -29,9 +29,7 @@ function ArtIcon({ src, className }: { src: string; className?: string }) {
       src={src}
       alt=""
       draggable={false}
-      className={["h-full w-full object-cover object-center", className]
-        .filter(Boolean)
-        .join(" ")}
+      className={["h-full w-full object-cover object-center", className].filter(Boolean).join(" ")}
       aria-hidden
     />
   );

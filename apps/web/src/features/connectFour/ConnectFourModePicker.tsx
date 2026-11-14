@@ -26,7 +26,16 @@ function ModeCanvas({ mode }: { mode: ConnectFourMode }) {
   if (mode === "1v1") {
     return (
       <svg viewBox="0 0 220 120" className="h-28 w-full sm:h-32" aria-hidden>
-        <rect x="58" y="18" width="104" height="84" rx="14" fill="#3B6FE8" stroke="#1a1a1a" strokeWidth="3" />
+        <rect
+          x="58"
+          y="18"
+          width="104"
+          height="84"
+          rx="14"
+          fill="#3B6FE8"
+          stroke="#1a1a1a"
+          strokeWidth="3"
+        />
         {Array.from({ length: 12 }, (_, i) => {
           const col = i % 4;
           const row = Math.floor(i / 4);
@@ -62,7 +71,16 @@ function ModeCanvas({ mode }: { mode: ConnectFourMode }) {
 
   return (
     <svg viewBox="0 0 220 120" className="h-28 w-full sm:h-32" aria-hidden>
-      <rect x="58" y="18" width="104" height="84" rx="14" fill="#3B6FE8" stroke="#1a1a1a" strokeWidth="3" />
+      <rect
+        x="58"
+        y="18"
+        width="104"
+        height="84"
+        rx="14"
+        fill="#3B6FE8"
+        stroke="#1a1a1a"
+        strokeWidth="3"
+      />
       {Array.from({ length: 12 }, (_, i) => {
         const col = i % 4;
         const row = Math.floor(i / 4);

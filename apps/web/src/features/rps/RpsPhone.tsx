@@ -24,8 +24,7 @@ const CHOICES: RpsChoice[] = ["rock", "paper", "scissors"];
 export function RpsPhone({ playerId, playerName, state, onStateChange, onLeave }: Props) {
   const { play } = useSound();
   const me = state.players.find((player) => player.id === playerId) ?? null;
-  const canPick =
-    !!me && state.status === "picking" && !state.locked[me.team];
+  const canPick = !!me && state.status === "picking" && !state.locked[me.team];
 
   function joinTeam(team: RpsTeam) {
     const next = joinRpsTeam(state, { id: playerId, name: playerName }, team);
@@ -125,7 +124,12 @@ export function RpsPhone({ playerId, playerName, state, onStateChange, onLeave }
               </button>
             ))}
           </div>
-          <Button size="lg" fullWidth disabled={!canPick || !me || !state.picks[me.team]} onClick={lock}>
+          <Button
+            size="lg"
+            fullWidth
+            disabled={!canPick || !me || !state.picks[me.team]}
+            onClick={lock}
+          >
             Lock in
           </Button>
         </>

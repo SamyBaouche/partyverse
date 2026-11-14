@@ -58,7 +58,6 @@ function TeamColumn({
 }
 
 export function ConnectFourHost({
-  code: _code,
   joinUrl,
   state,
   onStateChange,

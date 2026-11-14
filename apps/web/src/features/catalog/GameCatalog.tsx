@@ -192,8 +192,7 @@ function GameBubble({
   const hoverTimer = useRef<number | null>(null);
   const floatDelay = (index % 5) * 0.35;
   const floatAmp = 10 + (index % 3) * 4;
-  const showPadlock =
-    game.locked && IMPOSTER_REEL_INDEX >= 0 && index >= IMPOSTER_REEL_INDEX;
+  const showPadlock = game.locked && IMPOSTER_REEL_INDEX >= 0 && index >= IMPOSTER_REEL_INDEX;
 
   function clearHoverTimer() {
     if (hoverTimer.current !== null) {
@@ -361,11 +360,7 @@ function GameBubble({
         <motion.div
           className="flex w-full flex-1 flex-col text-center"
           animate={
-            reduceMotion
-              ? undefined
-              : hot
-                ? { y: 0, opacity: 1 }
-                : { y: [0, -3, 0], opacity: 1 }
+            reduceMotion ? undefined : hot ? { y: 0, opacity: 1 } : { y: [0, -3, 0], opacity: 1 }
           }
           transition={
             reduceMotion
@@ -387,13 +382,9 @@ function GameBubble({
           <motion.span
             className={cn(
               "mt-auto inline-flex h-11 w-full shrink-0 items-center justify-center gap-2 rounded-full border-[3px] border-ink px-5 font-body text-sm font-bold shadow-[3px_3px_0_var(--color-hard-shadow)] sm:h-12 sm:text-base",
-              game.locked
-                ? "cursor-not-allowed bg-[#F0F0F0] text-ink/55"
-                : "bg-white text-ink",
+              game.locked ? "cursor-not-allowed bg-[#F0F0F0] text-ink/55" : "bg-white text-ink",
             )}
-            animate={
-              !game.locked && hot && !reduceMotion ? { scale: [1, 1.06, 1] } : { scale: 1 }
-            }
+            animate={!game.locked && hot && !reduceMotion ? { scale: [1, 1.06, 1] } : { scale: 1 }}
             transition={
               !game.locked && hot && !reduceMotion
                 ? { duration: 0.9, repeat: Infinity, ease: "easeInOut" }
@@ -449,15 +440,9 @@ function HowItWorks() {
         className="font-body text-2xl font-extrabold text-ink sm:text-3xl"
         initial={reduceMotion ? false : { opacity: 0, x: 36, clipPath: "inset(0 100% 0 0)" }}
         animate={
-          inView || reduceMotion
-            ? { opacity: 1, x: 0, clipPath: "inset(0 0% 0 0)" }
-            : undefined
+          inView || reduceMotion ? { opacity: 1, x: 0, clipPath: "inset(0 0% 0 0)" } : undefined
         }
-        transition={
-          reduceMotion
-            ? { duration: 0 }
-            : { duration: 0.55, ease: [0.22, 1, 0.36, 1] }
-        }
+        transition={reduceMotion ? { duration: 0 } : { duration: 0.55, ease: [0.22, 1, 0.36, 1] }}
       >
         How it works
       </motion.h2>
@@ -537,9 +522,7 @@ function HowItWorks() {
                 initial={reduceMotion ? false : { opacity: 0, y: 10 }}
                 animate={inView || reduceMotion ? { opacity: 1, y: 0 } : undefined}
                 transition={
-                  reduceMotion
-                    ? { duration: 0 }
-                    : { delay: 0.34 + index * 0.18, duration: 0.35 }
+                  reduceMotion ? { duration: 0 } : { delay: 0.34 + index * 0.18, duration: 0.35 }
                 }
               >
                 {step.title}
@@ -549,9 +532,7 @@ function HowItWorks() {
                 initial={reduceMotion ? false : { opacity: 0, y: 12 }}
                 animate={inView || reduceMotion ? { opacity: 1, y: 0 } : undefined}
                 transition={
-                  reduceMotion
-                    ? { duration: 0 }
-                    : { delay: 0.42 + index * 0.18, duration: 0.4 }
+                  reduceMotion ? { duration: 0 } : { delay: 0.42 + index * 0.18, duration: 0.4 }
                 }
               >
                 {step.body}

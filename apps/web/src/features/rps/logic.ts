@@ -116,8 +116,7 @@ function revealRps(state: RpsState): RpsState {
       scores.red += 1;
     }
   }
-  const ended =
-    scores.yellow >= state.targetScore || scores.red >= state.targetScore;
+  const ended = scores.yellow >= state.targetScore || scores.red >= state.targetScore;
   return {
     ...state,
     scores,

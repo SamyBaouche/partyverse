@@ -12,13 +12,7 @@ type Props = {
   onLeave: () => void;
 };
 
-export function TicTacToePhone({
-  playerId,
-  playerName,
-  state,
-  onStateChange,
-  onLeave,
-}: Props) {
+export function TicTacToePhone({ playerId, playerName, state, onStateChange, onLeave }: Props) {
   const { play } = useSound();
   const me = state.players.find((player) => player.id === playerId) ?? null;
   const myTurn = !!me && state.status === "playing" && !state.winner && state.turn === me.team;

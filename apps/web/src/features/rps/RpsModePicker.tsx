@@ -6,7 +6,16 @@ function Canvas({ mode }: { mode: DuelMode }) {
     <svg viewBox="0 0 220 120" className="h-28 w-full sm:h-32" aria-hidden>
       <circle cx="110" cy="60" r="36" fill="#76A2AF" stroke="#1a1a1a" strokeWidth="3" />
       <circle cx="96" cy="52" r="10" fill="#fff" stroke="#1a1a1a" strokeWidth="2" />
-      <rect x="112" y="42" width="18" height="12" rx="3" fill="#fff" stroke="#1a1a1a" strokeWidth="2" />
+      <rect
+        x="112"
+        y="42"
+        width="18"
+        height="12"
+        rx="3"
+        fill="#fff"
+        stroke="#1a1a1a"
+        strokeWidth="2"
+      />
       <path
         d="M118 68h14M122 64v16M128 64v16"
         stroke="#fff"

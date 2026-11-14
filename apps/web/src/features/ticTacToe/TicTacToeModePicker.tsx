@@ -4,7 +4,16 @@ import { DuelModePicker } from "../duel/DuelModePicker";
 function Canvas({ mode }: { mode: DuelMode }) {
   return (
     <svg viewBox="0 0 220 120" className="h-28 w-full sm:h-32" aria-hidden>
-      <rect x="70" y="16" width="80" height="88" rx="12" fill="#fff" stroke="#1a1a1a" strokeWidth="3" />
+      <rect
+        x="70"
+        y="16"
+        width="80"
+        height="88"
+        rx="12"
+        fill="#fff"
+        stroke="#1a1a1a"
+        strokeWidth="3"
+      />
       <path d="M96 24v72M124 24v72M78 48h64M78 72h64" stroke="#1a1a1a" strokeWidth="3" />
       <path d="M82 32l10 10M92 32l-10 10" stroke="#4EA1FF" strokeWidth="3" strokeLinecap="round" />
       <circle cx="110" cy="60" r="9" fill="none" stroke="#FF6B7A" strokeWidth="3" />

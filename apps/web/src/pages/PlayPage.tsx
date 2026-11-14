@@ -115,9 +115,7 @@ export default function PlayPage() {
         <Card className="flex w-full max-w-sm flex-col items-center gap-6 text-center">
           <div className="space-y-2">
             <h1 className="font-display text-sm uppercase text-ink">Couldn’t join</h1>
-            <p className="font-body text-sm text-muted">
-              Scan the QR on the TV again to join.
-            </p>
+            <p className="font-body text-sm text-muted">Scan the QR on the TV again to join.</p>
           </div>
           <Button fullWidth size="lg" onClick={() => navigate("/")}>
             Back home
