@@ -185,7 +185,15 @@ Phone / TV                  Azure Web PubSub              Server
 | Realtime | Azure Web PubSub (authoritative server)             |
 | Quality  | Vitest, ESLint, Prettier, GitLab CI                 |
 
-Target Azure layout: [`docs/architecture/overview.drawio.svg`](docs/architecture/overview.drawio.svg)
+---
+
+## Architecture (Azure target)
+
+> Target layout for `v1.0` — not fully deployed yet.
+
+![Partyverse Azure target architecture](docs/architecture/overview.drawio.svg)
+
+Architecture decisions: [`docs/adr`](docs/adr).
 
 ---
 
