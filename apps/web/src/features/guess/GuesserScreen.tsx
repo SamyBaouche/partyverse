@@ -1,7 +1,7 @@
-import { useState } from "react";
-import { AnimatePresence, motion, useReducedMotion } from "motion/react";
+import { useEffect, useRef, useState } from "react";
 import { Card } from "../../components/ui";
 import { RoundTimer } from "../round/RoundTimer";
+import { useRemainingTime } from "../round/useRemainingTime";
 import { GuessHistory, type GuessEntry } from "./GuessHistory";
 import { GuessInput } from "./GuessInput";
 
@@ -10,6 +10,10 @@ type GuesserScreenProps = {
   wordLength: number;
   endsAt: number;
   onGuess: (text: string) => Promise<{ correct: boolean }>;
+  /** Fired once when the player guesses correctly. */
+  onCorrect?: () => void;
+  /** Fired once when the round timer hits zero. */
+  onTimeout?: () => void;
 };
 
 function WordHint({ length }: { length: number }) {
@@ -23,16 +27,39 @@ function WordHint({ length }: { length: number }) {
   );
 }
 
-export function GuesserScreen({ drawerName, wordLength, endsAt, onGuess }: GuesserScreenProps) {
-  const reduceMotion = useReducedMotion();
+export function GuesserScreen({
+  drawerName,
+  wordLength,
+  endsAt,
+  onGuess,
+  onCorrect,
+  onTimeout,
+}: GuesserScreenProps) {
   const [guesses, setGuesses] = useState<GuessEntry[]>([]);
   const [locked, setLocked] = useState(false);
+  const remaining = useRemainingTime(endsAt);
+  const timeoutSent = useRef(false);
+
+  useEffect(() => {
+    setGuesses([]);
+    setLocked(false);
+    timeoutSent.current = false;
+  }, [endsAt]);
+
+  useEffect(() => {
+    if (remaining > 0 || locked || timeoutSent.current) {
+      return;
+    }
+    timeoutSent.current = true;
+    onTimeout?.();
+  }, [locked, onTimeout, remaining]);
 
   async function handleGuess(text: string) {
     const result = await onGuess(text);
     setGuesses((previous) => [...previous, { text, correct: result.correct }]);
     if (result.correct) {
       setLocked(true);
+      onCorrect?.();
     }
     return result;
   }
@@ -56,31 +83,6 @@ export function GuesserScreen({ drawerName, wordLength, endsAt, onGuess }: Guess
 
       <GuessInput onGuess={handleGuess} locked={locked} />
       <GuessHistory guesses={guesses} />
-
-      <AnimatePresence>
-        {locked ? (
-          <motion.div
-            className="fixed inset-0 z-50 flex items-center justify-center bg-[#0b3d2c]/92 p-6"
-            initial={reduceMotion ? false : { opacity: 0 }}
-            animate={{ opacity: 1 }}
-            exit={reduceMotion ? undefined : { opacity: 0 }}
-          >
-            <motion.div
-              className="text-center"
-              initial={reduceMotion ? false : { scale: 0.85, y: 16 }}
-              animate={{ scale: 1, y: 0 }}
-              transition={
-                reduceMotion ? { duration: 0 } : { type: "spring", stiffness: 380, damping: 22 }
-              }
-            >
-              <p className="font-display text-lg uppercase leading-relaxed text-white sm:text-xl">
-                You got it!
-              </p>
-              <p className="font-display mt-4 text-3xl text-accent">+100</p>
-            </motion.div>
-          </motion.div>
-        ) : null}
-      </AnimatePresence>
     </div>
   );
 }
