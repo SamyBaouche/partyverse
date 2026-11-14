@@ -1,213 +1,229 @@
-# Partyverse — A real-time multiplayer party game where your phone is the controller.
+# Partyverse
 
-[![pipeline status](https://gitlab.com/SamyBaouche/partyverse/badges/main/pipeline.svg)](https://gitlab.com/SamyBaouche/partyverse/-/pipelines)
-[![coverage report](https://gitlab.com/SamyBaouche/partyverse/badges/main/coverage.svg)](https://gitlab.com/SamyBaouche/partyverse/-/pipelines)
-[![license: MIT](https://img.shields.io/badge/license-MIT-blue.svg)](LICENSE)
+**TV shows the party. Phones are the controllers.**
 
-A TV (or laptop) shows the game; players scan a QR code and draw, guess and compete from their phones. No app install, no account.
+Scan a QR, join in one tap, play mini-games together — no app install, no accounts.
 
-> Development, CI/CD and issue tracking happen on **GitLab**: [gitlab.com/SamyBaouche/partyverse](https://gitlab.com/SamyBaouche/partyverse).
-> The GitHub repository is a **read-only mirror**.
+[![pipeline](https://gitlab.com/SamyBaouche/partyverse/badges/main/pipeline.svg)](https://gitlab.com/SamyBaouche/partyverse/-/pipelines)
+[![coverage](https://gitlab.com/SamyBaouche/partyverse/badges/main/coverage.svg)](https://gitlab.com/SamyBaouche/partyverse/-/pipelines)
+[![license](https://img.shields.io/badge/license-MIT-blue.svg)](LICENSE)
+
+> Source of truth: **[GitLab](https://gitlab.com/SamyBaouche/partyverse)**.  
+> GitHub is a read-only mirror.
 
 ---
 
-## Status
+## What you can play today
 
-|                     |                                                                          |
-| ------------------- | ------------------------------------------------------------------------ |
-| **Current release** | `v0.1` — Sprint 1: foundations, game engine, arcade UI and first screens |
-| **Next milestone**  | Sprint 2 — complete front-end and real-time wiring with Azure Web PubSub |
-| **Target**          | `v1.0` deployed on Azure by January 2027                                 |
+| Game                    | Status                          | How it works                                                |
+| ----------------------- | ------------------------------- | ----------------------------------------------------------- |
+| **Draw Guess**          | Live (mock or Azure Web PubSub) | Drawer paints, others guess. Server owns the word & timers. |
+| **Connect Four**        | Local sync via room activity    | 1v1 / 2v2 lobbies, QR join.                                 |
+| **Tic-Tac-Toe**         | Local sync                      | Same duel flow as C4.                                       |
+| **Rock Paper Scissors** | Local sync                      | Same duel flow as C4.                                       |
+| Imposter+               | Locked                          | Coming later.                                               |
 
-## Features
+---
 
-### Available today (local, mock mode)
+## Quick start
 
-- **Drawing game engine**: XState state machine (`lobby → drawing → reveal → scores`), turn rotation, accent- and case-insensitive guessing, scoring (`apps/server/src/game/machine.ts`).
-- **Game rooms**: 4-letter room codes (alphabet without `I`/`O`), join / leave / host-only kick, 8 players max, duplicate nickname protection (`apps/server/src/game/rooms.ts`).
-- **Shared message contract**: client and server messages validated with Zod in `@partyverse/shared` (never trust the client).
-- **Arcade UI**: dark sandbox theme with selectable arcade backgrounds, Press Start 2P + Inter fonts, synthesized 8-bit SFX and chiptune music (Web Audio API, no audio files), confetti and countdown.
-- **TV lobby**: room code, QR code (`qrcode.react`), live mock player list, press-start gate.
-- **Phone join flow**: Zod-validated nickname, waiting screen, friendly `RoomErrorCode` messages (mock join).
-- **Drawing canvas**: clean SVG strokes, color chip + picker, eraser, Clear, normalized coordinates, 50 ms live chunking, `/draw-demo` TV mirror.
-- **HTTP health endpoint** on the Fastify server (`GET /health`).
+```bash
+# 1. Install (Node 24 + pnpm 12 via Corepack)
+corepack enable
+pnpm install
 
-### Planned
+# 2. Run TV + API together
+pnpm dev
+```
 
-- Real-time play across devices with **Azure Web PubSub**.
-- Cloud deployment on **Azure** (Static Web Apps, Container Apps, Cosmos DB, Service Bus, Functions, Blob Storage, Key Vault, App Insights).
-- Wiring the game engine and rooms to live network transport (today they run locally / under tests).
-- Stateless, crash-resilient engine with persisted snapshots.
-- Load testing, observability, and GitLab CI/CD deploy to Azure with OIDC.
+| App                | URL                                                          |
+| ------------------ | ------------------------------------------------------------ |
+| TV / web           | [http://localhost:5173](http://localhost:5173)               |
+| Phone (same Wi‑Fi) | Network URL printed by Vite, e.g. `http://192.168.x.x:5173`  |
+| API health         | [http://localhost:3000/health](http://localhost:3000/health) |
 
-## Architecture (target)
+**Tip:** open the host on the **Network** URL so the QR works on phones.  
+`localhost` on a phone means the phone itself — not your Mac.
 
-> Target architecture for `v1.0` — not deployed yet.
+Vite proxies `/api` → `http://127.0.0.1:3000`, so phones share the same origin as the TV.
 
-![Partyverse Azure target architecture](docs/architecture/overview.drawio.svg)
+### Mock vs real realtime
 
-Architecture decisions are documented as ADRs in [`docs/adr`](docs/adr).
+| Mode                             | How                                                                                     |
+| -------------------------------- | --------------------------------------------------------------------------------------- |
+| **Mock** (default in `pnpm dev`) | No Azure. Draw Guess uses a local transport.                                            |
+| **Real Web PubSub**              | See [Run with Azure Web PubSub](#run-with-azure-web-pubsub). Set `VITE_USE_MOCK=false`. |
 
-## Tech stack
+---
 
-| Layer           | Technologies                                                                                                                                     |
-| --------------- | ------------------------------------------------------------------------------------------------------------------------------------------------ |
-| Front-end       | React 19, TypeScript, Vite 8, Tailwind CSS v4, React Router, Motion, qrcode.react, canvas-confetti, Web Audio API                                |
-| Back-end        | Node.js 24, Fastify 5, XState 5                                                                                                                  |
-| Shared          | `@partyverse/shared` — Zod 4 schemas and inferred TypeScript types                                                                               |
-| Testing         | Vitest, `@vitest/coverage-v8`                                                                                                                    |
-| Tooling         | pnpm workspaces (`pnpm@12.18.0`), ESLint, Prettier, TypeScript strict mode                                                                       |
-| CI/CD           | GitLab CI (`.gitlab-ci.yml`), self-hosted GitLab Runner with Docker executor (`node:24-alpine`)                                                  |
-| Cloud (planned) | Azure Container Apps, Static Web Apps, Web PubSub, Cosmos DB, Service Bus, Functions, Blob Storage, Key Vault, App Insights, Bicep, OIDC deploys |
-
-## Repository structure
+## Monorepo map
 
 ```
 partyverse/
-├── apps/
-│   ├── web/          # React front-end (TV + phone screens)
-│   ├── server/       # Fastify game server (rooms, XState engine, /health)
-│   └── functions/    # Azure Functions package stub (planned)
-├── packages/
-│   └── shared/       # Zod schemas and shared types
-├── docs/
-│   ├── metrics.md              # Measured metrics and how they were measured
-│   ├── architecture/           # Target Azure architecture diagrams
-│   └── adr/                    # Architecture Decision Records
-├── .gitlab-ci.yml
-├── .node-version     # 24
-└── pnpm-workspace.yaml
+├── apps/web/          TV + phone UI (React, Vite, Tailwind)
+├── apps/server/       Game authority (Fastify, XState, Web PubSub)
+├── apps/functions/    Azure Functions stub (later)
+├── packages/shared/   Zod schemas shared by web + server
+└── docs/              Architecture diagrams, metrics, ADRs
 ```
 
-## Getting started
+### `apps/web` — what the player sees
 
-### Prerequisites
+| Folder                   | Role                                                |
+| ------------------------ | --------------------------------------------------- |
+| `src/pages/`             | Routes: host TV, phone join, demos                  |
+| `src/features/catalog/`  | Living-room game picker (chips, reel, how-it-works) |
+| `src/features/realtime/` | Zustand party store + mock / Azure transports       |
+| `src/features/drawing/`  | Canvas, strokes, drawer UI                          |
+| `src/features/join/`     | Nickname form, join API helpers                     |
+| `src/features/*/`        | One folder per mini-game (C4, TTT, RPS, …)          |
+| `src/components/`        | Shared UI + brand                                   |
+| `src/lib/`               | Audio, theme, join URL helpers                      |
 
-- **Node.js 24** (see `.node-version`; `engines.node` is `>=24`)
-- **pnpm** pinned via `packageManager`: `pnpm@12.18.0` (Corepack: `corepack enable`)
+### `apps/server` — source of truth
 
-### Install and run
+| Folder          | Role                                               |
+| --------------- | -------------------------------------------------- |
+| `src/game/`     | XState machine, rooms, session timers & broadcasts |
+| `src/realtime/` | Negotiate, publisher, event handler                |
+| `src/activity/` | Validation for HTTP room-activity payloads         |
+| `src/config.ts` | Env (connection string, hub, port)                 |
 
-```bash
-pnpm install
+Clients **never** publish to PubSub groups.  
+They only `sendEvent` → server validates (Zod) → machine → broadcast.
 
-# Front-end — http://localhost:5173
-pnpm --filter @partyverse/web dev
+### `packages/shared`
 
-# Game server — http://localhost:3000/health
-pnpm --filter @partyverse/server dev
-```
+Zod contracts for `ClientMessage` / `ServerMessage`, room codes, strokes, players.  
+If it crosses the wire, it lives here.
 
-To try the UI on a phone, open the **Network** URL printed by Vite (same Wi-Fi as your computer), for example `http://<your-lan-ip>:5173/play/ABCD`. Do not use `localhost` in the QR / phone URL.
+---
 
-Vite proxies `/api` to `http://localhost:3000`, so phones on the LAN talk to the same origin as the TV.
+## Commands
 
-### Run locally with Azure Web PubSub
+| Command                                | What it does              |
+| -------------------------------------- | ------------------------- |
+| `pnpm dev`                             | Web + server in parallel  |
+| `pnpm --filter @partyverse/web dev`    | Vite only                 |
+| `pnpm --filter @partyverse/server dev` | Fastify with `.env`       |
+| `pnpm test`                            | All package tests         |
+| `pnpm lint` / `pnpm format`            | ESLint / Prettier         |
+| `pnpm typecheck`                       | `tsc --noEmit` everywhere |
+| `pnpm -r build`                        | Production builds         |
 
-1. Create an Azure Web PubSub resource and copy its connection string.
-2. Copy the server env example and fill in secrets (never commit `.env`):
+---
+
+## Run with Azure Web PubSub
+
+1. Create a Web PubSub resource and copy the connection string.
+2. Local secrets (never commit `.env`):
 
 ```bash
 cp apps/server/.env.example apps/server/.env
-# Edit apps/server/.env:
-# WEBPUBSUB_CONNECTION_STRING=Endpoint=https://....webpubsub.azure.com;AccessKey=...;Version=1.0;
+# WEBPUBSUB_CONNECTION_STRING=...
 # WEBPUBSUB_HUB=partyverse
 # PORT=3000
 ```
 
-3. Point the hub event handler upstream at your machine with the [awps-tunnel](https://learn.microsoft.com/azure/azure-web-pubsub/howto-web-pubsub-tunnel-tool):
+3. Tunnel upstream events to your laptop:
 
 ```bash
 awps-tunnel run --hub partyverse --upstream http://localhost:3000
 ```
 
-Configure the hub’s event handler URL to the tunnel’s public HTTPS endpoint (path `/eventhandler`). Clients get **no PubSub roles** — they only `sendEvent`; the server validates and broadcasts.
+Point the hub event handler at the tunnel URL (`/eventhandler`).
 
-4. Run the apps (real transport — do **not** set `VITE_USE_MOCK=true`):
+4. Start apps **without** mock:
 
 ```bash
+# web: VITE_USE_MOCK=false
 pnpm --filter @partyverse/server dev
 pnpm --filter @partyverse/web dev
 ```
 
-5. Open the TV at the Vite URL, pick Draw Guess, scan the QR on two phones, then Start match.
+5. Host Draw Guess on the TV → scan QR on two phones → **Start match**.
 
-Mock mode (no Azure): set `VITE_USE_MOCK=true` for the web app (or use `?mock=1` on `/play/:code`).
+---
 
-## Development pages
+## How a Draw Guess round flows
 
-Routes from `apps/web/src/main.tsx`:
+```
+Phone / TV                  Azure Web PubSub              Server
+   |                              |                          |
+   |-- POST /api/rooms ---------->|------------------------->| create room
+   |-- POST .../players --------->|------------------------->| join
+   |-- GET  /api/negotiate ------>|------------------------->| token (no roles)
+   |<--------- wss url -----------|<-------------------------|
+   |-- sendEvent(guess) --------->|-- webhook /eventhandler->| Zod + machine
+   |<-- group / user message -----|<-- toRoom / toUser ------|
+```
 
-| Route          | Purpose                                                  | Availability |
-| -------------- | -------------------------------------------------------- | ------------ |
-| `/`            | Redirects to `/host`                                     | Always       |
-| `/host`        | TV lobby (press start, room code, QR, mock players)      | Always       |
-| `/play/:code`  | Phone join flow                                          | Always       |
-| `/backgrounds` | Arcade background picker                                 | Always       |
-| `/ui`          | Design-system and effects gallery                        | **Dev only** |
-| `/draw-demo`   | Drawing canvas + live “TV mirror” and Zod chunk counters | **Dev only** |
+- **Drawer only** gets `{ type: "yourWord" }` (never the room).
+- Everyone sees the word in the **reveal** phase.
+- Timers (60s draw / 5s reveal) live on the server.
 
-## Scripts
+---
 
-| Command                                          | Description                                  |
-| ------------------------------------------------ | -------------------------------------------- |
-| `pnpm dev`                                       | Run all package `dev` scripts in parallel    |
-| `pnpm build`                                     | Build every package that defines `build`     |
-| `pnpm lint`                                      | ESLint on the whole monorepo                 |
-| `pnpm format` / `pnpm format:check`              | Format with Prettier / check formatting      |
-| `pnpm typecheck`                                 | TypeScript `--noEmit` in every package       |
-| `pnpm test`                                      | Run all package tests                        |
-| `pnpm --filter @partyverse/web dev`              | Vite dev server for the web app              |
-| `pnpm --filter @partyverse/web build`            | Typecheck + production build for the web app |
-| `pnpm --filter @partyverse/server dev`           | Fastify server with `tsx watch`              |
-| `pnpm --filter @partyverse/server test`          | Server Vitest suite                          |
-| `pnpm --filter @partyverse/server test:coverage` | Server tests with v8 coverage report         |
+## Routes
 
-## Quality and CI
+| Path                | Who      | Purpose                 |
+| ------------------- | -------- | ----------------------- |
+| `/` → `/host`       | TV       | Catalog + lobbies       |
+| `/play/:code`       | Phone    | Join + play             |
+| `/backgrounds`      | Dev      | Arcade backgrounds      |
+| `/ui`, `/draw-demo` | Dev only | Gallery / canvas mirror |
 
-Every merge request runs a GitLab pipeline on a **self-hosted GitLab Runner** (Docker executor, image `node:24-alpine`):
+---
 
-| Stage     | Jobs                                                                           |
-| --------- | ------------------------------------------------------------------------------ |
-| `quality` | `format`, `lint`, `typecheck` (parallel)                                       |
-| `test`    | `pnpm --filter @partyverse/server test:coverage` (Cobertura in merge requests) |
-| `build`   | `build-web`, `build-server`                                                    |
+## Tech stack
 
-`main` is protected: changes land only through merge requests with a **green pipeline**.
+| Layer    | Choices                                             |
+| -------- | --------------------------------------------------- |
+| UI       | React 19, Vite 8, Tailwind v4, Motion, React Router |
+| API      | Node 24, Fastify 5, XState 5                        |
+| Contract | Zod 4 (`@partyverse/shared`)                        |
+| Realtime | Azure Web PubSub (authoritative server)             |
+| Quality  | Vitest, ESLint, Prettier, GitLab CI                 |
 
-## Metrics
+Target Azure layout: [`docs/architecture/overview.drawio.svg`](docs/architecture/overview.drawio.svg)
 
-All metrics are measured, dated and reproducible — see [`docs/metrics.md`](docs/metrics.md).
+---
 
-| Metric                            | Value | As of      |
-| --------------------------------- | ----- | ---------- |
-| Game engine test coverage (lines) | 98%   | 2026-11-10 |
+## Quality & CI
 
-## Roadmap
+Every MR on a self-hosted GitLab Runner (`node:24-alpine`):
 
-| Sprint | Dates        | Focus                                                            | Status        |
-| ------ | ------------ | ---------------------------------------------------------------- | ------------- |
-| 0      | Nov 7–8      | Accounts, tooling, GitLab, self-hosted runner                    | Done          |
-| 1      | Nov 9–15     | Monorepo, game engine, tests, CI, arcade UI, first screens       | Done (`v0.1`) |
-| 2      | Nov 16–22    | Complete front-end, real-time with Web PubSub, architecture docs | In progress   |
-| 3      | Nov 23–29    | Docker, Bicep, first Azure deployment                            | Planned       |
-| 4      | Nov 30–Dec 6 | Full CI/CD with OIDC, dev and prod environments                  | Planned       |
-| 5      | Dec 7–13     | Stateless engine, Service Bus timers, resilience                 | Planned       |
-| 6      | Dec 14–20    | Blue-green releases, observability, E2E tests                    | Planned       |
-| 7      | Dec 21–27    | Load testing and performance                                     | Planned       |
-| 8      | Dec 28–Jan 1 | Documentation, demo and `v1.0`                                   | Planned       |
+1. **quality** — format, lint, typecheck
+2. **test** — server coverage
+3. **build** — web + server
 
-## Contributing workflow
+`main` is protected: green pipeline required.
 
-1. Pick an issue on the GitLab board and move it to **Doing**.
-2. Create a branch from an up-to-date `main` (`feat/<issue>-<short-name>`).
-3. Use [Conventional Commits](https://www.conventionalcommits.org/) (`feat:`, `fix:`, `test:`, `ci:`, `docs:`).
-4. Open a merge request with `Closes #<issue>` and merge once the pipeline is green.
+---
 
-## Credits
+## Roadmap (short)
 
-Fonts and audio credits are listed in [`apps/web/CREDITS.md`](apps/web/CREDITS.md). All sounds and music are generated in code with the Web Audio API (no external audio files).
+| Sprint | Focus                                   | Status   |
+| ------ | --------------------------------------- | -------- |
+| 0–1    | Foundations, engine, arcade UI          | Done     |
+| **2**  | Front-end polish + Web PubSub + docs    | **Done** |
+| 3+     | Docker, Bicep, Azure deploy, resilience | Planned  |
 
-## License
+Full schedule and metrics: [`docs/metrics.md`](docs/metrics.md)
+
+---
+
+## Contributing
+
+1. Branch from `main`: `feat/<issue>-short-name` or `docs/...`
+2. Conventional Commits (`feat:`, `fix:`, `docs:`, …)
+3. MR with `Closes #<issue>` — merge when CI is green
+
+---
+
+## Credits & license
+
+Fonts & audio notes: [`apps/web/CREDITS.md`](apps/web/CREDITS.md)  
+SFX/music are synthesized in code (Web Audio) — no audio files.
 
 [MIT](LICENSE) © Samy Baouche

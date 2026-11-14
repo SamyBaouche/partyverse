@@ -10,14 +10,9 @@ import { GameCatalog } from "../features/catalog/GameCatalog";
 import { createRoom } from "../features/join/joinRoom";
 import { HostLobby } from "../features/lobby/HostLobby";
 import { useMockLobby } from "../features/lobby/useMockLobby";
-import {
-  HostDrawBoard,
-  PartyProvider,
-  resolvePartyTransportMode,
-  usePartyPhase,
-  usePartyPlayers,
-  useSendMessage,
-} from "../features/realtime";
+import { LiveHostLobby } from "../features/host/LiveHostLobby";
+import { readInitialPhase, type HostPhase } from "../features/host/hostPhases";
+import { PartyProvider, resolvePartyTransportMode } from "../features/realtime";
 import { RpsHost } from "../features/rps/RpsHost";
 import { RpsModePicker } from "../features/rps/RpsModePicker";
 import { createRpsLobby } from "../features/rps/logic";
@@ -43,92 +38,6 @@ import { useSound } from "../lib/audio";
 import { getJoinUrl } from "../lib/joinOrigin";
 
 const USE_MOCK_TRANSPORT = resolvePartyTransportMode() === "mock";
-
-function LiveHostLobby({
-  code,
-  joinUrl,
-  onBack,
-}: {
-  code: string;
-  joinUrl: string;
-  onBack: () => void;
-}) {
-  const players = usePartyPlayers();
-  const actions = useSendMessage();
-  const partyPhase = usePartyPhase();
-
-  if (partyPhase !== "lobby") {
-    return <HostDrawBoard onBack={onBack} />;
-  }
-
-  return (
-    <div className="flex w-full flex-col items-center gap-8 px-4 py-8">
-      <div className="space-y-3 text-center">
-        <p className="inline-flex rounded-full border-[3px] border-ink bg-[#86e3c2] px-3 py-1 font-display text-[9px] uppercase tracking-[0.2em] text-ink">
-          Draw Guess · live
-        </p>
-        <h1 className="font-display text-lg uppercase tracking-wide text-ink sm:text-xl">
-          Scan to join
-        </h1>
-      </div>
-      <HostLobby
-        code={code}
-        joinUrl={joinUrl}
-        players={players}
-        maxPlayers={8}
-        startLabel="Start match"
-        onStart={() => {
-          actions.startGame();
-        }}
-      />
-      <button
-        type="button"
-        onClick={onBack}
-        className="rounded-sm font-display text-[10px] uppercase tracking-widest text-muted underline-offset-4 hover:text-ink hover:underline focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-brand"
-      >
-        Back to games
-      </button>
-    </div>
-  );
-}
-
-type HostPhase =
-  | "catalog"
-  | "draw-modes"
-  | "lobby"
-  | "draw-ready"
-  | "c4-modes"
-  | "c4-lobby"
-  | "c4-play"
-  | "ttt-modes"
-  | "ttt-lobby"
-  | "ttt-play"
-  | "rps-modes"
-  | "rps-lobby"
-  | "rps-play";
-
-const HOST_PHASES: HostPhase[] = [
-  "catalog",
-  "draw-modes",
-  "lobby",
-  "draw-ready",
-  "c4-modes",
-  "c4-lobby",
-  "c4-play",
-  "ttt-modes",
-  "ttt-lobby",
-  "ttt-play",
-  "rps-modes",
-  "rps-lobby",
-  "rps-play",
-];
-
-function readInitialPhase(raw: string | null): HostPhase {
-  if (raw && (HOST_PHASES as string[]).includes(raw)) {
-    return raw as HostPhase;
-  }
-  return "catalog";
-}
 
 export default function HostPage() {
   const mockLobby = useMockLobby();
