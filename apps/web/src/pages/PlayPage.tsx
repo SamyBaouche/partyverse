@@ -8,12 +8,19 @@ import { JoinForm } from "../features/join/JoinForm";
 import { ROOM_ERROR_MESSAGES } from "../features/join/messages";
 import { mockJoin } from "../features/join/mockJoin";
 import { DrawGuessSession, PartyProvider } from "../features/realtime";
+import { RpsPhone } from "../features/rps/RpsPhone";
 import {
   fetchRoomActivity,
   publishRoomActivity,
   subscribeRoomActivity,
 } from "../features/session/activityApi";
-import type { ConnectFourState, RoomActivity } from "../features/session/types";
+import type {
+  ConnectFourState,
+  RoomActivity,
+  RpsState,
+  TicTacToeState,
+} from "../features/session/types";
+import { TicTacToePhone } from "../features/ticTacToe/TicTacToePhone";
 import { useSound } from "../lib/audio";
 
 const NICKNAME_STORAGE_KEY = "partyverse.nickname";
@@ -62,6 +69,18 @@ function isC4Activity(
   return activity.phase === "c4-lobby" || activity.phase === "c4-play";
 }
 
+function isTttActivity(
+  activity: RoomActivity,
+): activity is Extract<RoomActivity, { phase: "ttt-lobby" | "ttt-play" }> {
+  return activity.phase === "ttt-lobby" || activity.phase === "ttt-play";
+}
+
+function isRpsActivity(
+  activity: RoomActivity,
+): activity is Extract<RoomActivity, { phase: "rps-lobby" | "rps-play" }> {
+  return activity.phase === "rps-lobby" || activity.phase === "rps-play";
+}
+
 export default function PlayPage() {
   const { code: rawCode } = useParams();
   const [searchParams] = useSearchParams();
@@ -95,9 +114,9 @@ export default function PlayPage() {
       <main className="flex min-h-dvh items-center justify-center p-6 pb-[max(1.5rem,env(safe-area-inset-bottom))]">
         <Card className="flex w-full max-w-sm flex-col items-center gap-6 text-center">
           <div className="space-y-2">
-            <h1 className="font-display text-sm uppercase text-ink">Invalid room code</h1>
+            <h1 className="font-display text-sm uppercase text-ink">Couldn’t join</h1>
             <p className="font-body text-sm text-muted">
-              Room codes are 4 letters. Check the TV and try again.
+              Scan the QR on the TV again to join.
             </p>
           </div>
           <Button fullWidth size="lg" onClick={() => navigate("/")}>
@@ -139,6 +158,24 @@ export default function PlayPage() {
         state: nextState,
       });
     }
+    if (isTttActivity(activity)) {
+      const nextPlayers = activity.state.players.filter((entry) => entry.id !== playerId);
+      const nextState: TicTacToeState = { ...activity.state, players: nextPlayers };
+      void publishRoomActivity(code, {
+        phase: activity.phase,
+        gameId: "tic-tac-toe",
+        state: nextState,
+      });
+    }
+    if (isRpsActivity(activity)) {
+      const nextPlayers = activity.state.players.filter((entry) => entry.id !== playerId);
+      const nextState: RpsState = { ...activity.state, players: nextPlayers };
+      void publishRoomActivity(code, {
+        phase: activity.phase,
+        gameId: "rock-paper-scissors",
+        state: nextState,
+      });
+    }
     setPlayer(null);
     setServerError(null);
     setPhase("form");
@@ -149,6 +186,26 @@ export default function PlayPage() {
     const published = await publishRoomActivity(code, {
       phase: activityPhase,
       gameId: "connect-four",
+      state: next,
+    });
+    setActivity(published);
+  }
+
+  async function publishTttState(next: TicTacToeState) {
+    const activityPhase = next.status === "lobby" ? "ttt-lobby" : "ttt-play";
+    const published = await publishRoomActivity(code, {
+      phase: activityPhase,
+      gameId: "tic-tac-toe",
+      state: next,
+    });
+    setActivity(published);
+  }
+
+  async function publishRpsState(next: RpsState) {
+    const activityPhase = next.status === "lobby" ? "rps-lobby" : "rps-play";
+    const published = await publishRoomActivity(code, {
+      phase: activityPhase,
+      gameId: "rock-paper-scissors",
       state: next,
     });
     setActivity(published);
@@ -169,6 +226,52 @@ export default function PlayPage() {
             state={activity.state}
             onStateChange={(next) => {
               void publishC4State(next);
+            }}
+            onLeave={handleLeave}
+          />
+        </motion.div>
+      </main>
+    );
+  }
+
+  if (phase === "joined" && player && isTttActivity(activity)) {
+    return (
+      <main className="flex min-h-screen items-center justify-center p-6">
+        <motion.div
+          className="w-full max-w-sm"
+          initial={reduceMotion ? false : { opacity: 0, y: 16 }}
+          animate={{ opacity: 1, y: 0 }}
+          transition={{ duration: reduceMotion ? 0 : 0.3 }}
+        >
+          <TicTacToePhone
+            playerId={playerId}
+            playerName={player.name}
+            state={activity.state}
+            onStateChange={(next) => {
+              void publishTttState(next);
+            }}
+            onLeave={handleLeave}
+          />
+        </motion.div>
+      </main>
+    );
+  }
+
+  if (phase === "joined" && player && isRpsActivity(activity)) {
+    return (
+      <main className="flex min-h-screen items-center justify-center p-6">
+        <motion.div
+          className="w-full max-w-sm"
+          initial={reduceMotion ? false : { opacity: 0, y: 16 }}
+          animate={{ opacity: 1, y: 0 }}
+          transition={{ duration: reduceMotion ? 0 : 0.3 }}
+        >
+          <RpsPhone
+            playerId={playerId}
+            playerName={player.name}
+            state={activity.state}
+            onStateChange={(next) => {
+              void publishRpsState(next);
             }}
             onLeave={handleLeave}
           />

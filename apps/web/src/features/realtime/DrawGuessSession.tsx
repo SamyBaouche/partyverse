@@ -174,7 +174,7 @@ export function DrawGuessSession({
           />
           {import.meta.env.DEV ? (
             <p className="mt-4 text-center font-body text-xs text-muted">
-              Party store · {party.connection} · mock round starting…
+              Connected · {party.connection} · round starting…
             </p>
           ) : null}
         </motion.div>

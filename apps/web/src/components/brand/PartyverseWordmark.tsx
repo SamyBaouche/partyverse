@@ -22,7 +22,7 @@ export function PartyverseWordmark({ className }: PartyverseWordmarkProps) {
   return (
     <span
       className={cn(
-        "inline-flex flex-wrap items-end font-display text-lg uppercase leading-none tracking-tight sm:text-xl",
+        "inline-flex flex-wrap items-end font-display text-xl uppercase leading-none tracking-tight sm:text-2xl",
         className,
       )}
       aria-label="Partyverse"

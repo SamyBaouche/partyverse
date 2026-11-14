@@ -13,7 +13,7 @@ type JoinFormProps = {
 };
 
 export function JoinForm({
-  code,
+  code: _code,
   name,
   onNameChange,
   submitting,
@@ -36,18 +36,12 @@ export function JoinForm({
   const error = fieldError ?? serverError ?? undefined;
 
   return (
-    <Card className="flex w-full max-w-sm flex-col gap-6 sm:max-w-md">
-      <div className="flex flex-col items-center gap-4 text-center">
-        <PartyverseWordmark className="scale-90 sm:scale-100" />
-        <div>
-          <p className="font-display text-[10px] uppercase tracking-[0.35em] text-muted">Room</p>
-          <p
-            className="room-code font-display mt-2 text-4xl leading-tight tracking-[0.12em] sm:text-5xl"
-            aria-label={`Room code ${code}`}
-          >
-            {code.split("").join(" ")}
-          </p>
-        </div>
+    <Card className="flex w-full max-w-md flex-col gap-6 sm:max-w-lg sm:gap-7">
+      <div className="flex flex-col items-center gap-4 text-center sm:gap-5">
+        <PartyverseWordmark className="text-xl sm:text-2xl" />
+        <p className="font-display text-[11px] uppercase tracking-[0.35em] text-muted sm:text-xs">
+          Join the party
+        </p>
       </div>
 
       <form

@@ -1,8 +1,8 @@
 import type { RoomErrorCode } from "@partyverse/shared";
 
 export const ROOM_ERROR_MESSAGES: Record<RoomErrorCode, string> = {
-  INVALID_INPUT: "Invalid room code or nickname.",
-  ROOM_NOT_FOUND: "Room not found. Check the code on the TV.",
+  INVALID_INPUT: "Invalid nickname.",
+  ROOM_NOT_FOUND: "Room not found. Scan the QR on the TV again.",
   ROOM_FULL: "This room is full (8 players max).",
   GAME_STARTED: "This game has already started.",
   NAME_TAKEN: "This nickname is already taken.",

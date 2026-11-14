@@ -1,9 +1,8 @@
-import { useEffect, useRef, useState } from "react";
+import { useEffect, useRef } from "react";
 import type { Player } from "@partyverse/shared";
 import { AnimatePresence, motion, useReducedMotion } from "motion/react";
 import { QRCodeSVG } from "qrcode.react";
 import { Button, Card, PlayerAvatar } from "../../components/ui";
-import { copyText } from "../../lib/copyText";
 import { useSound } from "../../lib/audio";
 
 type HostLobbyProps = {
@@ -40,7 +39,6 @@ function LobbyPlayerRow({ player, index }: { player: Player; index: number }) {
 }
 
 export function HostLobby({
-  code,
   joinUrl,
   players,
   maxPlayers,
@@ -53,7 +51,6 @@ export function HostLobby({
   const { play } = useSound();
   const previousCount = useRef(players.length);
   const reduceMotion = useReducedMotion();
-  const [copied, setCopied] = useState(false);
 
   useEffect(() => {
     if (players.length > previousCount.current) {
@@ -61,14 +58,6 @@ export function HostLobby({
     }
     previousCount.current = players.length;
   }, [players.length, play]);
-
-  useEffect(() => {
-    if (!copied) {
-      return;
-    }
-    const id = window.setTimeout(() => setCopied(false), 1800);
-    return () => window.clearTimeout(id);
-  }, [copied]);
 
   return (
     <motion.div
@@ -79,43 +68,21 @@ export function HostLobby({
     >
       <div className="grid items-start gap-8 lg:grid-cols-2 lg:gap-10">
         <section className="flex flex-col items-center gap-5 text-center">
-          <p className="font-display text-[10px] uppercase tracking-[0.35em] text-ink/70">Room</p>
-          <p
-            className="room-code font-display text-4xl leading-tight tracking-[0.14em] sm:text-5xl md:text-6xl"
-            aria-label={`Room code ${code}`}
-          >
-            {code.split("").join(" ")}
+          <p className="font-display text-[10px] uppercase tracking-[0.35em] text-ink/70">
+            Scan to join
           </p>
 
-          <div className="toy-panel w-full max-w-[240px] rounded-[1.4rem] bg-white p-3 sm:p-4">
+          <div className="toy-panel w-full max-w-[260px] rounded-[1.4rem] bg-white p-3 sm:p-4">
             <QRCodeSVG
               value={joinUrl}
               className="h-auto w-full"
-              size={200}
+              size={220}
               aria-label="Scan to join"
             />
           </div>
-
-          <div className="flex w-full max-w-sm flex-col gap-3">
-            <Button
-              variant="ghost"
-              size="md"
-              fullWidth
-              onClick={() => {
-                void copyText(joinUrl).then((ok) => {
-                  if (ok) {
-                    setCopied(true);
-                  }
-                });
-              }}
-            >
-              {copied ? "Copied!" : "Copy invite link"}
-            </Button>
-            <p className="break-all font-body text-xs text-ink/60 sm:text-sm">{joinUrl}</p>
-            <p className="sr-only" aria-live="polite">
-              {copied ? "Invite link copied" : ""}
-            </p>
-          </div>
+          <p className="max-w-xs font-body text-sm text-ink/75 sm:text-base">
+            Friends open the camera on their phone and scan this code.
+          </p>
         </section>
 
         <section>

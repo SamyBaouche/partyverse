@@ -4,11 +4,14 @@ import { AnimatePresence, motion, useReducedMotion } from "motion/react";
 import { Button } from "../components/ui";
 import { ConnectFourHost } from "../features/connectFour/ConnectFourHost";
 import { ConnectFourModePicker } from "../features/connectFour/ConnectFourModePicker";
-import { createLobbyState, createMock1v1Match } from "../features/connectFour/logic";
+import { createLobbyState } from "../features/connectFour/logic";
 import { DrawModePicker } from "../features/catalog/DrawModePicker";
 import { GameCatalog } from "../features/catalog/GameCatalog";
 import { HostLobby } from "../features/lobby/HostLobby";
 import { useMockLobby } from "../features/lobby/useMockLobby";
+import { RpsHost } from "../features/rps/RpsHost";
+import { RpsModePicker } from "../features/rps/RpsModePicker";
+import { createRpsLobby } from "../features/rps/logic";
 import {
   fetchRoomActivity,
   publishRoomActivity,
@@ -19,24 +22,50 @@ import type {
   ConnectFourMode,
   ConnectFourState,
   DrawMode,
+  DuelMode,
   RoomActivity,
+  RpsState,
+  TicTacToeState,
 } from "../features/session/types";
+import { TicTacToeHost } from "../features/ticTacToe/TicTacToeHost";
+import { TicTacToeModePicker } from "../features/ticTacToe/TicTacToeModePicker";
+import { createTttLobby } from "../features/ticTacToe/logic";
 import { useSound } from "../lib/audio";
 
 type HostPhase =
-  "catalog" | "draw-modes" | "lobby" | "draw-ready" | "c4-modes" | "c4-lobby" | "c4-play";
+  | "catalog"
+  | "draw-modes"
+  | "lobby"
+  | "draw-ready"
+  | "c4-modes"
+  | "c4-lobby"
+  | "c4-play"
+  | "ttt-modes"
+  | "ttt-lobby"
+  | "ttt-play"
+  | "rps-modes"
+  | "rps-lobby"
+  | "rps-play";
+
+const HOST_PHASES: HostPhase[] = [
+  "catalog",
+  "draw-modes",
+  "lobby",
+  "draw-ready",
+  "c4-modes",
+  "c4-lobby",
+  "c4-play",
+  "ttt-modes",
+  "ttt-lobby",
+  "ttt-play",
+  "rps-modes",
+  "rps-lobby",
+  "rps-play",
+];
 
 function readInitialPhase(raw: string | null): HostPhase {
-  if (
-    raw === "draw-modes" ||
-    raw === "lobby" ||
-    raw === "draw-ready" ||
-    raw === "catalog" ||
-    raw === "c4-modes" ||
-    raw === "c4-lobby" ||
-    raw === "c4-play"
-  ) {
-    return raw;
+  if (raw && (HOST_PHASES as string[]).includes(raw)) {
+    return raw as HostPhase;
   }
   return "catalog";
 }
@@ -51,6 +80,8 @@ export default function HostPage() {
   const [phase, setPhase] = useState<HostPhase>(() => readInitialPhase(params.get("phase")));
   const [selectedMode, setSelectedMode] = useState<"vote" | "duo" | null>(null);
   const [c4State, setC4State] = useState<ConnectFourState | null>(null);
+  const [tttState, setTttState] = useState<TicTacToeState | null>(null);
+  const [rpsState, setRpsState] = useState<RpsState | null>(null);
 
   useEffect(() => {
     const next = readInitialPhase(params.get("phase"));
@@ -64,7 +95,14 @@ export default function HostPage() {
   }, [code, phase]);
 
   useEffect(() => {
-    if (phase !== "c4-lobby" && phase !== "c4-play") {
+    if (
+      phase !== "c4-lobby" &&
+      phase !== "c4-play" &&
+      phase !== "ttt-lobby" &&
+      phase !== "ttt-play" &&
+      phase !== "rps-lobby" &&
+      phase !== "rps-play"
+    ) {
       return;
     }
     void fetchRoomActivity(code).then((activity) => {
@@ -72,10 +110,26 @@ export default function HostPage() {
         setC4State(activity.state);
         setPhase(activity.phase);
       }
+      if (activity.phase === "ttt-lobby" || activity.phase === "ttt-play") {
+        setTttState(activity.state);
+        setPhase(activity.phase);
+      }
+      if (activity.phase === "rps-lobby" || activity.phase === "rps-play") {
+        setRpsState(activity.state);
+        setPhase(activity.phase);
+      }
     });
     return subscribeRoomActivity(code, (activity) => {
       if (activity.phase === "c4-lobby" || activity.phase === "c4-play") {
         setC4State(activity.state);
+        setPhase(activity.phase);
+      }
+      if (activity.phase === "ttt-lobby" || activity.phase === "ttt-play") {
+        setTttState(activity.state);
+        setPhase(activity.phase);
+      }
+      if (activity.phase === "rps-lobby" || activity.phase === "rps-play") {
+        setRpsState(activity.state);
         setPhase(activity.phase);
       }
     });
@@ -97,6 +151,30 @@ export default function HostPage() {
     });
   }
 
+  async function publishTtt(next: TicTacToeState) {
+    setTttState(next);
+    const activityPhase = next.status === "lobby" ? "ttt-lobby" : "ttt-play";
+    setPhase(activityPhase);
+    navigate(`/host?phase=${activityPhase}`, { replace: true });
+    await setActivity({
+      phase: activityPhase,
+      gameId: "tic-tac-toe",
+      state: next,
+    });
+  }
+
+  async function publishRps(next: RpsState) {
+    setRpsState(next);
+    const activityPhase = next.status === "lobby" ? "rps-lobby" : "rps-play";
+    setPhase(activityPhase);
+    navigate(`/host?phase=${activityPhase}`, { replace: true });
+    await setActivity({
+      phase: activityPhase,
+      gameId: "rock-paper-scissors",
+      state: next,
+    });
+  }
+
   async function handleSelectGame(gameId: CatalogGameId) {
     if (gameId === "draw-guess") {
       void play("correct");
@@ -110,6 +188,20 @@ export default function HostPage() {
       setPhase("c4-modes");
       navigate("/host?phase=c4-modes", { replace: true });
       await setActivity({ phase: "c4-modes", gameId: "connect-four" });
+      return;
+    }
+    if (gameId === "tic-tac-toe") {
+      void play("correct");
+      setPhase("ttt-modes");
+      navigate("/host?phase=ttt-modes", { replace: true });
+      await setActivity({ phase: "ttt-modes", gameId: "tic-tac-toe" });
+      return;
+    }
+    if (gameId === "rock-paper-scissors") {
+      void play("correct");
+      setPhase("rps-modes");
+      navigate("/host?phase=rps-modes", { replace: true });
+      await setActivity({ phase: "rps-modes", gameId: "rock-paper-scissors" });
     }
   }
 
@@ -126,20 +218,26 @@ export default function HostPage() {
 
   async function handleSelectC4Mode(mode: ConnectFourMode) {
     void play("go");
-    // 1v1 mock: two randoms join and the match starts immediately.
-    if (mode === "1v1") {
-      const mock = createMock1v1Match();
-      await publishC4(mock);
-      return;
-    }
     const lobby = createLobbyState(mode);
     await publishC4(lobby);
+  }
+
+  async function handleSelectTttMode(mode: DuelMode) {
+    void play("go");
+    await publishTtt(createTttLobby(mode));
+  }
+
+  async function handleSelectRpsMode(mode: DuelMode) {
+    void play("go");
+    await publishRps(createRpsLobby(mode));
   }
 
   async function backToCatalog() {
     void play("click");
     setSelectedMode(null);
     setC4State(null);
+    setTttState(null);
+    setRpsState(null);
     navigate("/", { replace: true });
   }
 
@@ -232,6 +330,90 @@ export default function HostPage() {
           </motion.div>
         ) : null}
 
+        {phase === "ttt-modes" ? (
+          <motion.div
+            key="ttt-modes"
+            className="w-full"
+            initial={reduceMotion ? false : { opacity: 0, y: 16 }}
+            animate={{ opacity: 1, y: 0 }}
+            exit={reduceMotion ? undefined : { opacity: 0, y: -12 }}
+            transition={{ duration: reduceMotion ? 0 : 0.3 }}
+          >
+            <TicTacToeModePicker
+              onSelect={(mode) => {
+                void handleSelectTttMode(mode);
+              }}
+              onBack={() => {
+                void backToCatalog();
+              }}
+            />
+          </motion.div>
+        ) : null}
+
+        {(phase === "ttt-lobby" || phase === "ttt-play") && tttState ? (
+          <motion.div
+            key="ttt-host"
+            className="w-full"
+            initial={reduceMotion ? false : { opacity: 0, y: 16 }}
+            animate={{ opacity: 1, y: 0 }}
+            exit={reduceMotion ? undefined : { opacity: 0, y: -12 }}
+            transition={{ duration: reduceMotion ? 0 : 0.3 }}
+          >
+            <TicTacToeHost
+              joinUrl={joinUrl}
+              state={tttState}
+              onStateChange={(next) => {
+                void publishTtt(next);
+              }}
+              onBack={() => {
+                void backToCatalog();
+              }}
+            />
+          </motion.div>
+        ) : null}
+
+        {phase === "rps-modes" ? (
+          <motion.div
+            key="rps-modes"
+            className="w-full"
+            initial={reduceMotion ? false : { opacity: 0, y: 16 }}
+            animate={{ opacity: 1, y: 0 }}
+            exit={reduceMotion ? undefined : { opacity: 0, y: -12 }}
+            transition={{ duration: reduceMotion ? 0 : 0.3 }}
+          >
+            <RpsModePicker
+              onSelect={(mode) => {
+                void handleSelectRpsMode(mode);
+              }}
+              onBack={() => {
+                void backToCatalog();
+              }}
+            />
+          </motion.div>
+        ) : null}
+
+        {(phase === "rps-lobby" || phase === "rps-play") && rpsState ? (
+          <motion.div
+            key="rps-host"
+            className="w-full"
+            initial={reduceMotion ? false : { opacity: 0, y: 16 }}
+            animate={{ opacity: 1, y: 0 }}
+            exit={reduceMotion ? undefined : { opacity: 0, y: -12 }}
+            transition={{ duration: reduceMotion ? 0 : 0.3 }}
+          >
+            <RpsHost
+              joinUrl={joinUrl}
+              state={rpsState}
+              onStateChange={(next) => {
+                void publishRps(next);
+              }}
+              onBack={() => {
+                void backToCatalog();
+              }}
+            />
+          </motion.div>
+        ) : null}
+
         {phase === "lobby" && selectedMode ? (
           <motion.div
             key="lobby"
@@ -246,7 +428,7 @@ export default function HostPage() {
                 Draw Guess · {selectedMode}
               </p>
               <h1 className="font-display text-lg uppercase tracking-wide text-ink sm:text-xl">
-                Invite the room
+                Scan to join
               </h1>
             </div>
             <HostLobby

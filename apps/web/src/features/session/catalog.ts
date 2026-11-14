@@ -2,19 +2,27 @@ import type { CatalogGame, DrawMode } from "./types";
 
 export const CATALOG_GAMES: CatalogGame[] = [
   {
-    id: "tic-tac-toe",
-    title: "Tic-Tac-Toe",
-    tagline: "THREE IN A ROW",
-    blurb: "The classic 30-second showdown. Loser picks the next game.",
-    accent: "#FFE566",
-    locked: true,
-  },
-  {
     id: "connect-four",
     title: "Connect Four",
     tagline: "DROP & STACK",
     blurb: "Drop discs, block sneaky diagonals, line up four first.",
-    accent: "#86E3C2",
+    accent: "#2452FF",
+    locked: false,
+  },
+  {
+    id: "draw-guess",
+    title: "Draw Guess",
+    tagline: "DRAW & GUESS",
+    blurb: "One draws the secret word. Everyone else races to guess it live.",
+    accent: "#5E9E6C",
+    locked: false,
+  },
+  {
+    id: "tic-tac-toe",
+    title: "Tic-Tac-Toe",
+    tagline: "THREE IN A ROW",
+    blurb: "The classic 30-second showdown. Loser picks the next game.",
+    accent: "#E8EEF5",
     locked: false,
   },
   {
@@ -22,15 +30,7 @@ export const CATALOG_GAMES: CatalogGame[] = [
     title: "Rock Paper Scissors",
     tagline: "PICK IN SECRET",
     blurb: "Both lock in at once, then reveal. Settle any argument.",
-    accent: "#FFB4C8",
-    locked: true,
-  },
-  {
-    id: "draw-guess",
-    title: "Draw Guess",
-    tagline: "DRAW & GUESS",
-    blurb: "One draws the secret word. Everyone else races to guess it live.",
-    accent: "#FFD18A",
+    accent: "#76A2AF",
     locked: false,
   },
   {

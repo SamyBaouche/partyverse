@@ -2,33 +2,7 @@ import { useEffect, useId, useRef, useState } from "react";
 import { AnimatePresence, motion, useReducedMotion } from "motion/react";
 import { Button } from "./ui";
 import { useSound } from "../lib/audio";
-import { useTheme, type ThemeMode } from "../lib/theme";
 import { cn } from "../lib/cn";
-
-function clearPartyverseCache(): number {
-  let keys = 0;
-  for (const store of [localStorage, sessionStorage]) {
-    try {
-      const toRemove: string[] = [];
-      for (let i = 0; i < store.length; i += 1) {
-        const key = store.key(i);
-        if (key?.startsWith("partyverse.")) {
-          toRemove.push(key);
-        }
-      }
-      for (const key of toRemove) {
-        store.removeItem(key);
-        keys += 1;
-      }
-    } catch {
-      // ignore
-    }
-  }
-  if (typeof caches !== "undefined") {
-    void caches.keys().then((names) => Promise.all(names.map((name) => caches.delete(name))));
-  }
-  return keys;
-}
 
 function GearIcon({ className }: { className?: string }) {
   return (
@@ -53,7 +27,6 @@ function GearIcon({ className }: { className?: string }) {
 
 export function SettingsMenu() {
   const [open, setOpen] = useState(false);
-  const [cacheNote, setCacheNote] = useState<string | null>(null);
   const [savedNote, setSavedNote] = useState<string | null>(null);
   const rootRef = useRef<HTMLDivElement>(null);
   const panelId = useId();
@@ -70,12 +43,10 @@ export function SettingsMenu() {
     stopMusic,
     play,
   } = useSound();
-  const { theme, setTheme } = useTheme();
 
   const [draftMusic, setDraftMusic] = useState(musicEnabled);
   const [draftMuted, setDraftMuted] = useState(muted);
   const [draftVolume, setDraftVolume] = useState(volume);
-  const [draftTheme, setDraftTheme] = useState<ThemeMode>(theme);
 
   useEffect(() => {
     if (!open) {
@@ -84,9 +55,8 @@ export function SettingsMenu() {
     setDraftMusic(musicEnabled);
     setDraftMuted(muted);
     setDraftVolume(volume);
-    setDraftTheme(theme);
     setSavedNote(null);
-  }, [open, musicEnabled, muted, volume, theme]);
+  }, [open, musicEnabled, muted, volume]);
 
   useEffect(() => {
     if (!open) {
@@ -121,7 +91,6 @@ export function SettingsMenu() {
     setMusicEnabled(draftMusic);
     setMuted(draftMuted);
     setVolume(draftVolume);
-    setTheme(draftTheme);
 
     await unlock();
     if (draftMusic && !draftMuted) {
@@ -142,7 +111,13 @@ export function SettingsMenu() {
         aria-expanded={open}
         aria-controls={panelId}
         onClick={() => {
-          void play("click");
+          void (async () => {
+            await unlock();
+            await play("click");
+            if (musicEnabled && !muted && !open) {
+              await startMusic();
+            }
+          })();
           setOpen((previous) => !previous);
         }}
         className={cn(
@@ -158,20 +133,17 @@ export function SettingsMenu() {
           <motion.div
             id={panelId}
             role="dialog"
-            aria-label="Settings"
+            aria-label="Music settings"
             className="brutal-panel absolute right-0 mt-2 w-[min(20rem,calc(100vw-2rem))] overflow-hidden rounded-[1.4rem] bg-panel p-4"
             initial={reduceMotion ? false : { opacity: 0, y: -8, scale: 0.96 }}
             animate={{ opacity: 1, y: 0, scale: 1 }}
             exit={reduceMotion ? undefined : { opacity: 0, y: -6, scale: 0.98 }}
             transition={{ duration: reduceMotion ? 0 : 0.2 }}
           >
-            <p className="font-display text-[10px] uppercase tracking-[0.28em] text-ink">
-              Settings
-            </p>
+            <p className="font-display text-[10px] uppercase tracking-[0.28em] text-ink">Music</p>
 
             <div className="mt-4 space-y-3">
               <section className="space-y-3 rounded-2xl border-[3px] border-line bg-panel-muted p-3">
-                <p className="font-display text-[9px] uppercase tracking-widest text-ink">Music</p>
                 <label className="flex items-center justify-between gap-3 font-body text-sm text-ink">
                   <span>Background music</span>
                   <input
@@ -203,54 +175,6 @@ export function SettingsMenu() {
                     className="w-full accent-[var(--color-brand)]"
                   />
                 </label>
-              </section>
-
-              <section className="space-y-3 rounded-2xl border-[3px] border-line bg-panel-muted p-3">
-                <p className="font-display text-[9px] uppercase tracking-widest text-ink">Theme</p>
-                <div className="grid grid-cols-2 gap-2">
-                  <button
-                    type="button"
-                    onClick={() => setDraftTheme("dark")}
-                    className={cn(
-                      "rounded-xl border-[3px] border-line px-3 py-2 font-display text-[9px] uppercase tracking-wide",
-                      draftTheme === "dark"
-                        ? "bg-[#1a1a1a] text-[#f7f1e4]"
-                        : "bg-panel text-muted hover:bg-[#ffe566]/60",
-                    )}
-                  >
-                    Dark
-                  </button>
-                  <button
-                    type="button"
-                    onClick={() => setDraftTheme("light")}
-                    className={cn(
-                      "rounded-xl border-[3px] border-line px-3 py-2 font-display text-[9px] uppercase tracking-wide",
-                      draftTheme === "light"
-                        ? "bg-[#ffe566] text-[#1a1a1a]"
-                        : "bg-panel text-muted hover:bg-[#ffe566]/60",
-                    )}
-                  >
-                    Light
-                  </button>
-                </div>
-              </section>
-
-              <section className="space-y-2 rounded-2xl border-[3px] border-line bg-panel-muted p-3">
-                <p className="font-display text-[9px] uppercase tracking-widest text-ink">
-                  Performance
-                </p>
-                <button
-                  type="button"
-                  onClick={() => {
-                    const keys = clearPartyverseCache();
-                    setCacheNote(`Cleared ${keys} items`);
-                    void play("correct");
-                  }}
-                  className="w-full rounded-xl border-[3px] border-line bg-panel px-3 py-2.5 font-display text-[9px] uppercase tracking-wide text-ink shadow-[3px_3px_0_var(--color-hard-shadow)] hover:-translate-y-0.5"
-                >
-                  Clear cache
-                </button>
-                {cacheNote ? <p className="font-body text-xs text-muted">{cacheNote}</p> : null}
               </section>
 
               <Button fullWidth onClick={() => void handleSave()}>
