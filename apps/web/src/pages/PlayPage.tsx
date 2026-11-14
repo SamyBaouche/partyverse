@@ -24,63 +24,14 @@ import type {
 import { TicTacToePhone } from "../features/ticTacToe/TicTacToePhone";
 import { useSound } from "../lib/audio";
 import { getJoinUrl } from "../lib/joinOrigin";
-
-const NICKNAME_STORAGE_KEY = "partyverse.nickname";
-const PLAYER_ID_KEY = "partyverse.playerId";
+import { isC4Activity, isRpsActivity, isTttActivity } from "./play/activityGuards";
+import { readOrCreatePlayerId, readStoredNickname, saveNickname } from "./play/nicknameStorage";
 
 type JoinPhase = "form" | "submitting" | "joined";
 type MockRole = "drawer" | "guesser";
 
-function readStoredNickname(): string {
-  try {
-    return localStorage.getItem(NICKNAME_STORAGE_KEY) ?? "";
-  } catch {
-    return "";
-  }
-}
-
-function saveNickname(name: string): void {
-  try {
-    localStorage.setItem(NICKNAME_STORAGE_KEY, name);
-  } catch {
-    // Ignore quota / private mode failures
-  }
-}
-
 function readMockRole(value: string | null): MockRole {
   return value === "drawer" ? "drawer" : "guesser";
-}
-
-function readOrCreatePlayerId(): string {
-  try {
-    const existing = localStorage.getItem(PLAYER_ID_KEY);
-    if (existing) {
-      return existing;
-    }
-    const id = `p-${Math.random().toString(36).slice(2, 10)}`;
-    localStorage.setItem(PLAYER_ID_KEY, id);
-    return id;
-  } catch {
-    return `p-${Math.random().toString(36).slice(2, 10)}`;
-  }
-}
-
-function isC4Activity(
-  activity: RoomActivity,
-): activity is Extract<RoomActivity, { phase: "c4-lobby" | "c4-play" }> {
-  return activity.phase === "c4-lobby" || activity.phase === "c4-play";
-}
-
-function isTttActivity(
-  activity: RoomActivity,
-): activity is Extract<RoomActivity, { phase: "ttt-lobby" | "ttt-play" }> {
-  return activity.phase === "ttt-lobby" || activity.phase === "ttt-play";
-}
-
-function isRpsActivity(
-  activity: RoomActivity,
-): activity is Extract<RoomActivity, { phase: "rps-lobby" | "rps-play" }> {
-  return activity.phase === "rps-lobby" || activity.phase === "rps-play";
 }
 
 export default function PlayPage() {
