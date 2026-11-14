@@ -11,14 +11,20 @@ type PartyProviderProps = {
   selfId: string;
   selfName: string;
   role?: MockTransportOptions["role"];
-  /** Defaults to mock in DEV, pubsub in production. Override with `VITE_PARTY_TRANSPORT`. */
+  /** Defaults from env: `VITE_USE_MOCK=true` → mock; else pubsub (or `VITE_PARTY_TRANSPORT`). */
   mode?: PartyTransportMode;
   children: ReactNode;
 };
 
-function resolveMode(explicit?: PartyTransportMode): PartyTransportMode {
+export function resolvePartyTransportMode(explicit?: PartyTransportMode): PartyTransportMode {
   if (explicit) {
     return explicit;
+  }
+  if (import.meta.env.VITE_USE_MOCK === "true") {
+    return "mock";
+  }
+  if (import.meta.env.VITE_USE_MOCK === "false") {
+    return "pubsub";
   }
   const fromEnv = import.meta.env.VITE_PARTY_TRANSPORT;
   if (fromEnv === "mock" || fromEnv === "pubsub") {
@@ -39,13 +45,13 @@ export function PartyProvider({
   mode,
   children,
 }: PartyProviderProps) {
-  const resolved = resolveMode(mode);
+  const resolved = resolvePartyTransportMode(mode);
 
   useEffect(() => {
     const transport =
       resolved === "mock"
         ? createMockTransport({ selfId, selfName, role })
-        : createPubSubTransport({ code });
+        : createPubSubTransport({ code, userId: selfId });
 
     usePartyStore.getState().reset();
     usePartyStore.getState().applyMeta({ code, selfId, selfName });
@@ -60,6 +66,9 @@ export function PartyProvider({
       try {
         usePartyStore.getState().setConnection("connecting");
         await transport.connect();
+        if (!cancelled) {
+          usePartyStore.getState().setConnection("connected");
+        }
         if (cancelled) {
           transport.disconnect();
         }

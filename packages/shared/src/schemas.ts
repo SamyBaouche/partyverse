@@ -58,7 +58,20 @@ export const ClientMessage = z.discriminatedUnion("type", [
 export const ServerMessage = z.discriminatedUnion("type", [
   z.object({ type: z.literal("playerJoined"), player: Player }),
   z.object({ type: z.literal("playerLeft"), playerId: PlayerId }),
-  z.object({ type: z.literal("phaseChanged"), phase: Phase, round: z.number().int().min(0) }),
+  z.object({
+    type: z.literal("phaseChanged"),
+    phase: Phase,
+    round: z.number().int().min(0),
+    maxRounds: z.number().int().min(1).optional(),
+    drawerId: PlayerId.optional().nullable(),
+    wordLength: z.number().int().min(0).optional(),
+    /** Unix ms when the current phase timer ends (server-owned). */
+    endsAt: z.number().int().optional(),
+    /** Secret word — only included during the reveal phase for everyone. */
+    word: z.string().optional(),
+  }),
+  /** Drawer-only: the secret word for the current round (never broadcast to the room). */
+  z.object({ type: z.literal("yourWord"), word: z.string().min(1) }),
   z.object({ type: z.literal("strokeDrawn"), stroke: Stroke }),
   z.object({ type: z.literal("canvasCleared") }),
   z.object({ type: z.literal("guessResult"), playerId: PlayerId, correct: z.boolean() }),

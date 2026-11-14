@@ -5,9 +5,10 @@ import { AnimatePresence, motion, useReducedMotion } from "motion/react";
 import { Button, Card } from "../components/ui";
 import { ConnectFourPhone } from "../features/connectFour/ConnectFourPhone";
 import { JoinForm } from "../features/join/JoinForm";
+import { joinRoom } from "../features/join/joinRoom";
 import { ROOM_ERROR_MESSAGES } from "../features/join/messages";
 import { mockJoin } from "../features/join/mockJoin";
-import { DrawGuessSession, PartyProvider } from "../features/realtime";
+import { DrawGuessSession, PartyProvider, resolvePartyTransportMode } from "../features/realtime";
 import { RpsPhone } from "../features/rps/RpsPhone";
 import {
   fetchRoomActivity,
@@ -22,6 +23,7 @@ import type {
 } from "../features/session/types";
 import { TicTacToePhone } from "../features/ticTacToe/TicTacToePhone";
 import { useSound } from "../lib/audio";
+import { getJoinUrl } from "../lib/joinOrigin";
 
 const NICKNAME_STORAGE_KEY = "partyverse.nickname";
 const PLAYER_ID_KEY = "partyverse.playerId";
@@ -91,11 +93,11 @@ export default function PlayPage() {
   const reduceMotion = useReducedMotion();
 
   const mockRole = readMockRole(searchParams.get("role"));
-  const forceMock = searchParams.get("mock") === "1";
+  const forceMock = searchParams.get("mock") === "1" || resolvePartyTransportMode() === "mock";
   const [phase, setPhase] = useState<JoinPhase>("form");
   const [name, setName] = useState(readStoredNickname);
   const [player, setPlayer] = useState<Player | null>(null);
-  const [playerId] = useState(readOrCreatePlayerId);
+  const [playerId, setPlayerId] = useState(readOrCreatePlayerId);
   const [serverError, setServerError] = useState<string | null>(null);
   const [activity, setActivity] = useState<RoomActivity>({ phase: "lobby" });
 
@@ -131,19 +133,26 @@ export default function PlayPage() {
     setServerError(null);
     setPhase("submitting");
 
-    const result = await mockJoin(code, nickname);
-    if (!result.ok) {
-      void play("wrong");
-      setServerError(ROOM_ERROR_MESSAGES[result.error]);
-      setPhase("form");
-      return;
-    }
+    try {
+      const result = forceMock ? await mockJoin(code, nickname) : await joinRoom(code, nickname);
+      if (!result.ok) {
+        void play("wrong");
+        setServerError(ROOM_ERROR_MESSAGES[result.error] ?? result.error);
+        setPhase("form");
+        return;
+      }
 
-    saveNickname(result.player.name);
-    setPlayer(result.player);
-    setName(result.player.name);
-    void play("join");
-    setPhase("joined");
+      saveNickname(result.player.name);
+      setPlayer(result.player);
+      setPlayerId(result.player.id);
+      setName(result.player.name);
+      void play("join");
+      setPhase("joined");
+    } catch (error) {
+      void play("wrong");
+      setServerError(error instanceof Error ? error.message : "Could not join. Try again.");
+      setPhase("form");
+    }
   }
 
   function handleLeave() {
@@ -282,17 +291,17 @@ export default function PlayPage() {
     return (
       <PartyProvider
         code={code}
-        selfId={playerId}
+        selfId={player.id}
         selfName={player.name}
         role={mockRole}
-        mode={forceMock ? "mock" : undefined}
+        mode={forceMock ? "mock" : "pubsub"}
       >
         <DrawGuessSession
           role={mockRole}
           playerName={player.name}
           activity={activity}
           onLeave={handleLeave}
-          joinUrl={`${window.location.origin}/play/${code}`}
+          joinUrl={getJoinUrl(code)}
           roomCode={code}
         />
       </PartyProvider>

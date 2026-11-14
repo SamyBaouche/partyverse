@@ -47,7 +47,7 @@ export function HostLobby({
   starting = false,
 }: HostLobbyProps) {
   const emptySlots = Math.max(0, maxPlayers - players.length);
-  const canStart = players.length >= 1;
+  const canStart = players.length >= 2;
   const { play } = useSound();
   const previousCount = useRef(players.length);
   const reduceMotion = useReducedMotion();
@@ -80,8 +80,9 @@ export function HostLobby({
               aria-label="Scan to join"
             />
           </div>
+          <p className="max-w-sm break-all font-body text-xs text-muted">{joinUrl}</p>
           <p className="max-w-xs font-body text-sm text-ink/75 sm:text-base">
-            Friends open the camera on their phone and scan this code.
+            Friends open the camera on their phone and scan this code. Same Wi‑Fi as the TV.
           </p>
         </section>
 

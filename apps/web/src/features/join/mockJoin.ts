@@ -1,9 +1,10 @@
 import { PlayerName, type Player, type RoomErrorCode } from "@partyverse/shared";
+import { newClientId } from "../../lib/id";
 
 export type MockJoinResult = { ok: true; player: Player } | { ok: false; error: RoomErrorCode };
 
 export async function mockJoin(code: string, name: string): Promise<MockJoinResult> {
-  await new Promise((resolve) => setTimeout(resolve, 600));
+  await new Promise((resolve) => setTimeout(resolve, 200));
 
   if (code === "FULL") {
     return { ok: false, error: "ROOM_FULL" };
@@ -22,7 +23,7 @@ export async function mockJoin(code: string, name: string): Promise<MockJoinResu
   return {
     ok: true,
     player: {
-      id: crypto.randomUUID(),
+      id: newClientId("mock"),
       name: parsedName,
       score: 0,
     },

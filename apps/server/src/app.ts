@@ -1,5 +1,16 @@
 import Fastify from "fastify";
+import fastifyExpress from "@fastify/express";
+import { WebPubSubServiceClient } from "@azure/web-pubsub";
 import { getRoomActivity, setRoomActivity, type RoomActivity } from "./session.js";
+import { GameSessionManager } from "./game/session.js";
+import {
+  AzureRealtimePublisher,
+  createAzureTokenFn,
+  type ClientAccessTokenFn,
+  type RealtimePublisher,
+} from "./realtime/publisher.js";
+import { registerApiRoutes } from "./realtime/routes.js";
+import { createWebPubSubEventHandler } from "./realtime/eventHandler.js";
 
 const RoomActivityBody = {
   type: "object",
@@ -57,12 +68,43 @@ function isRoomActivity(value: unknown): value is RoomActivity {
   return false;
 }
 
-export function buildApp() {
+export type BuildAppOptions = {
+  sessions?: GameSessionManager;
+  publisher?: RealtimePublisher;
+  getClientAccessToken?: ClientAccessTokenFn;
+  /** When set, mounts the Azure Web PubSub event handler (skipped in pure unit tests). */
+  webPubSub?: {
+    connectionString: string;
+    hub: string;
+    allowedEndpoints?: string[];
+  };
+};
+
+export async function buildApp(options: BuildAppOptions = {}) {
   const app = Fastify({ logger: true });
+
+  let publisher = options.publisher;
+  let getClientAccessToken = options.getClientAccessToken;
+  let serviceClient: WebPubSubServiceClient | undefined;
+
+  if (options.webPubSub) {
+    serviceClient = new WebPubSubServiceClient(
+      options.webPubSub.connectionString,
+      options.webPubSub.hub,
+    );
+    publisher = publisher ?? new AzureRealtimePublisher(serviceClient);
+    getClientAccessToken = getClientAccessToken ?? createAzureTokenFn(serviceClient);
+  }
+
+  if (!publisher || !getClientAccessToken) {
+    throw new Error("buildApp requires publisher + getClientAccessToken, or webPubSub config");
+  }
+
+  const sessions = options.sessions ?? new GameSessionManager({ publisher });
 
   app.addHook("onRequest", async (_request, reply) => {
     reply.header("Access-Control-Allow-Origin", "*");
-    reply.header("Access-Control-Allow-Methods", "GET, PUT, OPTIONS");
+    reply.header("Access-Control-Allow-Methods", "GET, POST, PUT, OPTIONS");
     reply.header("Access-Control-Allow-Headers", "Content-Type");
   });
 
@@ -73,6 +115,8 @@ export function buildApp() {
   app.get("/health", async () => {
     return { status: "ok", uptime: process.uptime() };
   });
+
+  await registerApiRoutes(app, { sessions, getClientAccessToken });
 
   app.get<{ Params: { code: string } }>("/api/rooms/:code/activity", async (request, reply) => {
     const code = request.params.code.toUpperCase();
@@ -98,5 +142,17 @@ export function buildApp() {
     },
   );
 
-  return app;
+  if (options.webPubSub) {
+    await app.register(fastifyExpress);
+    const handler = createWebPubSubEventHandler({
+      hub: options.webPubSub.hub,
+      sessions,
+      publisher,
+      allowedEndpoints: options.webPubSub.allowedEndpoints,
+    });
+    // Express middleware for CloudEvents abuse-protection + event delivery.
+    app.use(handler.getMiddleware());
+  }
+
+  return { app, sessions, publisher };
 }

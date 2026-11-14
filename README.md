@@ -100,6 +100,40 @@ pnpm --filter @partyverse/server dev
 
 To try the UI on a phone, open the **Network** URL printed by Vite (same Wi-Fi as your computer), for example `http://<your-lan-ip>:5173/play/ABCD`. Do not use `localhost` in the QR / phone URL.
 
+Vite proxies `/api` to `http://localhost:3000`, so phones on the LAN talk to the same origin as the TV.
+
+### Run locally with Azure Web PubSub
+
+1. Create an Azure Web PubSub resource and copy its connection string.
+2. Copy the server env example and fill in secrets (never commit `.env`):
+
+```bash
+cp apps/server/.env.example apps/server/.env
+# Edit apps/server/.env:
+# WEBPUBSUB_CONNECTION_STRING=Endpoint=https://....webpubsub.azure.com;AccessKey=...;Version=1.0;
+# WEBPUBSUB_HUB=partyverse
+# PORT=3000
+```
+
+3. Point the hub event handler upstream at your machine with the [awps-tunnel](https://learn.microsoft.com/azure/azure-web-pubsub/howto-web-pubsub-tunnel-tool):
+
+```bash
+awps-tunnel run --hub partyverse --upstream http://localhost:3000
+```
+
+Configure the hub’s event handler URL to the tunnel’s public HTTPS endpoint (path `/eventhandler`). Clients get **no PubSub roles** — they only `sendEvent`; the server validates and broadcasts.
+
+4. Run the apps (real transport — do **not** set `VITE_USE_MOCK=true`):
+
+```bash
+pnpm --filter @partyverse/server dev
+pnpm --filter @partyverse/web dev
+```
+
+5. Open the TV at the Vite URL, pick Draw Guess, scan the QR on two phones, then Start match.
+
+Mock mode (no Azure): set `VITE_USE_MOCK=true` for the web app (or use `?mock=1` on `/play/:code`).
+
 ## Development pages
 
 Routes from `apps/web/src/main.tsx`:

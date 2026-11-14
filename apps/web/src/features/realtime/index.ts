@@ -1,7 +1,9 @@
 export { applyServerMessage, initialPartySnapshot } from "./applyServerMessage";
 export type { ConnectionStatus, PartySnapshot } from "./applyServerMessage";
 export { DrawGuessSession } from "./DrawGuessSession";
-export { PartyProvider } from "./PartyProvider";
+export { HostDrawBoard } from "./HostDrawBoard";
+export { useGameState, useRoomConnection, useSendMessage } from "./hooks";
+export { PartyProvider, resolvePartyTransportMode } from "./PartyProvider";
 export type { PartyTransportMode } from "./PartyProvider";
 export { usePartyStore } from "./partyStore";
 export { useParty, usePartyPhase, usePartyPlayers } from "./useParty";

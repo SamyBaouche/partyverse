@@ -65,12 +65,28 @@ export function applyServerMessage(state: PartySnapshot, message: ServerMessage)
         phase: message.phase,
         round: message.round,
         lastGuess: null,
+        drawerId: message.drawerId === undefined ? state.drawerId : message.drawerId,
+        wordLength: message.wordLength ?? state.wordLength,
+        endsAt: message.endsAt ?? state.endsAt,
       };
       if (message.phase === "drawing") {
         return {
           ...next,
           strokes: [],
           revealedWord: null,
+          secretWord: null,
+        };
+      }
+      if (message.phase === "reveal") {
+        return {
+          ...next,
+          revealedWord: message.word ?? state.revealedWord,
+          secretWord: null,
+          lastRoundCorrect: state.lastGuess?.correct ?? state.lastRoundCorrect,
+          lastGuesserId:
+            state.lastGuess?.correct === true
+              ? state.lastGuess.playerId
+              : (state.lastGuesserId ?? null),
         };
       }
       if (message.phase === "lobby") {
@@ -86,6 +102,8 @@ export function applyServerMessage(state: PartySnapshot, message: ServerMessage)
       }
       return next;
     }
+    case "yourWord":
+      return { ...state, secretWord: message.word, wordLength: message.word.length };
     case "strokeDrawn":
       return { ...state, strokes: [...state.strokes, message.stroke] };
     case "canvasCleared":
@@ -94,11 +112,13 @@ export function applyServerMessage(state: PartySnapshot, message: ServerMessage)
       return {
         ...state,
         lastGuess: { playerId: message.playerId, correct: message.correct },
+        lastRoundCorrect: message.correct ? true : state.lastRoundCorrect,
+        lastGuesserId: message.correct ? message.playerId : state.lastGuesserId,
       };
     case "scoresUpdated":
       return { ...state, players: message.players };
     case "error":
-      return { ...state, lastError: message.message, connection: "error" };
+      return { ...state, lastError: message.message };
     default:
       return state;
   }

@@ -1,56 +1,78 @@
+import { WebPubSubClient } from "@azure/web-pubsub-client";
+import type { ClientMessage } from "@partyverse/shared";
 import type { PartyTransport, PubSubTransportOptions } from "./types";
 
 /**
- * Real Azure Web PubSub transport (stub until #19 negotiate lands).
- * Same `PartyTransport` shape as the mock — UI stays transport-agnostic.
+ * Azure Web PubSub transport. Tokens come from `/api/negotiate` (no client roles).
+ * Outbound traffic is `sendEvent` only; inbound is `server-message` / `group-message`.
  */
 export function createPubSubTransport(options: PubSubTransportOptions): PartyTransport {
-  const negotiateUrl = options.negotiateUrl ?? `/api/negotiate?code=${options.code}`;
   const listeners = new Set<(raw: unknown) => void>();
-  let socket: WebSocket | null = null;
+  let client: WebPubSubClient | null = null;
+
+  function emit(raw: unknown) {
+    for (const listener of listeners) {
+      listener(raw);
+    }
+  }
+
+  function ingestPayload(data: unknown) {
+    if (data == null) {
+      return;
+    }
+    if (typeof data === "string") {
+      try {
+        emit(JSON.parse(data));
+      } catch {
+        // Ignore non-JSON frames
+      }
+      return;
+    }
+    emit(data);
+  }
 
   return {
     async connect() {
-      const response = await fetch(negotiateUrl);
-      if (!response.ok) {
-        throw new Error(`Negotiate failed (${response.status})`);
-      }
-      const data = (await response.json()) as { url?: string };
-      if (!data.url) {
-        throw new Error("Negotiate response missing url");
-      }
-
-      await new Promise<void>((resolve, reject) => {
-        const ws = new WebSocket(data.url!);
-        socket = ws;
-        ws.addEventListener("open", () => resolve());
-        ws.addEventListener("error", () => reject(new Error("WebSocket connection failed")));
-        ws.addEventListener("message", (event) => {
-          try {
-            const raw = typeof event.data === "string" ? JSON.parse(event.data) : event.data;
-            for (const listener of listeners) {
-              listener(raw);
-            }
-          } catch {
-            // Ignore non-JSON frames
+      const next = new WebPubSubClient({
+        getClientAccessUrl: async () => {
+          const url =
+            options.negotiateUrl ??
+            `/api/negotiate?code=${encodeURIComponent(options.code)}&userId=${encodeURIComponent(options.userId)}`;
+          const response = await fetch(url);
+          if (!response.ok) {
+            throw new Error(`Negotiate failed (${response.status})`);
           }
-        });
-        ws.addEventListener("close", () => {
-          socket = null;
-        });
+          const body = (await response.json()) as { url?: string };
+          if (!body.url) {
+            throw new Error("Negotiate response missing url");
+          }
+          return body.url;
+        },
       });
+
+      next.on("server-message", (event) => {
+        ingestPayload(event.message.data);
+      });
+      next.on("group-message", (event) => {
+        ingestPayload(event.message.data);
+      });
+
+      await next.start();
+      client = next;
     },
 
     disconnect() {
-      socket?.close();
-      socket = null;
+      if (client) {
+        void client.stop();
+        client = null;
+      }
     },
 
-    send(message) {
-      if (!socket || socket.readyState !== WebSocket.OPEN) {
-        throw new Error("WebSocket is not open");
+    send(message: ClientMessage) {
+      if (!client) {
+        throw new Error("Web PubSub client is not connected");
       }
-      socket.send(JSON.stringify(message));
+      void client.sendEvent("message", message, "json");
     },
 
     subscribe(onMessage) {
