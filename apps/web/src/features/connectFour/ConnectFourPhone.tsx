@@ -2,11 +2,7 @@ import { useEffect, useRef, useState } from "react";
 import { Button } from "../../components/ui";
 import { useSound } from "../../lib/audio";
 import { cn } from "../../lib/cn";
-import type {
-  ConnectFourColor,
-  ConnectFourPlayer,
-  ConnectFourState,
-} from "../session/types";
+import type { ConnectFourColor, ConnectFourPlayer, ConnectFourState } from "../session/types";
 import {
   applyDrop,
   canJoinTeam,
@@ -55,8 +51,7 @@ export function ConnectFourPhone({
   const stateRef = useRef(state);
   stateRef.current = state;
 
-  const myTurn =
-    !!me && state.status === "playing" && !state.winner && state.turn === me.team;
+  const myTurn = !!me && state.status === "playing" && !state.winner && state.turn === me.team;
 
   useEffect(() => {
     if (!myTurn || !motionReady) {

@@ -85,15 +85,18 @@ export function ConnectFourHost({
             <p className="inline-flex rounded-full border-[3px] border-ink bg-[#86e3c2] px-3 py-1 font-display text-[9px] uppercase tracking-[0.18em] text-ink">
               Connect Four · {state.mode}
             </p>
-            <p className="room-code font-display text-4xl sm:text-5xl" aria-label={`Room code ${code}`}>
+            <p
+              className="room-code font-display text-4xl sm:text-5xl"
+              aria-label={`Room code ${code}`}
+            >
               {code}
             </p>
             <div className="toy-panel rounded-[1.4rem] bg-white p-4">
               <QRCodeSVG value={joinUrl} size={220} aria-label="Scan to join" />
             </div>
             <p className="font-body text-sm text-ink/75">
-              Scan to join a team — need {requiredPlayers(state.mode)} players
-              ({teamCount(state.players, "yellow") + teamCount(state.players, "red")}/
+              Scan to join a team — need {requiredPlayers(state.mode)} players (
+              {teamCount(state.players, "yellow") + teamCount(state.players, "red")}/
               {requiredPlayers(state.mode)})
             </p>
           </section>

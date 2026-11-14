@@ -10,7 +10,10 @@ type GameHoverDemoProps = {
 export function GameHoverDemo({ id, accent }: GameHoverDemoProps) {
   return (
     <div className="game-demo absolute inset-0 overflow-hidden" aria-hidden>
-      <div className="absolute inset-0" style={{ background: `linear-gradient(160deg, ${accent}, #fff8 45%, ${accent}cc)` }} />
+      <div
+        className="absolute inset-0"
+        style={{ background: `linear-gradient(160deg, ${accent}, #fff8 45%, ${accent}cc)` }}
+      />
       {id === "draw-guess" ? (
         <div className="absolute inset-0 flex items-center justify-center bg-[#E8F4FF] p-4">
           <GameIcon id="draw-guess" className="h-full w-full" />

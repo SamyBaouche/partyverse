@@ -79,9 +79,7 @@ export function SplashIntro({ onDone }: SplashIntroProps) {
           >
             <motion.div
               className="h-36 w-36 drop-shadow-[6px_6px_0_#1a1a1a] sm:h-44 sm:w-44"
-              animate={
-                phase === "hold" && !reduceMotion ? { scale: [1, 1.06, 1] } : { scale: 1 }
-              }
+              animate={phase === "hold" && !reduceMotion ? { scale: [1, 1.06, 1] } : { scale: 1 }}
               transition={
                 phase === "hold" && !reduceMotion
                   ? { duration: 1.8, repeat: Infinity, ease: "easeInOut" }
@@ -96,8 +94,14 @@ export function SplashIntro({ onDone }: SplashIntroProps) {
               {phase !== "zoom" ? (
                 <div className="flex items-center gap-2" aria-label="Loading">
                   <span className="splash-dot" />
-                  <span className="splash-dot splash-dot-delay-1" style={{ background: "#ffe566" }} />
-                  <span className="splash-dot splash-dot-delay-2" style={{ background: "#86e3c2" }} />
+                  <span
+                    className="splash-dot splash-dot-delay-1"
+                    style={{ background: "#ffe566" }}
+                  />
+                  <span
+                    className="splash-dot splash-dot-delay-2"
+                    style={{ background: "#86e3c2" }}
+                  />
                 </div>
               ) : null}
             </div>

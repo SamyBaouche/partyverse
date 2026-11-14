@@ -24,12 +24,28 @@ export function PartyverseLogo({ className, tone = "ui" }: PartyverseLogoProps) 
       aria-label="Partyverse"
     >
       <defs>
-        <linearGradient id="pv-tile" x1="18" y1="12" x2="100" y2="108" gradientUnits="userSpaceOnUse">
+        <linearGradient
+          id="pv-tile"
+          x1="18"
+          y1="12"
+          x2="100"
+          y2="108"
+          gradientUnits="userSpaceOnUse"
+        >
           <stop stopColor={fill} />
           <stop offset="1" stopColor={accent} />
         </linearGradient>
       </defs>
-      <rect x="10" y="10" width="100" height="100" rx="28" fill="url(#pv-tile)" stroke={ink} strokeWidth="5" />
+      <rect
+        x="10"
+        y="10"
+        width="100"
+        height="100"
+        rx="28"
+        fill="url(#pv-tile)"
+        stroke={ink}
+        strokeWidth="5"
+      />
       <rect x="22" y="22" width="76" height="76" rx="20" fill={ink} />
       <path
         d="M48 38c0-3.3 2.7-6 6-6h14c11 0 20 9 20 20s-9 20-20 20H60v16c0 3.3-2.7 6-6 6s-6-2.7-6-6V38z"
