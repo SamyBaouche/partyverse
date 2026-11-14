@@ -6,11 +6,13 @@ import { Button, Card } from "../components/ui";
 import { ConnectFourPhone } from "../features/connectFour/ConnectFourPhone";
 import { DrawerScreen } from "../features/drawing/DrawerScreen";
 import { GuesserScreen } from "../features/guess/GuesserScreen";
-import { useMockGuessRound } from "../features/guess/useMockGuessRound";
+import { useMockDrawGame, type MockRole } from "../features/guess/useMockDrawGame";
 import { JoinForm } from "../features/join/JoinForm";
 import { ROOM_ERROR_MESSAGES } from "../features/join/messages";
 import { mockJoin } from "../features/join/mockJoin";
 import { WaitingScreen } from "../features/join/WaitingScreen";
+import { RevealScreen } from "../features/reveal/RevealScreen";
+import { ScoreboardScreen } from "../features/scoreboard/ScoreboardScreen";
 import {
   fetchRoomActivity,
   publishRoomActivity,
@@ -23,8 +25,8 @@ const NICKNAME_STORAGE_KEY = "partyverse.nickname";
 const PLAYER_ID_KEY = "partyverse.playerId";
 const MOCK_DRAWING_DELAY_MS = 3000;
 
-type ScreenPhase = "form" | "submitting" | "waiting" | "drawing";
-type MockRole = "drawer" | "guesser";
+type ScreenPhase =
+  "form" | "submitting" | "waiting" | "drawing" | "reveal" | "roundScores" | "finalScores";
 
 function readStoredNickname(): string {
   try {
@@ -74,7 +76,6 @@ export default function PlayPage() {
   const parsedCode = RoomCode.safeParse(normalizedCode);
   const { play } = useSound();
   const reduceMotion = useReducedMotion();
-  const mockRound = useMockGuessRound();
 
   const mockRole = readMockRole(searchParams.get("role"));
   const [phase, setPhase] = useState<ScreenPhase>("form");
@@ -83,6 +84,14 @@ export default function PlayPage() {
   const [playerId] = useState(readOrCreatePlayerId);
   const [serverError, setServerError] = useState<string | null>(null);
   const [activity, setActivity] = useState<RoomActivity>({ phase: "lobby" });
+
+  const mockGame = useMockDrawGame({
+    selfId: playerId,
+    selfName: player?.name ?? (name || "Player"),
+    role: mockRole,
+    maxRounds: 2,
+  });
+  const { beginGame } = mockGame;
 
   useEffect(() => {
     const parsed = RoomCode.safeParse(normalizedCode);
@@ -94,13 +103,21 @@ export default function PlayPage() {
     return subscribeRoomActivity(roomCode, setActivity);
   }, [normalizedCode]);
 
+  // Only depend on activity.phase — full `activity` is a new object every poll (~350ms)
+  // and would reset this timer forever.
   useEffect(() => {
-    if (!import.meta.env.DEV || phase !== "waiting" || isC4Activity(activity)) {
+    if (!import.meta.env.DEV || phase !== "waiting") {
       return;
     }
-    const timer = window.setTimeout(() => setPhase("drawing"), MOCK_DRAWING_DELAY_MS);
+    if (activity.phase === "c4-lobby" || activity.phase === "c4-play") {
+      return;
+    }
+    const timer = window.setTimeout(() => {
+      beginGame();
+      setPhase("drawing");
+    }, MOCK_DRAWING_DELAY_MS);
     return () => window.clearTimeout(timer);
-  }, [phase, activity]);
+  }, [phase, activity.phase, beginGame]);
 
   if (!parsedCode.success) {
     return (
@@ -166,19 +183,82 @@ export default function PlayPage() {
     setActivity(published);
   }
 
+  function goToReveal() {
+    setPhase("reveal");
+  }
+
+  function handleRevealDone() {
+    if (mockGame.hasMoreRounds) {
+      setPhase("roundScores");
+      return;
+    }
+    setPhase("finalScores");
+  }
+
+  function handleScoreboardContinue() {
+    if (phase === "finalScores") {
+      mockGame.beginGame();
+      setPhase("drawing");
+      return;
+    }
+    mockGame.startRound(mockGame.round + 1);
+    setPhase("drawing");
+  }
+
   if (phase === "drawing" && player && !isC4Activity(activity)) {
     if (mockRole === "drawer") {
-      return <DrawerScreen secretWord={mockRound.secretWord} endsAt={mockRound.endsAt} />;
+      return (
+        <DrawerScreen
+          secretWord={mockGame.secretWord}
+          endsAt={mockGame.endsAt}
+          onTimeout={() => {
+            mockGame.endRoundTimeout();
+            goToReveal();
+          }}
+        />
+      );
     }
     return (
       <main className="flex min-h-screen justify-center">
         <GuesserScreen
-          drawerName={mockRound.drawerName}
-          wordLength={mockRound.wordLength}
-          endsAt={mockRound.endsAt}
-          onGuess={mockRound.submitGuess}
+          drawerName={mockGame.drawerName}
+          wordLength={mockGame.wordLength}
+          endsAt={mockGame.endsAt}
+          onGuess={mockGame.submitGuess}
+          onCorrect={goToReveal}
+          onTimeout={() => {
+            mockGame.endRoundTimeout();
+            goToReveal();
+          }}
         />
       </main>
+    );
+  }
+
+  if (phase === "reveal" && player) {
+    if (!mockGame.lastResult) {
+      return null;
+    }
+    return (
+      <RevealScreen
+        result={mockGame.lastResult}
+        round={mockGame.round}
+        maxRounds={mockGame.maxRounds}
+        onDone={handleRevealDone}
+      />
+    );
+  }
+
+  if ((phase === "roundScores" || phase === "finalScores") && player) {
+    return (
+      <ScoreboardScreen
+        players={mockGame.players}
+        variant={phase === "finalScores" ? "final" : "betweenRounds"}
+        round={mockGame.round}
+        maxRounds={mockGame.maxRounds}
+        playerId={playerId}
+        onContinue={handleScoreboardContinue}
+      />
     );
   }
 

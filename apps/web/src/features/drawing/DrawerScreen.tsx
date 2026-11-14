@@ -1,6 +1,7 @@
-import { useEffect } from "react";
+import { useEffect, useRef } from "react";
 import type { Stroke } from "@partyverse/shared";
 import { RoundTimer } from "../round/RoundTimer";
+import { useRemainingTime } from "../round/useRemainingTime";
 import { DrawingCanvas } from "./DrawingCanvas";
 
 type DrawerScreenProps = {
@@ -8,9 +9,32 @@ type DrawerScreenProps = {
   endsAt: number;
   onStrokeChunk?: (stroke: Stroke) => void;
   onClear?: () => void;
+  /** Fired once when the round timer hits zero. */
+  onTimeout?: () => void;
 };
 
-export function DrawerScreen({ secretWord, endsAt, onStrokeChunk, onClear }: DrawerScreenProps) {
+export function DrawerScreen({
+  secretWord,
+  endsAt,
+  onStrokeChunk,
+  onClear,
+  onTimeout,
+}: DrawerScreenProps) {
+  const remaining = useRemainingTime(endsAt);
+  const timeoutSent = useRef(false);
+
+  useEffect(() => {
+    timeoutSent.current = false;
+  }, [endsAt]);
+
+  useEffect(() => {
+    if (remaining > 0 || timeoutSent.current) {
+      return;
+    }
+    timeoutSent.current = true;
+    onTimeout?.();
+  }, [onTimeout, remaining]);
+
   useEffect(() => {
     const previousOverflow = document.body.style.overflow;
     const previousOverscroll = document.body.style.overscrollBehavior;
@@ -39,6 +63,7 @@ export function DrawerScreen({ secretWord, endsAt, onStrokeChunk, onClear }: Dra
 
       <DrawingCanvas
         className="flex-1"
+        disabled={remaining <= 0}
         onStrokeChunk={(stroke) => {
           onStrokeChunk?.(stroke);
         }}
