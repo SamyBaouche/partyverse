@@ -3,14 +3,22 @@ import { motion, useReducedMotion } from "motion/react";
 import { Button, Card, PlayerAvatar } from "../../components/ui";
 import { celebrate } from "../../components/effects";
 import { useSound } from "../../lib/audio";
-import type { MockRoundResult } from "../guess/useMockDrawGame";
+
+export type RevealResult = {
+  word: string;
+  reason: "correct" | "timeout";
+  drawerName: string;
+  correctGuesserName: string | null;
+  guesserDelta: number;
+  drawerDelta: number;
+};
 
 type RevealScreenProps = {
-  result: MockRoundResult;
+  result: RevealResult;
   round: number;
   maxRounds: number;
   dwellMs?: number;
-  onDone: () => void;
+  onDone?: () => void;
 };
 
 export function RevealScreen({
@@ -23,7 +31,9 @@ export function RevealScreen({
   const reduceMotion = useReducedMotion();
   const { play } = useSound();
   const gotIt = result.reason === "correct";
-  const onDoneEvent = useEffectEvent(onDone);
+  const onDoneEvent = useEffectEvent(() => {
+    onDone?.();
+  });
 
   useEffect(() => {
     if (gotIt) {
@@ -89,9 +99,11 @@ export function RevealScreen({
             ) : null}
           </ul>
 
-          <Button fullWidth size="lg" onClick={onDone}>
-            {round < maxRounds ? "Next" : "See scores"}
-          </Button>
+          {onDone ? (
+            <Button fullWidth size="lg" onClick={onDone}>
+              {round < maxRounds ? "Next" : "See scores"}
+            </Button>
+          ) : null}
         </Card>
       </motion.div>
     </main>

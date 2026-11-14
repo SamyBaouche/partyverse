@@ -4,15 +4,10 @@ import { RoomCode, type Player } from "@partyverse/shared";
 import { AnimatePresence, motion, useReducedMotion } from "motion/react";
 import { Button, Card } from "../components/ui";
 import { ConnectFourPhone } from "../features/connectFour/ConnectFourPhone";
-import { DrawerScreen } from "../features/drawing/DrawerScreen";
-import { GuesserScreen } from "../features/guess/GuesserScreen";
-import { useMockDrawGame, type MockRole } from "../features/guess/useMockDrawGame";
 import { JoinForm } from "../features/join/JoinForm";
 import { ROOM_ERROR_MESSAGES } from "../features/join/messages";
 import { mockJoin } from "../features/join/mockJoin";
-import { WaitingScreen } from "../features/join/WaitingScreen";
-import { RevealScreen } from "../features/reveal/RevealScreen";
-import { ScoreboardScreen } from "../features/scoreboard/ScoreboardScreen";
+import { DrawGuessSession, PartyProvider } from "../features/realtime";
 import {
   fetchRoomActivity,
   publishRoomActivity,
@@ -23,10 +18,9 @@ import { useSound } from "../lib/audio";
 
 const NICKNAME_STORAGE_KEY = "partyverse.nickname";
 const PLAYER_ID_KEY = "partyverse.playerId";
-const MOCK_DRAWING_DELAY_MS = 3000;
 
-type ScreenPhase =
-  "form" | "submitting" | "waiting" | "drawing" | "reveal" | "roundScores" | "finalScores";
+type JoinPhase = "form" | "submitting" | "joined";
+type MockRole = "drawer" | "guesser";
 
 function readStoredNickname(): string {
   try {
@@ -78,20 +72,13 @@ export default function PlayPage() {
   const reduceMotion = useReducedMotion();
 
   const mockRole = readMockRole(searchParams.get("role"));
-  const [phase, setPhase] = useState<ScreenPhase>("form");
+  const forceMock = searchParams.get("mock") === "1";
+  const [phase, setPhase] = useState<JoinPhase>("form");
   const [name, setName] = useState(readStoredNickname);
   const [player, setPlayer] = useState<Player | null>(null);
   const [playerId] = useState(readOrCreatePlayerId);
   const [serverError, setServerError] = useState<string | null>(null);
   const [activity, setActivity] = useState<RoomActivity>({ phase: "lobby" });
-
-  const mockGame = useMockDrawGame({
-    selfId: playerId,
-    selfName: player?.name ?? (name || "Player"),
-    role: mockRole,
-    maxRounds: 2,
-  });
-  const { beginGame } = mockGame;
 
   useEffect(() => {
     const parsed = RoomCode.safeParse(normalizedCode);
@@ -102,22 +89,6 @@ export default function PlayPage() {
     void fetchRoomActivity(roomCode).then(setActivity);
     return subscribeRoomActivity(roomCode, setActivity);
   }, [normalizedCode]);
-
-  // Only depend on activity.phase — full `activity` is a new object every poll (~350ms)
-  // and would reset this timer forever.
-  useEffect(() => {
-    if (!import.meta.env.DEV || phase !== "waiting") {
-      return;
-    }
-    if (activity.phase === "c4-lobby" || activity.phase === "c4-play") {
-      return;
-    }
-    const timer = window.setTimeout(() => {
-      beginGame();
-      setPhase("drawing");
-    }, MOCK_DRAWING_DELAY_MS);
-    return () => window.clearTimeout(timer);
-  }, [phase, activity.phase, beginGame]);
 
   if (!parsedCode.success) {
     return (
@@ -155,7 +126,7 @@ export default function PlayPage() {
     setPlayer(result.player);
     setName(result.player.name);
     void play("join");
-    setPhase("waiting");
+    setPhase("joined");
   }
 
   function handleLeave() {
@@ -183,147 +154,73 @@ export default function PlayPage() {
     setActivity(published);
   }
 
-  function goToReveal() {
-    setPhase("reveal");
-  }
-
-  function handleRevealDone() {
-    if (mockGame.hasMoreRounds) {
-      setPhase("roundScores");
-      return;
-    }
-    setPhase("finalScores");
-  }
-
-  function handleScoreboardContinue() {
-    if (phase === "finalScores") {
-      mockGame.beginGame();
-      setPhase("drawing");
-      return;
-    }
-    mockGame.startRound(mockGame.round + 1);
-    setPhase("drawing");
-  }
-
-  if (phase === "drawing" && player && !isC4Activity(activity)) {
-    if (mockRole === "drawer") {
-      return (
-        <DrawerScreen
-          secretWord={mockGame.secretWord}
-          endsAt={mockGame.endsAt}
-          onTimeout={() => {
-            mockGame.endRoundTimeout();
-            goToReveal();
-          }}
-        />
-      );
-    }
+  if (phase === "joined" && player && isC4Activity(activity)) {
     return (
-      <main className="flex min-h-screen justify-center">
-        <GuesserScreen
-          drawerName={mockGame.drawerName}
-          wordLength={mockGame.wordLength}
-          endsAt={mockGame.endsAt}
-          onGuess={mockGame.submitGuess}
-          onCorrect={goToReveal}
-          onTimeout={() => {
-            mockGame.endRoundTimeout();
-            goToReveal();
-          }}
-        />
+      <main className="flex min-h-screen items-center justify-center p-6">
+        <motion.div
+          className="w-full max-w-sm"
+          initial={reduceMotion ? false : { opacity: 0, y: 16 }}
+          animate={{ opacity: 1, y: 0 }}
+          transition={{ duration: reduceMotion ? 0 : 0.3 }}
+        >
+          <ConnectFourPhone
+            playerId={playerId}
+            playerName={player.name}
+            state={activity.state}
+            onStateChange={(next) => {
+              void publishC4State(next);
+            }}
+            onLeave={handleLeave}
+          />
+        </motion.div>
       </main>
     );
   }
 
-  if (phase === "reveal" && player) {
-    if (!mockGame.lastResult) {
-      return null;
-    }
+  if (phase === "joined" && player) {
     return (
-      <RevealScreen
-        result={mockGame.lastResult}
-        round={mockGame.round}
-        maxRounds={mockGame.maxRounds}
-        onDone={handleRevealDone}
-      />
-    );
-  }
-
-  if ((phase === "roundScores" || phase === "finalScores") && player) {
-    return (
-      <ScoreboardScreen
-        players={mockGame.players}
-        variant={phase === "finalScores" ? "final" : "betweenRounds"}
-        round={mockGame.round}
-        maxRounds={mockGame.maxRounds}
-        playerId={playerId}
-        onContinue={handleScoreboardContinue}
-      />
+      <PartyProvider
+        code={code}
+        selfId={playerId}
+        selfName={player.name}
+        role={mockRole}
+        mode={forceMock ? "mock" : undefined}
+      >
+        <DrawGuessSession
+          role={mockRole}
+          playerName={player.name}
+          activity={activity}
+          onLeave={handleLeave}
+        />
+      </PartyProvider>
     );
   }
 
   return (
     <main className="flex min-h-screen items-center justify-center p-6">
       <AnimatePresence mode="wait">
-        {phase === "waiting" && player && isC4Activity(activity) ? (
-          <motion.div
-            key="c4-phone"
-            className="w-full max-w-sm"
-            initial={reduceMotion ? false : { opacity: 0, y: 16 }}
-            animate={{ opacity: 1, y: 0 }}
-            exit={reduceMotion ? undefined : { opacity: 0, y: -12 }}
-            transition={{ duration: reduceMotion ? 0 : 0.3 }}
-          >
-            <ConnectFourPhone
-              playerId={playerId}
-              playerName={player.name}
-              state={activity.state}
-              onStateChange={(next) => {
-                void publishC4State(next);
-              }}
-              onLeave={handleLeave}
-            />
-          </motion.div>
-        ) : phase === "waiting" && player ? (
-          <motion.div
-            key="waiting"
-            className="w-full max-w-sm"
-            initial={reduceMotion ? false : { opacity: 0, y: 16 }}
-            animate={{ opacity: 1, y: 0 }}
-            exit={reduceMotion ? undefined : { opacity: 0, y: -12 }}
-            transition={{ duration: reduceMotion ? 0 : 0.3 }}
-          >
-            <WaitingScreen name={player.name} activity={activity} onLeave={handleLeave} />
-            {import.meta.env.DEV ? (
-              <p className="mt-4 text-center font-body text-xs text-muted">
-                Mock round starts in a few seconds ({mockRole})…
-              </p>
-            ) : null}
-          </motion.div>
-        ) : (
-          <motion.div
-            key="form"
-            className="w-full max-w-sm"
-            initial={reduceMotion ? false : { opacity: 0, y: 16 }}
-            animate={{ opacity: 1, y: 0 }}
-            exit={reduceMotion ? undefined : { opacity: 0, y: -12 }}
-            transition={{ duration: reduceMotion ? 0 : 0.3 }}
-          >
-            <JoinForm
-              code={code}
-              name={name}
-              onNameChange={(value) => {
-                setServerError(null);
-                setName(value);
-              }}
-              submitting={phase === "submitting"}
-              serverError={serverError}
-              onSubmit={(nickname) => {
-                void handleJoin(nickname);
-              }}
-            />
-          </motion.div>
-        )}
+        <motion.div
+          key="form"
+          className="w-full max-w-sm"
+          initial={reduceMotion ? false : { opacity: 0, y: 16 }}
+          animate={{ opacity: 1, y: 0 }}
+          exit={reduceMotion ? undefined : { opacity: 0, y: -12 }}
+          transition={{ duration: reduceMotion ? 0 : 0.3 }}
+        >
+          <JoinForm
+            code={code}
+            name={name}
+            onNameChange={(value) => {
+              setServerError(null);
+              setName(value);
+            }}
+            submitting={phase === "submitting"}
+            serverError={serverError}
+            onSubmit={(nickname) => {
+              void handleJoin(nickname);
+            }}
+          />
+        </motion.div>
       </AnimatePresence>
     </main>
   );
