@@ -1,4 +1,12 @@
-import { createContext, useCallback, useContext, useMemo, useState, type ReactNode } from "react";
+import {
+  createContext,
+  useCallback,
+  useContext,
+  useEffect,
+  useMemo,
+  useState,
+  type ReactNode,
+} from "react";
 import { audioEngine } from "./AudioEngine";
 import type { SoundName } from "./types";
 
@@ -42,6 +50,9 @@ export function SoundProvider({ children }: { children: ReactNode }) {
   const setMuted = useCallback((next: boolean) => {
     audioEngine.setMuted(next);
     setMutedState(next);
+    if (!next && audioEngine.isMusicEnabled()) {
+      void audioEngine.startMusic();
+    }
   }, []);
 
   const setVolume = useCallback((next: number) => {
@@ -54,12 +65,55 @@ export function SoundProvider({ children }: { children: ReactNode }) {
     setMusicEnabledState(enabled);
     if (!enabled) {
       audioEngine.stopMusic();
+    } else if (!audioEngine.isMuted()) {
+      void audioEngine.startMusic();
     }
   }, []);
 
   const toggleMute = useCallback(() => {
     setMuted(!audioEngine.isMuted());
   }, [setMuted]);
+
+  // Keep audio unlocked + music alive after the first user gesture, across routes.
+  useEffect(() => {
+    let armed = false;
+
+    async function wake() {
+      try {
+        await audioEngine.unlock();
+        if (audioEngine.isMusicEnabled() && !audioEngine.isMuted()) {
+          if (!audioEngine.isMusicPlaying()) {
+            await audioEngine.startMusic();
+          }
+        }
+      } catch {
+        // ignore autoplay / unlock failures
+      }
+    }
+
+    function onGesture() {
+      void wake();
+      if (!armed) {
+        armed = true;
+      }
+    }
+
+    function onVisibility() {
+      if (document.visibilityState === "visible") {
+        void wake();
+      }
+    }
+
+    window.addEventListener("pointerdown", onGesture, { capture: true });
+    window.addEventListener("keydown", onGesture, { capture: true });
+    document.addEventListener("visibilitychange", onVisibility);
+
+    return () => {
+      window.removeEventListener("pointerdown", onGesture, { capture: true });
+      window.removeEventListener("keydown", onGesture, { capture: true });
+      document.removeEventListener("visibilitychange", onVisibility);
+    };
+  }, []);
 
   const value = useMemo(
     () => ({

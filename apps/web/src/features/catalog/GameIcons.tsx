@@ -1,7 +1,19 @@
 import type { ComponentType, ReactNode } from "react";
+import connectFourArt from "../../assets/connect-four.png";
+import drawGuessArt from "../../assets/draw-guess.png";
+import rpsHandsArt from "../../assets/rps-hands.png";
+import ticTacToeArt from "../../assets/tic-tac-toe.png";
 import type { CatalogGameId } from "../session/types";
 
 type IconProps = { className?: string };
+
+/** Games that use full-bleed photo art in the catalog reel. */
+export const ART_BUBBLE_GAMES = new Set<CatalogGameId>([
+  "tic-tac-toe",
+  "connect-four",
+  "rock-paper-scissors",
+  "draw-guess",
+]);
 
 function Frame({ className, children }: { className?: string; children: ReactNode }) {
   return (
@@ -11,223 +23,35 @@ function Frame({ className, children }: { className?: string; children: ReactNod
   );
 }
 
-/** Pencil drawing on a tablet / screen. */
-export function DrawGuessIcon({ className }: IconProps) {
+function ArtIcon({ src, className }: { src: string; className?: string }) {
   return (
-    <Frame className={className}>
-      <rect
-        x="8"
-        y="8"
-        width="48"
-        height="40"
-        rx="6"
-        fill="#FFF8EC"
-        stroke="#1a1a1a"
-        strokeWidth="2.5"
-      />
-      <rect
-        x="12"
-        y="12"
-        width="40"
-        height="32"
-        rx="3"
-        fill="#E8F4FF"
-        stroke="#1a1a1a"
-        strokeWidth="1.75"
-      />
-      <path
-        d="M18 36c5-12 10-16 15-12 4 3 7 10 13 4"
-        stroke="#1a1a1a"
-        strokeWidth="2.2"
-        strokeLinecap="round"
-      />
-      <circle cx="40" cy="20" r="2.2" fill="#FF6B7A" stroke="#1a1a1a" strokeWidth="1.2" />
-      {/* Pencil */}
-      <g transform="translate(38 34) rotate(-35)">
-        <rect
-          x="0"
-          y="0"
-          width="18"
-          height="5"
-          rx="1.5"
-          fill="#FFE566"
-          stroke="#1a1a1a"
-          strokeWidth="1.5"
-        />
-        <path
-          d="M18 0l6 2.5L18 5"
-          fill="#F4C4A0"
-          stroke="#1a1a1a"
-          strokeWidth="1.3"
-          strokeLinejoin="round"
-        />
-        <rect
-          x="0"
-          y="0"
-          width="3.5"
-          height="5"
-          fill="#FF6B7A"
-          stroke="#1a1a1a"
-          strokeWidth="1.2"
-        />
-        <path d="M22 1.5l2 1-2 1" fill="#1a1a1a" />
-      </g>
-      <rect
-        x="22"
-        y="50"
-        width="20"
-        height="6"
-        rx="2"
-        fill="#D4D4D4"
-        stroke="#1a1a1a"
-        strokeWidth="1.5"
-      />
-    </Frame>
+    <img
+      src={src}
+      alt=""
+      draggable={false}
+      className={["h-full w-full object-cover object-center", className].filter(Boolean).join(" ")}
+      aria-hidden
+    />
   );
+}
+
+/** Pencil bent into a question mark. */
+export function DrawGuessIcon({ className }: IconProps) {
+  return <ArtIcon src={drawGuessArt} className={className} />;
 }
 
 export function TicTacToeIcon({ className }: IconProps) {
-  // Larger board; marks inset so X / O never leave their cell.
-  const xMark = (cx: number, cy: number) => {
-    const s = 4.2;
-    return (
-      <path
-        key={`x-${cx}-${cy}`}
-        d={`M${cx - s} ${cy - s}l${s * 2} ${s * 2}M${cx + s} ${cy - s}l${-s * 2} ${s * 2}`}
-        stroke="#FF6B7A"
-        strokeWidth="2.6"
-        strokeLinecap="round"
-      />
-    );
-  };
-  const oMark = (cx: number, cy: number) => (
-    <circle key={`o-${cx}-${cy}`} cx={cx} cy={cy} r="4" stroke="#4EA1FF" strokeWidth="2.6" />
-  );
-
-  return (
-    <Frame className={className}>
-      <rect
-        x="4"
-        y="4"
-        width="56"
-        height="56"
-        rx="10"
-        fill="#fff"
-        stroke="#1a1a1a"
-        strokeWidth="3"
-      />
-      <path d="M22.7 8v48M41.3 8v48M8 22.7h48M8 41.3h48" stroke="#1a1a1a" strokeWidth="2.4" />
-      {/* Cell centers ~13.3 / 32 / 50.7 — marks stay inside each square */}
-      {xMark(13.3, 13.3)}
-      {oMark(32, 13.3)}
-      {xMark(50.7, 13.3)}
-      {oMark(13.3, 32)}
-      {xMark(32, 32)}
-      {oMark(50.7, 32)}
-      {oMark(13.3, 50.7)}
-      {xMark(32, 50.7)}
-      {oMark(50.7, 50.7)}
-    </Frame>
-  );
+  return <ArtIcon src={ticTacToeArt} className={className} />;
 }
 
-/** Blue board with yellow + red discs. */
+/** Blue board with red + yellow discs. */
 export function ConnectFourIcon({ className }: IconProps) {
-  const cells: Array<"empty" | "yellow" | "red">[] = [
-    ["empty", "empty", "empty", "empty", "empty"],
-    ["empty", "empty", "yellow", "empty", "empty"],
-    ["empty", "red", "yellow", "red", "empty"],
-    ["yellow", "red", "yellow", "red", "yellow"],
-  ];
-
-  return (
-    <Frame className={className}>
-      <rect
-        x="6"
-        y="10"
-        width="52"
-        height="44"
-        rx="8"
-        fill="#3B6FE8"
-        stroke="#1a1a1a"
-        strokeWidth="3"
-      />
-      {cells.map((row, rowIndex) =>
-        row.map((cell, colIndex) => (
-          <circle
-            key={`${rowIndex}-${colIndex}`}
-            cx={14 + colIndex * 9}
-            cy={18 + rowIndex * 9}
-            r="3.4"
-            fill={cell === "yellow" ? "#FFE566" : cell === "red" ? "#FF6B7A" : "#E8F2FF"}
-            stroke="#1a1a1a"
-            strokeWidth="1.5"
-          />
-        )),
-      )}
-    </Frame>
-  );
+  return <ArtIcon src={connectFourArt} className={className} />;
 }
 
-/** Rock (pierre), scissors (ciseaux), paper (feuille). */
+/** Three hands (rock / paper / scissors). */
 export function RockPaperScissorsIcon({ className }: IconProps) {
-  return (
-    <Frame className={className}>
-      {/* Rock / pierre */}
-      <g>
-        <path
-          d="M6 42c0-8 4-16 12-18 3-1 6 0 8 2 2-4 6-6 10-5 5 1 8 6 8 12 0 2-.3 4-1 6H7c-.6-2-1-4-1-7z"
-          fill="#9CA3AF"
-          stroke="#1a1a1a"
-          strokeWidth="2.2"
-          strokeLinejoin="round"
-        />
-        <path
-          d="M14 36c2-3 5-4 8-3M22 40c3-2 6-2 9 0"
-          stroke="#1a1a1a"
-          strokeWidth="1.4"
-          strokeLinecap="round"
-          opacity="0.55"
-        />
-      </g>
-
-      {/* Scissors / ciseaux */}
-      <g transform="translate(22 4)">
-        <circle cx="8" cy="34" r="5.5" fill="#FFE566" stroke="#1a1a1a" strokeWidth="2" />
-        <circle cx="20" cy="34" r="5.5" fill="#FFE566" stroke="#1a1a1a" strokeWidth="2" />
-        <circle cx="8" cy="34" r="2" fill="#fff" stroke="#1a1a1a" strokeWidth="1.4" />
-        <circle cx="20" cy="34" r="2" fill="#fff" stroke="#1a1a1a" strokeWidth="1.4" />
-        <path d="M10 30 L18 8" stroke="#94A3B8" strokeWidth="3.2" strokeLinecap="round" />
-        <path d="M18 30 L10 8" stroke="#94A3B8" strokeWidth="3.2" strokeLinecap="round" />
-        <path
-          d="M10 30 L18 8M18 30 L10 8"
-          stroke="#1a1a1a"
-          strokeWidth="1.6"
-          strokeLinecap="round"
-        />
-        <circle cx="14" cy="22" r="2.2" fill="#FF6B7A" stroke="#1a1a1a" strokeWidth="1.5" />
-      </g>
-
-      {/* Paper / feuille */}
-      <g transform="translate(40 10)">
-        <path
-          d="M4 6h12l6 6v28H4V6z"
-          fill="#FFF8EC"
-          stroke="#1a1a1a"
-          strokeWidth="2.2"
-          strokeLinejoin="round"
-        />
-        <path d="M16 6v6h6" fill="none" stroke="#1a1a1a" strokeWidth="2" strokeLinejoin="round" />
-        <path
-          d="M8 22h10M8 28h10M8 34h7"
-          stroke="#1a1a1a"
-          strokeWidth="1.6"
-          strokeLinecap="round"
-          opacity="0.7"
-        />
-      </g>
-    </Frame>
-  );
+  return <ArtIcon src={rpsHandsArt} className={className} />;
 }
 
 /** Sherlock Holmes — deerstalker + pipe silhouette. */

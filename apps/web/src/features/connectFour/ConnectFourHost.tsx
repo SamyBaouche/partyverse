@@ -1,6 +1,7 @@
 import { QRCodeSVG } from "qrcode.react";
-import { Button } from "../../components/ui";
+import { ModeScreenHeader } from "../../components/brand/ModeScreenHeader";
 import { PartyverseWordmark } from "../../components/brand/PartyverseWordmark";
+import { Button } from "../../components/ui";
 import type { ConnectFourColor, ConnectFourState } from "../session/types";
 import { ConnectFourBoard } from "./ConnectFourBoard";
 import {
@@ -33,17 +34,19 @@ function TeamColumn({
 }) {
   return (
     <div
-      className="brutal-card flex min-h-40 flex-1 flex-col gap-3 rounded-[1.4rem] p-4"
+      className="brutal-card flex min-h-52 flex-1 flex-col gap-4 rounded-[1.7rem] p-5 sm:min-h-56 sm:p-6"
       style={{ backgroundColor: color }}
     >
-      <p className="font-display text-[10px] uppercase tracking-widest text-[#1a1a1a]">{label}</p>
-      <ul className="flex flex-col gap-2">
+      <p className="font-display text-xs uppercase tracking-[0.2em] text-[#1a1a1a] sm:text-sm">
+        {label} · {names.length}/{capacity}
+      </p>
+      <ul className="flex flex-col gap-3">
         {Array.from({ length: capacity }, (_, index) => {
           const name = names[index];
           return (
             <li
               key={`${label}-${index}`}
-              className="rounded-xl border-[3px] border-[#1a1a1a] bg-white px-3 py-2 font-body text-sm text-[#1a1a1a]"
+              className="rounded-2xl border-[3px] border-[#1a1a1a] bg-white px-4 py-3.5 font-body text-lg font-bold text-[#1a1a1a] sm:text-xl"
             >
               {name ?? "Waiting…"}
             </li>
@@ -54,13 +57,7 @@ function TeamColumn({
   );
 }
 
-export function ConnectFourHost({
-  code,
-  joinUrl,
-  state,
-  onStateChange,
-  onBack,
-}: ConnectFourHostProps) {
+export function ConnectFourHost({ joinUrl, state, onStateChange, onBack }: ConnectFourHostProps) {
   const capacity = state.mode === "1v1" ? 1 : 2;
   const yellow = state.players.filter((player) => player.team === "yellow").map((p) => p.name);
   const red = state.players.filter((player) => player.team === "red").map((p) => p.name);
@@ -68,42 +65,29 @@ export function ConnectFourHost({
 
   if (state.status === "lobby") {
     return (
-      <div className="mx-auto flex w-full max-w-6xl flex-col gap-8 px-5 py-8 sm:px-8">
-        <header className="flex flex-wrap items-center justify-between gap-4">
-          <PartyverseWordmark />
-          <button
-            type="button"
-            onClick={onBack}
-            className="rounded-full border-[3px] border-ink bg-white px-4 py-2 font-display text-[9px] uppercase tracking-wide text-ink shadow-[3px_3px_0_#1a1a1a]"
-          >
-            ← Games
-          </button>
-        </header>
+      <div className="mx-auto flex w-full max-w-7xl flex-col gap-10 px-5 py-8 sm:gap-12 sm:px-8 md:px-10">
+        <ModeScreenHeader onBack={onBack} />
 
-        <div className="grid items-start gap-8 lg:grid-cols-[1.1fr_1fr]">
-          <section className="flex flex-col items-center gap-5 text-center">
-            <p className="inline-flex rounded-full border-[3px] border-ink bg-[#86e3c2] px-3 py-1 font-display text-[9px] uppercase tracking-[0.18em] text-ink">
+        <div className="grid items-start gap-10 lg:grid-cols-[1.05fr_1fr] lg:gap-12">
+          <section className="flex flex-col items-center gap-6 text-center sm:gap-7">
+            <p className="inline-flex rounded-full border-[3px] border-ink bg-[#86e3c2] px-5 py-2.5 font-display text-sm uppercase tracking-[0.18em] text-ink sm:text-base">
               Connect Four · {state.mode}
             </p>
-            <p
-              className="room-code font-display text-4xl sm:text-5xl"
-              aria-label={`Room code ${code}`}
-            >
-              {code}
-            </p>
-            <div className="toy-panel rounded-[1.4rem] bg-white p-4">
-              <QRCodeSVG value={joinUrl} size={220} aria-label="Scan to join" />
+            <div className="toy-panel rounded-[1.8rem] bg-white p-5 sm:p-6">
+              <QRCodeSVG value={joinUrl} size={280} aria-label="Scan to join" />
             </div>
-            <p className="font-body text-sm text-ink/75">
+            <p className="max-w-md font-body text-lg text-ink/75 sm:text-xl">
               Scan to join a team — need {requiredPlayers(state.mode)} players (
               {teamCount(state.players, "yellow") + teamCount(state.players, "red")}/
               {requiredPlayers(state.mode)})
             </p>
           </section>
 
-          <section className="flex flex-col gap-4">
-            <h1 className="font-display text-lg uppercase text-ink">Pick your team</h1>
-            <div className="flex flex-col gap-4 sm:flex-row">
+          <section className="flex flex-col gap-5 sm:gap-6">
+            <h1 className="font-body text-3xl font-extrabold tracking-tight text-ink sm:text-4xl md:text-5xl">
+              Pick your team
+            </h1>
+            <div className="flex flex-col gap-5 sm:flex-row sm:gap-6">
               <TeamColumn label="Yellow" color="#FFE566" names={yellow} capacity={capacity} />
               <TeamColumn label="Red" color="#FF6B7A" names={red} capacity={capacity} />
             </div>
@@ -112,11 +96,12 @@ export function ConnectFourHost({
               fullWidth
               disabled={!ready}
               onClick={() => onStateChange(startPlaying(state))}
+              className="!h-16 !text-sm sm:!h-20 sm:!text-base"
             >
               Start match
             </Button>
             {!ready ? (
-              <p className="text-center font-body text-sm text-ink/70">
+              <p className="text-center font-body text-base text-ink/70 sm:text-lg">
                 Waiting for at least one player on each color…
               </p>
             ) : null}
@@ -133,9 +118,6 @@ export function ConnectFourHost({
       <header className="flex w-full flex-wrap items-center justify-between gap-4">
         <PartyverseWordmark />
         <div className="flex flex-wrap items-center gap-2">
-          <span className="rounded-full border-[3px] border-line bg-panel px-3 py-1 font-display text-[9px] uppercase tracking-wide text-ink">
-            ROOM {code}
-          </span>
           <span
             className="rounded-full border-[3px] border-[#1a1a1a] px-3 py-1 font-display text-[9px] uppercase tracking-wide text-[#1a1a1a]"
             style={{

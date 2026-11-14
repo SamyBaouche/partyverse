@@ -1,9 +1,9 @@
 import { MUTE_STORAGE_KEY, type SoundName } from "./types";
 
 /** Overall mix — loud enough to hear, still soft for long lobby sessions. */
-const MASTER_VOLUME = 0.55;
+const MASTER_VOLUME = 0.72;
 /** Music bed relative level (on top of master). */
-const MUSIC_GAIN = 1;
+const MUSIC_GAIN = 1.35;
 const VOLUME_STORAGE_KEY = "partyverse.volume";
 const MUSIC_STORAGE_KEY = "partyverse.music";
 
@@ -147,7 +147,26 @@ class AudioEngine {
     if (!this.unlockPromise) {
       this.unlockPromise = ctx
         .resume()
-        .then(() => undefined)
+        .catch(() => undefined)
+        .then(async () => {
+          // Some browsers need a silent buffer kick after resume.
+          if (ctx.state !== "running") {
+            try {
+              await ctx.resume();
+            } catch {
+              // ignore
+            }
+          }
+          try {
+            const buffer = ctx.createBuffer(1, 1, ctx.sampleRate);
+            const source = ctx.createBufferSource();
+            source.buffer = buffer;
+            source.connect(ctx.destination);
+            source.start(0);
+          } catch {
+            // ignore
+          }
+        })
         .finally(() => {
           this.unlockPromise = null;
         });
@@ -371,15 +390,15 @@ class AudioEngine {
     const root = padRoot[bar] ?? 48;
     const fifth = padFifth[bar] ?? 55;
 
-    // Warm held chords
-    this.tone(time, midiToFreq(root), 1.55, "sine", 0.045, "music");
-    this.tone(time, midiToFreq(fifth), 1.45, "sine", 0.032, "music");
-    this.tone(time, midiToFreq(root + 12), 1.2, "triangle", 0.018, "music");
+    // Warm held chords — loud enough to notice in a living room
+    this.tone(time, midiToFreq(root), 1.55, "sine", 0.11, "music");
+    this.tone(time, midiToFreq(fifth), 1.45, "sine", 0.085, "music");
+    this.tone(time, midiToFreq(root + 12), 1.2, "triangle", 0.055, "music");
 
     // Rare soft sparkle so it still feels playful
     const sparkleMidi = sparkle[step % sparkle.length] ?? 0;
     if (sparkleMidi > 0) {
-      this.tone(time, midiToFreq(sparkleMidi), 0.9, "sine", 0.028, "music");
+      this.tone(time, midiToFreq(sparkleMidi), 0.9, "sine", 0.07, "music");
     }
   }
 }

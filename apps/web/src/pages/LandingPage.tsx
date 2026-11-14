@@ -25,14 +25,23 @@ function markSplashSeen(): void {
   }
 }
 
+function clearSplashSeen(): void {
+  try {
+    sessionStorage.removeItem(SPLASH_SEEN_KEY);
+  } catch {
+    // ignore
+  }
+}
+
 /**
- * Catalog home. Splash plays once per browser tab session — not on every Back.
+ * Catalog home. Splash plays once per tab session; logo click replays it.
  */
 export default function LandingPage() {
   const navigate = useNavigate();
   const { unlock, play, startMusic, musicEnabled, muted } = useSound();
   const [showSplash, setShowSplash] = useState(() => !hasSeenSplash());
   const [catalogReady, setCatalogReady] = useState(() => hasSeenSplash());
+  const [splashKey, setSplashKey] = useState(0);
 
   const bootMusic = useCallback(async () => {
     try {
@@ -52,6 +61,14 @@ export default function LandingPage() {
     void publishRoomActivity(HOST_CODE, { phase: "catalog" });
     void bootMusic();
   }, [bootMusic]);
+
+  const replaySplash = useCallback(() => {
+    clearSplashSeen();
+    setCatalogReady(false);
+    setShowSplash(true);
+    setSplashKey((key) => key + 1);
+    window.scrollTo({ top: 0, behavior: "auto" });
+  }, []);
 
   useEffect(() => {
     if (showSplash) {
@@ -75,6 +92,7 @@ export default function LandingPage() {
         transition={{ duration: 0.55, ease: [0.22, 1, 0.36, 1] }}
       >
         <GameCatalog
+          onLogoClick={replaySplash}
           onSelect={(gameId) => {
             if (gameId === "draw-guess") {
               void play("correct");
@@ -92,12 +110,30 @@ export default function LandingPage() {
                 gameId: "connect-four",
               });
               navigate("/host?phase=c4-modes");
+              return;
+            }
+            if (gameId === "tic-tac-toe") {
+              void play("correct");
+              void publishRoomActivity(HOST_CODE, {
+                phase: "ttt-modes",
+                gameId: "tic-tac-toe",
+              });
+              navigate("/host?phase=ttt-modes");
+              return;
+            }
+            if (gameId === "rock-paper-scissors") {
+              void play("correct");
+              void publishRoomActivity(HOST_CODE, {
+                phase: "rps-modes",
+                gameId: "rock-paper-scissors",
+              });
+              navigate("/host?phase=rps-modes");
             }
           }}
         />
       </motion.div>
 
-      {showSplash ? <SplashIntro onDone={finishSplash} /> : null}
+      {showSplash ? <SplashIntro key={splashKey} onDone={finishSplash} /> : null}
     </main>
   );
 }

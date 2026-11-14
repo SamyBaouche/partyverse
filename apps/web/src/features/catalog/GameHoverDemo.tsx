@@ -15,7 +15,7 @@ export function GameHoverDemo({ id, accent }: GameHoverDemoProps) {
         style={{ background: `linear-gradient(160deg, ${accent}, #fff8 45%, ${accent}cc)` }}
       />
       {id === "draw-guess" ? (
-        <div className="absolute inset-0 flex items-center justify-center bg-[#E8F4FF] p-4">
+        <div className="absolute inset-0">
           <GameIcon id="draw-guess" className="h-full w-full" />
         </div>
       ) : null}
@@ -30,32 +30,17 @@ export function GameHoverDemo({ id, accent }: GameHoverDemoProps) {
         </div>
       ) : null}
       {id === "connect-four" ? (
-        <div className="absolute inset-0 flex items-center justify-center bg-[#3B6FE8]">
-          <div className="grid grid-cols-5 gap-1.5 p-4">
-            {Array.from({ length: 20 }, (_, index) => {
-              const filled = index >= 10;
-              const yellow = index % 2 === 0;
-              return (
-                <span
-                  key={index}
-                  className="demo-bomb h-4 w-4 rounded-full border-2 border-[#1a1a1a] sm:h-5 sm:w-5"
-                  style={{
-                    background: filled ? (yellow ? "#FFE566" : "#FF6B7A") : "#E8F2FF",
-                    animationDelay: `${(index % 5) * 0.08}s`,
-                  }}
-                />
-              );
-            })}
-          </div>
+        <div className="absolute inset-0">
+          <GameIcon id="connect-four" className="h-full w-full" />
         </div>
       ) : null}
       {id === "tic-tac-toe" ? (
-        <div className="absolute inset-0 flex items-center justify-center bg-white p-3">
+        <div className="absolute inset-0">
           <GameIcon id="tic-tac-toe" className="h-full w-full" />
         </div>
       ) : null}
       {id === "rock-paper-scissors" ? (
-        <div className="absolute inset-0 flex items-center justify-center p-3">
+        <div className="absolute inset-0">
           <GameIcon id="rock-paper-scissors" className="h-full w-full" />
         </div>
       ) : null}
@@ -88,9 +73,6 @@ export function GameHoverDemo({ id, accent }: GameHoverDemoProps) {
           <div className="demo-flag h-12 w-8 origin-bottom-left bg-[#ff5a6a]" />
         </div>
       ) : null}
-      <div className="absolute inset-x-0 bottom-3 text-center font-display text-[8px] uppercase tracking-[0.28em] text-white">
-        How it plays
-      </div>
     </div>
   );
 }

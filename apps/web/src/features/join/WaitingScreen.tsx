@@ -1,14 +1,11 @@
-import { useEffect, useState } from "react";
 import { motion, useReducedMotion } from "motion/react";
 import { Button, Card, PlayerAvatar } from "../../components/ui";
-import { copyText } from "../../lib/copyText";
 import type { RoomActivity } from "../session/types";
 
 type WaitingScreenProps = {
   name: string;
   activity: RoomActivity;
   onLeave: () => void;
-  /** Optional invite URL for share/copy (phone waiting room). */
   joinUrl?: string;
   roomCode?: string;
 };
@@ -53,28 +50,49 @@ function activityCopy(activity: RoomActivity): { title: string; body: string } {
         title: "Connect Four",
         body: "Match is live — use your phone as the controller.",
       };
+    case "ttt-modes":
+      return {
+        title: "Tic-Tac-Toe",
+        body: "Host is choosing 1v1 or 2v2…",
+      };
+    case "ttt-lobby":
+      return {
+        title: "Tic-Tac-Toe",
+        body: "Pick a team on the next screen.",
+      };
+    case "ttt-play":
+      return {
+        title: "Tic-Tac-Toe",
+        body: "Match is live — tap a cell on your phone.",
+      };
+    case "rps-modes":
+      return {
+        title: "Rock Paper Scissors",
+        body: "Host is choosing 1v1 or 2v2…",
+      };
+    case "rps-lobby":
+      return {
+        title: "Rock Paper Scissors",
+        body: "Pick a team on the next screen.",
+      };
+    case "rps-play":
+      return {
+        title: "Rock Paper Scissors",
+        body: "Match is live — lock in your move.",
+      };
   }
 }
 
-export function WaitingScreen({ name, activity, onLeave, joinUrl, roomCode }: WaitingScreenProps) {
+export function WaitingScreen({ name, activity, onLeave }: WaitingScreenProps) {
   const reduceMotion = useReducedMotion();
   const copy = activityCopy(activity);
-  const [copied, setCopied] = useState(false);
-
-  useEffect(() => {
-    if (!copied) {
-      return;
-    }
-    const id = window.setTimeout(() => setCopied(false), 1800);
-    return () => window.clearTimeout(id);
-  }, [copied]);
 
   return (
-    <Card className="flex w-full max-w-sm flex-col items-center gap-6 text-center sm:max-w-md">
-      <div className="flex gap-1.5" aria-hidden>
-        <span className="h-3 w-3 rounded-full bg-[#FF5A6A]" />
-        <span className="h-3 w-3 rounded-full bg-[#FFE566]" />
-        <span className="h-3 w-3 rounded-full bg-[#5B8CFF]" />
+    <Card className="flex w-full max-w-md flex-col items-center gap-6 text-center sm:max-w-lg sm:gap-7">
+      <div className="flex gap-2" aria-hidden>
+        <span className="h-3.5 w-3.5 rounded-full bg-[#FF5A6A]" />
+        <span className="h-3.5 w-3.5 rounded-full bg-[#FFE566]" />
+        <span className="h-3.5 w-3.5 rounded-full bg-[#5B8CFF]" />
       </div>
 
       <motion.div
@@ -84,54 +102,22 @@ export function WaitingScreen({ name, activity, onLeave, joinUrl, roomCode }: Wa
           reduceMotion ? { duration: 0 } : { type: "spring", stiffness: 420, damping: 18 }
         }
       >
-        <PlayerAvatar name={name} size="lg" className="h-20 w-20 text-2xl" />
+        <PlayerAvatar name={name} size="lg" className="h-24 w-24 text-3xl" />
       </motion.div>
 
-      <div className="space-y-3" aria-live="polite">
-        <h1 className="font-display text-sm uppercase leading-relaxed text-ink sm:text-base">
+      <div className="space-y-3 sm:space-y-4" aria-live="polite">
+        <h1 className="font-display text-base uppercase leading-relaxed text-ink sm:text-lg">
           {copy.title}
         </h1>
-        <p className="font-body text-base text-ink/80">
-          Hey {name} — {copy.body}
+        <p className="font-body text-lg text-ink/80 sm:text-xl">
+          Hey {name}. {copy.body}
         </p>
         <p
-          className={`font-body text-sm font-semibold text-accent ${reduceMotion ? "" : "blink-soft"}`}
+          className={`font-body text-base font-semibold text-accent sm:text-lg ${reduceMotion ? "" : "blink-soft"}`}
         >
           Watch the TV
         </p>
       </div>
-
-      {joinUrl ? (
-        <div className="flex w-full flex-col gap-3 rounded-[1.25rem] border-[3px] border-ink bg-[#fffaf2] p-4 text-left">
-          <p className="font-display text-[9px] uppercase tracking-[0.2em] text-muted">
-            Invite a friend
-          </p>
-          <p className="break-all font-body text-sm text-ink/80">{joinUrl}</p>
-          <Button
-            variant="ghost"
-            size="md"
-            fullWidth
-            onClick={() => {
-              void copyText(joinUrl).then((ok) => {
-                if (ok) {
-                  setCopied(true);
-                }
-              });
-            }}
-          >
-            {copied ? "Copied!" : "Copy invite link"}
-          </Button>
-          {roomCode ? (
-            <p className="text-center font-body text-xs text-muted">
-              Or tell them the code{" "}
-              <span className="font-semibold text-ink">{roomCode.split("").join(" ")}</span>
-            </p>
-          ) : null}
-          <p className="sr-only" aria-live="polite">
-            {copied ? "Invite link copied to clipboard" : ""}
-          </p>
-        </div>
-      ) : null}
 
       <Button variant="secondary" size="md" onClick={onLeave}>
         Leave
