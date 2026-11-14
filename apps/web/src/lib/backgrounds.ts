@@ -1,4 +1,9 @@
 export const BACKGROUND_IDS = [
+  "squabble",
+  "dusk",
+  "nardo",
+  "mauve",
+  "friv",
   "sandbox",
   "tunnel",
   "synthwave",
@@ -19,6 +24,31 @@ export type BackgroundOption = {
 };
 
 export const BACKGROUNDS: BackgroundOption[] = [
+  {
+    id: "squabble",
+    title: "Cream Dots",
+    blurb: "Playful cream paper with coral dots",
+  },
+  {
+    id: "dusk",
+    title: "Dusk Ember",
+    blurb: "Warm ink night with soft peach light",
+  },
+  {
+    id: "nardo",
+    title: "Nardo Grey",
+    blurb: "Matte grey lobby — clean mini-game hub",
+  },
+  {
+    id: "mauve",
+    title: "Mauve Lobby",
+    blurb: "Soft purple mini-game portal",
+  },
+  {
+    id: "friv",
+    title: "Mini-game Lobby",
+    blurb: "Soft portal vibe — sober, playful, Friv-ish",
+  },
   {
     id: "sandbox",
     title: "Sandbox Minigame",
@@ -71,5 +101,5 @@ export function isBackgroundId(value: string | null): value is BackgroundId {
 }
 
 export function resolveBackgroundId(value: string | null): BackgroundId {
-  return isBackgroundId(value) ? value : "sandbox";
+  return isBackgroundId(value) ? value : "squabble";
 }

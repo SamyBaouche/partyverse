@@ -3,6 +3,7 @@ import { useNavigate, useParams, useSearchParams } from "react-router";
 import { RoomCode, type Player } from "@partyverse/shared";
 import { AnimatePresence, motion, useReducedMotion } from "motion/react";
 import { Button, Card } from "../components/ui";
+import { ConnectFourPhone } from "../features/connectFour/ConnectFourPhone";
 import { DrawerScreen } from "../features/drawing/DrawerScreen";
 import { GuesserScreen } from "../features/guess/GuesserScreen";
 import { useMockGuessRound } from "../features/guess/useMockGuessRound";
@@ -10,9 +11,16 @@ import { JoinForm } from "../features/join/JoinForm";
 import { ROOM_ERROR_MESSAGES } from "../features/join/messages";
 import { mockJoin } from "../features/join/mockJoin";
 import { WaitingScreen } from "../features/join/WaitingScreen";
+import {
+  fetchRoomActivity,
+  publishRoomActivity,
+  subscribeRoomActivity,
+} from "../features/session/activityApi";
+import type { ConnectFourState, RoomActivity } from "../features/session/types";
 import { useSound } from "../lib/audio";
 
 const NICKNAME_STORAGE_KEY = "partyverse.nickname";
+const PLAYER_ID_KEY = "partyverse.playerId";
 const MOCK_DRAWING_DELAY_MS = 3000;
 
 type ScreenPhase = "form" | "submitting" | "waiting" | "drawing";
@@ -38,6 +46,26 @@ function readMockRole(value: string | null): MockRole {
   return value === "drawer" ? "drawer" : "guesser";
 }
 
+function readOrCreatePlayerId(): string {
+  try {
+    const existing = localStorage.getItem(PLAYER_ID_KEY);
+    if (existing) {
+      return existing;
+    }
+    const id = `p-${Math.random().toString(36).slice(2, 10)}`;
+    localStorage.setItem(PLAYER_ID_KEY, id);
+    return id;
+  } catch {
+    return `p-${Math.random().toString(36).slice(2, 10)}`;
+  }
+}
+
+function isC4Activity(
+  activity: RoomActivity,
+): activity is Extract<RoomActivity, { phase: "c4-lobby" | "c4-play" }> {
+  return activity.phase === "c4-lobby" || activity.phase === "c4-play";
+}
+
 export default function PlayPage() {
   const { code: rawCode } = useParams();
   const [searchParams] = useSearchParams();
@@ -52,15 +80,27 @@ export default function PlayPage() {
   const [phase, setPhase] = useState<ScreenPhase>("form");
   const [name, setName] = useState(readStoredNickname);
   const [player, setPlayer] = useState<Player | null>(null);
+  const [playerId] = useState(readOrCreatePlayerId);
   const [serverError, setServerError] = useState<string | null>(null);
+  const [activity, setActivity] = useState<RoomActivity>({ phase: "lobby" });
 
   useEffect(() => {
-    if (!import.meta.env.DEV || phase !== "waiting") {
+    const parsed = RoomCode.safeParse(normalizedCode);
+    if (!parsed.success) {
+      return;
+    }
+    const roomCode = parsed.data;
+    void fetchRoomActivity(roomCode).then(setActivity);
+    return subscribeRoomActivity(roomCode, setActivity);
+  }, [normalizedCode]);
+
+  useEffect(() => {
+    if (!import.meta.env.DEV || phase !== "waiting" || isC4Activity(activity)) {
       return;
     }
     const timer = window.setTimeout(() => setPhase("drawing"), MOCK_DRAWING_DELAY_MS);
     return () => window.clearTimeout(timer);
-  }, [phase]);
+  }, [phase, activity]);
 
   if (!parsedCode.success) {
     return (
@@ -102,12 +142,31 @@ export default function PlayPage() {
   }
 
   function handleLeave() {
+    if (isC4Activity(activity)) {
+      const nextPlayers = activity.state.players.filter((entry) => entry.id !== playerId);
+      const nextState: ConnectFourState = { ...activity.state, players: nextPlayers };
+      void publishRoomActivity(code, {
+        phase: activity.phase,
+        gameId: "connect-four",
+        state: nextState,
+      });
+    }
     setPlayer(null);
     setServerError(null);
     setPhase("form");
   }
 
-  if (phase === "drawing" && player) {
+  async function publishC4State(next: ConnectFourState) {
+    const activityPhase = next.status === "lobby" ? "c4-lobby" : "c4-play";
+    const published = await publishRoomActivity(code, {
+      phase: activityPhase,
+      gameId: "connect-four",
+      state: next,
+    });
+    setActivity(published);
+  }
+
+  if (phase === "drawing" && player && !isC4Activity(activity)) {
     if (mockRole === "drawer") {
       return <DrawerScreen secretWord={mockRound.secretWord} endsAt={mockRound.endsAt} />;
     }
@@ -126,7 +185,26 @@ export default function PlayPage() {
   return (
     <main className="flex min-h-screen items-center justify-center p-6">
       <AnimatePresence mode="wait">
-        {phase === "waiting" && player ? (
+        {phase === "waiting" && player && isC4Activity(activity) ? (
+          <motion.div
+            key="c4-phone"
+            className="w-full max-w-sm"
+            initial={reduceMotion ? false : { opacity: 0, y: 16 }}
+            animate={{ opacity: 1, y: 0 }}
+            exit={reduceMotion ? undefined : { opacity: 0, y: -12 }}
+            transition={{ duration: reduceMotion ? 0 : 0.3 }}
+          >
+            <ConnectFourPhone
+              playerId={playerId}
+              playerName={player.name}
+              state={activity.state}
+              onStateChange={(next) => {
+                void publishC4State(next);
+              }}
+              onLeave={handleLeave}
+            />
+          </motion.div>
+        ) : phase === "waiting" && player ? (
           <motion.div
             key="waiting"
             className="w-full max-w-sm"
@@ -135,7 +213,7 @@ export default function PlayPage() {
             exit={reduceMotion ? undefined : { opacity: 0, y: -12 }}
             transition={{ duration: reduceMotion ? 0 : 0.3 }}
           >
-            <WaitingScreen name={player.name} onLeave={handleLeave} />
+            <WaitingScreen name={player.name} activity={activity} onLeave={handleLeave} />
             {import.meta.env.DEV ? (
               <p className="mt-4 text-center font-body text-xs text-muted">
                 Mock round starts in a few seconds ({mockRole})…

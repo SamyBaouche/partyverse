@@ -1,6 +1,11 @@
 import { MUTE_STORAGE_KEY, type SoundName } from "./types";
 
-const MASTER_VOLUME = 0.35;
+/** Overall mix — loud enough to hear, still soft for long lobby sessions. */
+const MASTER_VOLUME = 0.55;
+/** Music bed relative level (on top of master). */
+const MUSIC_GAIN = 1;
+const VOLUME_STORAGE_KEY = "partyverse.volume";
+const MUSIC_STORAGE_KEY = "partyverse.music";
 
 function readStoredMute(): boolean {
   try {
@@ -18,6 +23,51 @@ function writeStoredMute(muted: boolean): void {
   }
 }
 
+function readStoredVolume(): number {
+  try {
+    const raw = window.localStorage.getItem(VOLUME_STORAGE_KEY);
+    if (raw === null) {
+      return 0.85;
+    }
+    const value = Number(raw);
+    if (!Number.isFinite(value)) {
+      return 0.85;
+    }
+    return Math.min(1, Math.max(0, value));
+  } catch {
+    return 0.85;
+  }
+}
+
+function writeStoredVolume(volume: number): void {
+  try {
+    window.localStorage.setItem(VOLUME_STORAGE_KEY, String(volume));
+  } catch {
+    // ignore
+  }
+}
+
+function readStoredMusicEnabled(): boolean {
+  try {
+    const raw = window.localStorage.getItem(MUSIC_STORAGE_KEY);
+    // Calm lobby bed on by default; Settings → Save still controls it.
+    if (raw === null) {
+      return true;
+    }
+    return raw === "1";
+  } catch {
+    return true;
+  }
+}
+
+function writeStoredMusicEnabled(enabled: boolean): void {
+  try {
+    window.localStorage.setItem(MUSIC_STORAGE_KEY, enabled ? "1" : "0");
+  } catch {
+    // ignore
+  }
+}
+
 function midiToFreq(midi: number): number {
   return 440 * 2 ** ((midi - 69) / 12);
 }
@@ -32,7 +82,10 @@ function createAudioContext(): AudioContext {
 class AudioEngine {
   private ctx: AudioContext | null = null;
   private master: GainNode | null = null;
+  private musicBus: GainNode | null = null;
   private muted = typeof window === "undefined" ? false : readStoredMute();
+  private volume = typeof window === "undefined" ? 0.85 : readStoredVolume();
+  private musicEnabled = typeof window === "undefined" ? true : readStoredMusicEnabled();
   private musicPlaying = false;
   private musicTimer: number | null = null;
   private nextMusicTime = 0;
@@ -43,15 +96,46 @@ class AudioEngine {
     return this.muted;
   }
 
+  getVolume(): number {
+    return this.volume;
+  }
+
+  isMusicEnabled(): boolean {
+    return this.musicEnabled;
+  }
+
+  isMusicPlaying(): boolean {
+    return this.musicPlaying && !!this.ctx && this.ctx.state === "running";
+  }
+
+  setVolume(volume: number): void {
+    this.volume = Math.min(1, Math.max(0, volume));
+    writeStoredVolume(this.volume);
+    this.applyMasterGain();
+  }
+
+  setMusicEnabled(enabled: boolean): void {
+    this.musicEnabled = enabled;
+    writeStoredMusicEnabled(enabled);
+    if (!enabled) {
+      this.stopMusic();
+    }
+  }
+
   setMuted(muted: boolean): void {
     this.muted = muted;
     writeStoredMute(muted);
-    if (this.master) {
-      this.master.gain.value = muted ? 0 : MASTER_VOLUME;
-    }
+    this.applyMasterGain();
     if (muted) {
       this.stopMusic();
     }
+  }
+
+  private applyMasterGain(): void {
+    if (!this.master) {
+      return;
+    }
+    this.master.gain.value = this.muted ? 0 : MASTER_VOLUME * this.volume;
   }
 
   /** Must be called from a user gesture (click / keydown). */
@@ -108,7 +192,7 @@ class AudioEngine {
   }
 
   async startMusic(): Promise<void> {
-    if (this.muted) {
+    if (this.muted || !this.musicEnabled) {
       return;
     }
     await this.unlock();
@@ -116,9 +200,8 @@ class AudioEngine {
     if (ctx.state !== "running") {
       return;
     }
-    if (this.musicPlaying) {
-      return;
-    }
+    // Always (re)start so a dead timer / silent state recovers.
+    this.stopMusic();
     this.musicPlaying = true;
     this.musicStep = 0;
     this.nextMusicTime = ctx.currentTime + 0.05;
@@ -137,7 +220,10 @@ class AudioEngine {
     if (!this.ctx) {
       this.ctx = createAudioContext();
       this.master = this.ctx.createGain();
-      this.master.gain.value = this.muted ? 0 : MASTER_VOLUME;
+      this.musicBus = this.ctx.createGain();
+      this.musicBus.gain.value = MUSIC_GAIN;
+      this.musicBus.connect(this.master);
+      this.applyMasterGain();
       this.master.connect(this.ctx.destination);
     }
     return this.ctx;
@@ -149,12 +235,15 @@ class AudioEngine {
     duration: number,
     type: OscillatorType,
     peak: number,
+    bus: "sfx" | "music" = "sfx",
   ): void {
     const ctx = this.ensureContext();
     const master = this.master;
+    const musicBus = this.musicBus;
     if (!master || this.muted) {
       return;
     }
+    const destination = bus === "music" && musicBus ? musicBus : master;
 
     try {
       const osc = ctx.createOscillator();
@@ -162,13 +251,12 @@ class AudioEngine {
       osc.type = type;
       osc.frequency.setValueAtTime(frequency, start);
 
-      // linearRamp is more reliable than exponentialRamp across browsers
       gain.gain.setValueAtTime(0, start);
-      gain.gain.linearRampToValueAtTime(peak, start + 0.012);
+      gain.gain.linearRampToValueAtTime(peak, start + 0.02);
       gain.gain.linearRampToValueAtTime(0, start + duration);
 
       osc.connect(gain);
-      gain.connect(master);
+      gain.connect(destination);
       osc.start(start);
       osc.stop(start + duration + 0.03);
     } catch {
@@ -246,7 +334,7 @@ class AudioEngine {
   }
 
   private scheduleMusic(): void {
-    if (!this.musicPlaying || this.muted) {
+    if (!this.musicPlaying || this.muted || !this.musicEnabled) {
       return;
     }
 
@@ -258,40 +346,40 @@ class AudioEngine {
       return;
     }
 
-    // 120 BPM → quarter = 0.5s; 16th = 0.125s
-    const stepDuration = 0.125;
-    const lookAhead = 0.25;
+    // Calm lobby loop (~70 BPM).
+    const stepDuration = 0.42;
+    const lookAhead = 1.1;
 
     while (this.nextMusicTime < ctx.currentTime + lookAhead) {
-      this.playMusicStep(this.nextMusicTime, this.musicStep % 64);
+      this.playMusicStep(this.nextMusicTime, this.musicStep % 32);
       this.nextMusicTime += stepDuration;
       this.musicStep += 1;
     }
 
     this.musicTimer = window.setTimeout(() => {
       this.scheduleMusic();
-    }, 40);
+    }, 60);
   }
 
   private playMusicStep(time: number, step: number): void {
-    // 4 bars of 16 sixteenths = 64 steps, seamless loop.
-    const bassPattern = [36, 0, 36, 0, 43, 0, 36, 0, 38, 0, 38, 0, 43, 0, 41, 0];
-    const arpPattern = [60, 64, 67, 72, 67, 64, 60, 64, 62, 65, 69, 74, 69, 65, 62, 65];
+    // Calm living-room pad — soft, slow, no sharp arcade stabs.
+    const padRoot = [48, 48, 48, 48, 45, 45, 43, 43];
+    const padFifth = [55, 55, 55, 55, 52, 52, 50, 50];
+    const sparkle = [0, 0, 0, 67, 0, 0, 0, 0, 0, 0, 64, 0, 0, 0, 0, 69];
 
-    const bassMidi = bassPattern[step % bassPattern.length] ?? 0;
-    if (bassMidi > 0) {
-      this.tone(time, midiToFreq(bassMidi), 0.12, "square", 0.16);
-    }
+    const bar = Math.floor(step / 4) % padRoot.length;
+    const root = padRoot[bar] ?? 48;
+    const fifth = padFifth[bar] ?? 55;
 
-    if (step % 2 === 0) {
-      const arpMidi = arpPattern[(step / 2) % arpPattern.length] ?? 0;
-      if (arpMidi > 0) {
-        this.tone(time, midiToFreq(arpMidi), 0.1, "square", 0.1);
-      }
-    }
+    // Warm held chords
+    this.tone(time, midiToFreq(root), 1.55, "sine", 0.045, "music");
+    this.tone(time, midiToFreq(fifth), 1.45, "sine", 0.032, "music");
+    this.tone(time, midiToFreq(root + 12), 1.2, "triangle", 0.018, "music");
 
-    if (step % 8 === 0) {
-      this.tone(time, 180, 0.04, "triangle", 0.08);
+    // Rare soft sparkle so it still feels playful
+    const sparkleMidi = sparkle[step % sparkle.length] ?? 0;
+    if (sparkleMidi > 0) {
+      this.tone(time, midiToFreq(sparkleMidi), 0.9, "sine", 0.028, "music");
     }
   }
 }

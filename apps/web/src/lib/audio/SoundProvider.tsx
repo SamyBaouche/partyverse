@@ -8,13 +8,20 @@ type SoundContextValue = {
   stopMusic: () => void;
   unlock: () => Promise<void>;
   muted: boolean;
+  volume: number;
+  musicEnabled: boolean;
+  setMuted: (muted: boolean) => void;
+  setVolume: (volume: number) => void;
+  setMusicEnabled: (enabled: boolean) => void;
   toggleMute: () => void;
 };
 
 const SoundContext = createContext<SoundContextValue | null>(null);
 
 export function SoundProvider({ children }: { children: ReactNode }) {
-  const [muted, setMuted] = useState(() => audioEngine.isMuted());
+  const [muted, setMutedState] = useState(() => audioEngine.isMuted());
+  const [volume, setVolumeState] = useState(() => audioEngine.getVolume());
+  const [musicEnabled, setMusicEnabledState] = useState(() => audioEngine.isMusicEnabled());
 
   const unlock = useCallback(async () => {
     await audioEngine.unlock();
@@ -32,17 +39,55 @@ export function SoundProvider({ children }: { children: ReactNode }) {
     audioEngine.stopMusic();
   }, []);
 
-  const toggleMute = useCallback(() => {
-    setMuted((previous) => {
-      const next = !previous;
-      audioEngine.setMuted(next);
-      return next;
-    });
+  const setMuted = useCallback((next: boolean) => {
+    audioEngine.setMuted(next);
+    setMutedState(next);
   }, []);
 
+  const setVolume = useCallback((next: number) => {
+    audioEngine.setVolume(next);
+    setVolumeState(audioEngine.getVolume());
+  }, []);
+
+  const setMusicEnabled = useCallback((enabled: boolean) => {
+    audioEngine.setMusicEnabled(enabled);
+    setMusicEnabledState(enabled);
+    if (!enabled) {
+      audioEngine.stopMusic();
+    }
+  }, []);
+
+  const toggleMute = useCallback(() => {
+    setMuted(!audioEngine.isMuted());
+  }, [setMuted]);
+
   const value = useMemo(
-    () => ({ play, startMusic, stopMusic, unlock, muted, toggleMute }),
-    [play, startMusic, stopMusic, unlock, muted, toggleMute],
+    () => ({
+      play,
+      startMusic,
+      stopMusic,
+      unlock,
+      muted,
+      volume,
+      musicEnabled,
+      setMuted,
+      setVolume,
+      setMusicEnabled,
+      toggleMute,
+    }),
+    [
+      play,
+      startMusic,
+      stopMusic,
+      unlock,
+      muted,
+      volume,
+      musicEnabled,
+      setMuted,
+      setVolume,
+      setMusicEnabled,
+      toggleMute,
+    ],
   );
 
   return <SoundContext.Provider value={value}>{children}</SoundContext.Provider>;
