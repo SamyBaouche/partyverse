@@ -134,9 +134,24 @@ export function GameCatalog({ onSelect }: GameCatalogProps) {
         <h2 className="font-body text-xl font-extrabold text-ink sm:text-2xl">How it works</h2>
         <ol className="mt-5 grid gap-4 sm:grid-cols-3">
           {[
-            { n: "1", color: "#FFE566", title: "Pick a game", body: "Choose a battle and open a room." },
-            { n: "2", color: "#86E3C2", title: "Share the link", body: "Friends join on their phone in one tap." },
-            { n: "3", color: "#FFB4C8", title: "Play live", body: "Moves sync instantly. Rematch anytime." },
+            {
+              n: "1",
+              color: "#FFE566",
+              title: "Pick a game",
+              body: "Choose a battle and open a room.",
+            },
+            {
+              n: "2",
+              color: "#86E3C2",
+              title: "Share the link",
+              body: "Friends join on their phone in one tap.",
+            },
+            {
+              n: "3",
+              color: "#FFB4C8",
+              title: "Play live",
+              body: "Moves sync instantly. Rematch anytime.",
+            },
           ].map((step) => (
             <li key={step.n} className="flex gap-3">
               <span

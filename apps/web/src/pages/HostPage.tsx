@@ -24,13 +24,7 @@ import type {
 import { useSound } from "../lib/audio";
 
 type HostPhase =
-  | "catalog"
-  | "draw-modes"
-  | "lobby"
-  | "draw-ready"
-  | "c4-modes"
-  | "c4-lobby"
-  | "c4-play";
+  "catalog" | "draw-modes" | "lobby" | "draw-ready" | "c4-modes" | "c4-lobby" | "c4-play";
 
 function readInitialPhase(raw: string | null): HostPhase {
   if (

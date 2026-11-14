@@ -675,7 +675,9 @@
   /* Nintendo DS–style dual-screen units (bright mauve plastic, not black) */
   .ds-shell {
     filter: drop-shadow(0 14px 22px rgb(90 60 140 / 0.35));
-    transition: transform 0.25s ease, filter 0.25s ease;
+    transition:
+      transform 0.25s ease,
+      filter 0.25s ease;
   }
 
   .ds-shell:hover {

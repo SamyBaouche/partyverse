@@ -171,9 +171,7 @@ export function SettingsMenu() {
 
             <div className="mt-4 space-y-3">
               <section className="space-y-3 rounded-2xl border-[3px] border-line bg-panel-muted p-3">
-                <p className="font-display text-[9px] uppercase tracking-widest text-ink">
-                  Music
-                </p>
+                <p className="font-display text-[9px] uppercase tracking-widest text-ink">Music</p>
                 <label className="flex items-center justify-between gap-3 font-body text-sm text-ink">
                   <span>Background music</span>
                   <input
@@ -208,9 +206,7 @@ export function SettingsMenu() {
               </section>
 
               <section className="space-y-3 rounded-2xl border-[3px] border-line bg-panel-muted p-3">
-                <p className="font-display text-[9px] uppercase tracking-widest text-ink">
-                  Theme
-                </p>
+                <p className="font-display text-[9px] uppercase tracking-widest text-ink">Theme</p>
                 <div className="grid grid-cols-2 gap-2">
                   <button
                     type="button"

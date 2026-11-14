@@ -123,7 +123,8 @@ export function ConnectFourMirror({ state, onStateChange, onOpenTv }: ConnectFou
             )}
           >
             {/* Column guides */}
-            <div className="pointer-events-none absolute inset-x-3 bottom-3 top-3 grid opacity-25"
+            <div
+              className="pointer-events-none absolute inset-x-3 bottom-3 top-3 grid opacity-25"
               style={{ gridTemplateColumns: `repeat(${C4_COLS}, minmax(0, 1fr))` }}
             >
               {Array.from({ length: C4_COLS }, (_, index) => (

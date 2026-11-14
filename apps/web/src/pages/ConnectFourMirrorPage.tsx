@@ -30,21 +30,30 @@ export default function ConnectFourMirrorPage() {
       }
       // No active match — spin up a mock 1v1 so the mirror is instantly playable.
       const mock = createMock1v1Match();
+      if (cancelled) {
+        return;
+      }
       setState(mock);
       await publishRoomActivity(HOST_CODE, {
         phase: "c4-play",
         gameId: "connect-four",
         state: mock,
       });
-      void play("go");
+      if (!cancelled) {
+        void play("go");
+      }
     }
 
     void boot();
-    return subscribeRoomActivity(HOST_CODE, (activity) => {
+    const unsubscribe = subscribeRoomActivity(HOST_CODE, (activity) => {
       if (activity.phase === "c4-play" || activity.phase === "c4-lobby") {
         setState(activity.state);
       }
     });
+    return () => {
+      cancelled = true;
+      unsubscribe();
+    };
   }, [play]);
 
   async function publish(next: ConnectFourState) {

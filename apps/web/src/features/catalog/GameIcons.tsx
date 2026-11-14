@@ -15,8 +15,26 @@ function Frame({ className, children }: { className?: string; children: ReactNod
 export function DrawGuessIcon({ className }: IconProps) {
   return (
     <Frame className={className}>
-      <rect x="8" y="8" width="48" height="40" rx="6" fill="#FFF8EC" stroke="#1a1a1a" strokeWidth="2.5" />
-      <rect x="12" y="12" width="40" height="32" rx="3" fill="#E8F4FF" stroke="#1a1a1a" strokeWidth="1.75" />
+      <rect
+        x="8"
+        y="8"
+        width="48"
+        height="40"
+        rx="6"
+        fill="#FFF8EC"
+        stroke="#1a1a1a"
+        strokeWidth="2.5"
+      />
+      <rect
+        x="12"
+        y="12"
+        width="40"
+        height="32"
+        rx="3"
+        fill="#E8F4FF"
+        stroke="#1a1a1a"
+        strokeWidth="1.75"
+      />
       <path
         d="M18 36c5-12 10-16 15-12 4 3 7 10 13 4"
         stroke="#1a1a1a"
@@ -26,12 +44,44 @@ export function DrawGuessIcon({ className }: IconProps) {
       <circle cx="40" cy="20" r="2.2" fill="#FF6B7A" stroke="#1a1a1a" strokeWidth="1.2" />
       {/* Pencil */}
       <g transform="translate(38 34) rotate(-35)">
-        <rect x="0" y="0" width="18" height="5" rx="1.5" fill="#FFE566" stroke="#1a1a1a" strokeWidth="1.5" />
-        <path d="M18 0l6 2.5L18 5" fill="#F4C4A0" stroke="#1a1a1a" strokeWidth="1.3" strokeLinejoin="round" />
-        <rect x="0" y="0" width="3.5" height="5" fill="#FF6B7A" stroke="#1a1a1a" strokeWidth="1.2" />
+        <rect
+          x="0"
+          y="0"
+          width="18"
+          height="5"
+          rx="1.5"
+          fill="#FFE566"
+          stroke="#1a1a1a"
+          strokeWidth="1.5"
+        />
+        <path
+          d="M18 0l6 2.5L18 5"
+          fill="#F4C4A0"
+          stroke="#1a1a1a"
+          strokeWidth="1.3"
+          strokeLinejoin="round"
+        />
+        <rect
+          x="0"
+          y="0"
+          width="3.5"
+          height="5"
+          fill="#FF6B7A"
+          stroke="#1a1a1a"
+          strokeWidth="1.2"
+        />
         <path d="M22 1.5l2 1-2 1" fill="#1a1a1a" />
       </g>
-      <rect x="22" y="50" width="20" height="6" rx="2" fill="#D4D4D4" stroke="#1a1a1a" strokeWidth="1.5" />
+      <rect
+        x="22"
+        y="50"
+        width="20"
+        height="6"
+        rx="2"
+        fill="#D4D4D4"
+        stroke="#1a1a1a"
+        strokeWidth="1.5"
+      />
     </Frame>
   );
 }
@@ -51,24 +101,22 @@ export function TicTacToeIcon({ className }: IconProps) {
     );
   };
   const oMark = (cx: number, cy: number) => (
-    <circle
-      key={`o-${cx}-${cy}`}
-      cx={cx}
-      cy={cy}
-      r="4"
-      stroke="#4EA1FF"
-      strokeWidth="2.6"
-    />
+    <circle key={`o-${cx}-${cy}`} cx={cx} cy={cy} r="4" stroke="#4EA1FF" strokeWidth="2.6" />
   );
 
   return (
     <Frame className={className}>
-      <rect x="4" y="4" width="56" height="56" rx="10" fill="#fff" stroke="#1a1a1a" strokeWidth="3" />
-      <path
-        d="M22.7 8v48M41.3 8v48M8 22.7h48M8 41.3h48"
+      <rect
+        x="4"
+        y="4"
+        width="56"
+        height="56"
+        rx="10"
+        fill="#fff"
         stroke="#1a1a1a"
-        strokeWidth="2.4"
+        strokeWidth="3"
       />
+      <path d="M22.7 8v48M41.3 8v48M8 22.7h48M8 41.3h48" stroke="#1a1a1a" strokeWidth="2.4" />
       {/* Cell centers ~13.3 / 32 / 50.7 — marks stay inside each square */}
       {xMark(13.3, 13.3)}
       {oMark(32, 13.3)}
@@ -94,7 +142,16 @@ export function ConnectFourIcon({ className }: IconProps) {
 
   return (
     <Frame className={className}>
-      <rect x="6" y="10" width="52" height="44" rx="8" fill="#3B6FE8" stroke="#1a1a1a" strokeWidth="3" />
+      <rect
+        x="6"
+        y="10"
+        width="52"
+        height="44"
+        rx="8"
+        fill="#3B6FE8"
+        stroke="#1a1a1a"
+        strokeWidth="3"
+      />
       {cells.map((row, rowIndex) =>
         row.map((cell, colIndex) => (
           <circle
@@ -140,19 +197,14 @@ export function RockPaperScissorsIcon({ className }: IconProps) {
         <circle cx="20" cy="34" r="5.5" fill="#FFE566" stroke="#1a1a1a" strokeWidth="2" />
         <circle cx="8" cy="34" r="2" fill="#fff" stroke="#1a1a1a" strokeWidth="1.4" />
         <circle cx="20" cy="34" r="2" fill="#fff" stroke="#1a1a1a" strokeWidth="1.4" />
+        <path d="M10 30 L18 8" stroke="#94A3B8" strokeWidth="3.2" strokeLinecap="round" />
+        <path d="M18 30 L10 8" stroke="#94A3B8" strokeWidth="3.2" strokeLinecap="round" />
         <path
-          d="M10 30 L18 8"
-          stroke="#94A3B8"
-          strokeWidth="3.2"
+          d="M10 30 L18 8M18 30 L10 8"
+          stroke="#1a1a1a"
+          strokeWidth="1.6"
           strokeLinecap="round"
         />
-        <path
-          d="M18 30 L10 8"
-          stroke="#94A3B8"
-          strokeWidth="3.2"
-          strokeLinecap="round"
-        />
-        <path d="M10 30 L18 8M18 30 L10 8" stroke="#1a1a1a" strokeWidth="1.6" strokeLinecap="round" />
         <circle cx="14" cy="22" r="2.2" fill="#FF6B7A" stroke="#1a1a1a" strokeWidth="1.5" />
       </g>
 
@@ -204,7 +256,16 @@ export function ImposterIcon({ className }: IconProps) {
         strokeWidth="1.6"
         strokeLinejoin="round"
       />
-      <rect x="34" y="42" width="5" height="4" rx="1" fill="#6B3F1D" stroke="#1a1a1a" strokeWidth="1.4" />
+      <rect
+        x="34"
+        y="42"
+        width="5"
+        height="4"
+        rx="1"
+        fill="#6B3F1D"
+        stroke="#1a1a1a"
+        strokeWidth="1.4"
+      />
       <path d="M48 42c2-4 4-5 6-4" stroke="#9aa3b0" strokeWidth="1.5" strokeLinecap="round" />
       {/* Magnifier hint */}
       <circle cx="18" cy="48" r="5" stroke="#1a1a1a" strokeWidth="2" fill="#fff8" />
@@ -241,16 +302,25 @@ export function BombPartyIcon({ className }: IconProps) {
     <Frame className={className}>
       <circle cx="30" cy="38" r="18" fill="#2A2A2A" stroke="#1a1a1a" strokeWidth="2.5" />
       <ellipse cx="24" cy="32" rx="5" ry="3" fill="#ffffff55" />
-      <rect x="26" y="18" width="8" height="6" rx="1.5" fill="#6B7280" stroke="#1a1a1a" strokeWidth="1.5" />
-      <path
-        d="M34 18c4-6 10-8 16-6"
-        stroke="#8B5A2B"
-        strokeWidth="2.5"
-        strokeLinecap="round"
+      <rect
+        x="26"
+        y="18"
+        width="8"
+        height="6"
+        rx="1.5"
+        fill="#6B7280"
+        stroke="#1a1a1a"
+        strokeWidth="1.5"
       />
+      <path d="M34 18c4-6 10-8 16-6" stroke="#8B5A2B" strokeWidth="2.5" strokeLinecap="round" />
       <circle cx="52" cy="10" r="5" fill="#FFE566" stroke="#1a1a1a" strokeWidth="1.8" />
       <circle cx="52" cy="10" r="2.2" fill="#FF6B7A" />
-      <path d="M48 8l-2-3M56 8l2-3M52 5v-3" stroke="#FF6B7A" strokeWidth="1.5" strokeLinecap="round" />
+      <path
+        d="M48 8l-2-3M56 8l2-3M52 5v-3"
+        stroke="#FF6B7A"
+        strokeWidth="1.5"
+        strokeLinecap="round"
+      />
     </Frame>
   );
 }

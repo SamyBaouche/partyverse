@@ -91,10 +91,7 @@ export function teamCount(players: ConnectFourPlayer[], team: ConnectFourColor):
   return players.filter((player) => player.team === team).length;
 }
 
-export function canJoinTeam(
-  state: ConnectFourState,
-  team: ConnectFourColor,
-): boolean {
+export function canJoinTeam(state: ConnectFourState, team: ConnectFourColor): boolean {
   return teamCount(state.players, team) < teamCapacity(state.mode);
 }
 
