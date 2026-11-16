@@ -17,3 +17,15 @@ export function isRpsActivity(
 ): activity is Extract<RoomActivity, { phase: "rps-lobby" | "rps-play" }> {
   return activity.phase === "rps-lobby" || activity.phase === "rps-play";
 }
+
+export function isKartActivity(
+  activity: RoomActivity,
+): activity is Extract<RoomActivity, { phase: "kart-lobby" | "kart-play" }> {
+  return activity.phase === "kart-lobby" || activity.phase === "kart-play";
+}
+
+export function isPartyActivity(
+  activity: RoomActivity,
+): activity is Extract<RoomActivity, { phase: "party-lobby" | "party-play" }> {
+  return activity.phase === "party-lobby" || activity.phase === "party-play";
+}

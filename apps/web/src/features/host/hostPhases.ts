@@ -11,7 +11,12 @@ export type HostPhase =
   | "ttt-play"
   | "rps-modes"
   | "rps-lobby"
-  | "rps-play";
+  | "rps-play"
+  | "kart-modes"
+  | "kart-lobby"
+  | "kart-play"
+  | "party-lobby"
+  | "party-play";
 
 export const HOST_PHASES: HostPhase[] = [
   "catalog",
@@ -27,6 +32,11 @@ export const HOST_PHASES: HostPhase[] = [
   "rps-modes",
   "rps-lobby",
   "rps-play",
+  "kart-modes",
+  "kart-lobby",
+  "kart-play",
+  "party-lobby",
+  "party-play",
 ];
 
 export function readInitialPhase(raw: string | null): HostPhase {

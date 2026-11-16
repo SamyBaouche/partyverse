@@ -3,7 +3,9 @@ import { motion } from "motion/react";
 import { useNavigate } from "react-router";
 import { SplashIntro } from "../components/SplashIntro";
 import { GameCatalog } from "../features/catalog/GameCatalog";
+import { isPartyGameId } from "../features/partyGames/logic";
 import { publishRoomActivity } from "../features/session/activityApi";
+import type { CatalogGameId } from "../features/session/types";
 import { useSound } from "../lib/audio";
 
 const HOST_CODE = "KXPM";
@@ -70,6 +72,45 @@ export default function LandingPage() {
     window.scrollTo({ top: 0, behavior: "auto" });
   }, []);
 
+  const openGame = useCallback(
+    (gameId: CatalogGameId) => {
+      void play("correct");
+
+      if (gameId === "draw-guess") {
+        void publishRoomActivity(HOST_CODE, { phase: "draw-modes", gameId: "draw-guess" });
+        navigate("/host?phase=draw-modes");
+        return;
+      }
+      if (gameId === "connect-four") {
+        void publishRoomActivity(HOST_CODE, { phase: "c4-modes", gameId: "connect-four" });
+        navigate("/host?phase=c4-modes");
+        return;
+      }
+      if (gameId === "tic-tac-toe") {
+        void publishRoomActivity(HOST_CODE, { phase: "ttt-modes", gameId: "tic-tac-toe" });
+        navigate("/host?phase=ttt-modes");
+        return;
+      }
+      if (gameId === "rock-paper-scissors") {
+        void publishRoomActivity(HOST_CODE, {
+          phase: "rps-modes",
+          gameId: "rock-paper-scissors",
+        });
+        navigate("/host?phase=rps-modes");
+        return;
+      }
+      if (gameId === "wish-kart") {
+        void publishRoomActivity(HOST_CODE, { phase: "kart-modes", gameId: "wish-kart" });
+        navigate("/host?phase=kart-modes");
+        return;
+      }
+      if (isPartyGameId(gameId)) {
+        navigate(`/host?phase=party-lobby&game=${gameId}`);
+      }
+    },
+    [navigate, play],
+  );
+
   useEffect(() => {
     if (showSplash) {
       return;
@@ -94,41 +135,7 @@ export default function LandingPage() {
         <GameCatalog
           onLogoClick={replaySplash}
           onSelect={(gameId) => {
-            if (gameId === "draw-guess") {
-              void play("correct");
-              void publishRoomActivity(HOST_CODE, {
-                phase: "draw-modes",
-                gameId: "draw-guess",
-              });
-              navigate("/host?phase=draw-modes");
-              return;
-            }
-            if (gameId === "connect-four") {
-              void play("correct");
-              void publishRoomActivity(HOST_CODE, {
-                phase: "c4-modes",
-                gameId: "connect-four",
-              });
-              navigate("/host?phase=c4-modes");
-              return;
-            }
-            if (gameId === "tic-tac-toe") {
-              void play("correct");
-              void publishRoomActivity(HOST_CODE, {
-                phase: "ttt-modes",
-                gameId: "tic-tac-toe",
-              });
-              navigate("/host?phase=ttt-modes");
-              return;
-            }
-            if (gameId === "rock-paper-scissors") {
-              void play("correct");
-              void publishRoomActivity(HOST_CODE, {
-                phase: "rps-modes",
-                gameId: "rock-paper-scissors",
-              });
-              navigate("/host?phase=rps-modes");
-            }
+            void openGame(gameId);
           }}
         />
       </motion.div>

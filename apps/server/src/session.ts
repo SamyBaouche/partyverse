@@ -19,6 +19,7 @@ export type ConnectFourState = {
   status: "lobby" | "playing" | "ended";
 };
 
+/** Opaque game state blobs validated loosely in validateActivity. */
 export type RoomActivity =
   | { phase: "lobby" }
   | { phase: "catalog" }
@@ -26,7 +27,21 @@ export type RoomActivity =
   | { phase: "draw-ready"; gameId: "draw-guess"; mode: "vote" | "duo" }
   | { phase: "c4-modes"; gameId: "connect-four" }
   | { phase: "c4-lobby"; gameId: "connect-four"; state: ConnectFourState }
-  | { phase: "c4-play"; gameId: "connect-four"; state: ConnectFourState };
+  | { phase: "c4-play"; gameId: "connect-four"; state: ConnectFourState }
+  | { phase: "ttt-modes"; gameId: "tic-tac-toe" }
+  | { phase: "ttt-lobby"; gameId: "tic-tac-toe"; state: Record<string, unknown> }
+  | { phase: "ttt-play"; gameId: "tic-tac-toe"; state: Record<string, unknown> }
+  | { phase: "rps-modes"; gameId: "rock-paper-scissors" }
+  | { phase: "rps-lobby"; gameId: "rock-paper-scissors"; state: Record<string, unknown> }
+  | { phase: "rps-play"; gameId: "rock-paper-scissors"; state: Record<string, unknown> }
+  | { phase: "kart-modes"; gameId: "wish-kart" }
+  | { phase: "kart-lobby"; gameId: "wish-kart"; state: Record<string, unknown> }
+  | { phase: "kart-play"; gameId: "wish-kart"; state: Record<string, unknown> }
+  | {
+      phase: "party-lobby" | "party-play";
+      gameId: string;
+      state: Record<string, unknown>;
+    };
 
 type RoomSession = {
   activity: RoomActivity;

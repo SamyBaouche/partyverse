@@ -208,11 +208,35 @@ export function RedFlagIcon({ className }: IconProps) {
   );
 }
 
+/** Tiny wish-grade kart on an oval. */
+export function WishKartIcon({ className }: IconProps) {
+  return (
+    <Frame className={className}>
+      <ellipse cx="32" cy="36" rx="22" ry="14" fill="#3d3d3d" stroke="#1a1a1a" strokeWidth="2.2" />
+      <ellipse cx="32" cy="36" rx="10" ry="6" fill="#24523a" stroke="#1a1a1a" strokeWidth="1.8" />
+      <rect
+        x="24"
+        y="28"
+        width="16"
+        height="10"
+        rx="3"
+        fill="#FF6B7A"
+        stroke="#1a1a1a"
+        strokeWidth="1.8"
+      />
+      <circle cx="27" cy="40" r="2.2" fill="#1a1a1a" />
+      <circle cx="37" cy="40" r="2.2" fill="#1a1a1a" />
+      <path d="M40 18l6 4-6 4" stroke="#FFE566" strokeWidth="2.5" strokeLinecap="round" />
+    </Frame>
+  );
+}
+
 const ICONS: Record<CatalogGameId, ComponentType<IconProps>> = {
   "tic-tac-toe": TicTacToeIcon,
   "connect-four": ConnectFourIcon,
   "rock-paper-scissors": RockPaperScissorsIcon,
   "draw-guess": DrawGuessIcon,
+  "wish-kart": WishKartIcon,
   imposter: ImposterIcon,
   "word-rush": WordRushIcon,
   "bomb-party": BombPartyIcon,

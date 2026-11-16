@@ -2,6 +2,14 @@ import type { CatalogGame, DrawMode } from "./types";
 
 export const CATALOG_GAMES: CatalogGame[] = [
   {
+    id: "wish-kart",
+    title: "Wish Kart",
+    tagline: "MARIO KART DE WISH",
+    blurb: "Oval track, phone or gamepad. Four karts, zero shame.",
+    accent: "#FFE566",
+    locked: false,
+  },
+  {
     id: "connect-four",
     title: "Connect Four",
     tagline: "DROP & STACK",
@@ -39,7 +47,7 @@ export const CATALOG_GAMES: CatalogGame[] = [
     tagline: "FIND THE FAKE",
     blurb: "Someone doesn't know the word. Talk, bluff, and vote them out.",
     accent: "#A8E6FF",
-    locked: true,
+    locked: false,
   },
   {
     id: "word-rush",
@@ -47,7 +55,7 @@ export const CATALOG_GAMES: CatalogGame[] = [
     tagline: "TYPE FAST",
     blurb: "Speed prompts hit the room. First correct answer wins the point.",
     accent: "#D4B8FF",
-    locked: true,
+    locked: false,
   },
   {
     id: "bomb-party",
@@ -55,7 +63,7 @@ export const CATALOG_GAMES: CatalogGame[] = [
     tagline: "PASS THE BOMB",
     blurb: "Type a word with the letters before the bomb pops.",
     accent: "#B8F2C8",
-    locked: true,
+    locked: false,
   },
   {
     id: "trivia-blitz",
@@ -63,7 +71,7 @@ export const CATALOG_GAMES: CatalogGame[] = [
     tagline: "QUICK ANSWERS",
     blurb: "Fast questions, loud buzzers, and a climbing scoreboard.",
     accent: "#FFC4A8",
-    locked: true,
+    locked: false,
   },
   {
     id: "charades",
@@ -71,7 +79,7 @@ export const CATALOG_GAMES: CatalogGame[] = [
     tagline: "ACT IT OUT",
     blurb: "No talking — mime the prompt while your team guesses.",
     accent: "#C8D4FF",
-    locked: true,
+    locked: false,
   },
   {
     id: "spyfall",
@@ -79,7 +87,7 @@ export const CATALOG_GAMES: CatalogGame[] = [
     tagline: "SPOT THE SPY",
     blurb: "Everyone knows the place except one spy. Ask carefully.",
     accent: "#F5D0A9",
-    locked: true,
+    locked: false,
   },
   {
     id: "red-flag",
@@ -87,7 +95,7 @@ export const CATALOG_GAMES: CatalogGame[] = [
     tagline: "VOTE THE WORST",
     blurb: "Wild dating pitches. Vote the biggest red flag in the room.",
     accent: "#E8C4FF",
-    locked: true,
+    locked: false,
   },
 ];
 

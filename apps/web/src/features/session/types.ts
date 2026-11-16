@@ -1,3 +1,6 @@
+import type { PartyGameState } from "../partyGames/logic";
+import type { WishKartState } from "../wishKart/logic";
+
 export type DrawMode = "vote" | "duo" | "solo" | "ai";
 
 export type DuelMode = "1v1" | "2v2";
@@ -59,6 +62,8 @@ export type RpsState = {
   targetScore: number;
 };
 
+export type { PartyGameState, WishKartState };
+
 export type RoomActivity =
   | { phase: "lobby" }
   | { phase: "catalog" }
@@ -72,13 +77,29 @@ export type RoomActivity =
   | { phase: "ttt-play"; gameId: "tic-tac-toe"; state: TicTacToeState }
   | { phase: "rps-modes"; gameId: "rock-paper-scissors" }
   | { phase: "rps-lobby"; gameId: "rock-paper-scissors"; state: RpsState }
-  | { phase: "rps-play"; gameId: "rock-paper-scissors"; state: RpsState };
+  | { phase: "rps-play"; gameId: "rock-paper-scissors"; state: RpsState }
+  | { phase: "kart-modes"; gameId: "wish-kart" }
+  | { phase: "kart-lobby"; gameId: "wish-kart"; state: WishKartState }
+  | { phase: "kart-play"; gameId: "wish-kart"; state: WishKartState }
+  | {
+      phase: "party-lobby" | "party-play";
+      gameId:
+        | "imposter"
+        | "word-rush"
+        | "bomb-party"
+        | "trivia-blitz"
+        | "charades"
+        | "spyfall"
+        | "red-flag";
+      state: PartyGameState;
+    };
 
 export type CatalogGameId =
   | "tic-tac-toe"
   | "connect-four"
   | "rock-paper-scissors"
   | "draw-guess"
+  | "wish-kart"
   | "imposter"
   | "word-rush"
   | "bomb-party"

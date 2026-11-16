@@ -8,6 +8,8 @@ import { JoinForm } from "../features/join/JoinForm";
 import { joinRoom } from "../features/join/joinRoom";
 import { ROOM_ERROR_MESSAGES } from "../features/join/messages";
 import { mockJoin } from "../features/join/mockJoin";
+import { PartyGamePhone } from "../features/partyGames/PartyGamePhone";
+import { leaveParty, type PartyGameState } from "../features/partyGames/logic";
 import { DrawGuessSession, PartyProvider, resolvePartyTransportMode } from "../features/realtime";
 import { RpsPhone } from "../features/rps/RpsPhone";
 import {
@@ -20,11 +22,20 @@ import type {
   RoomActivity,
   RpsState,
   TicTacToeState,
+  WishKartState,
 } from "../features/session/types";
 import { TicTacToePhone } from "../features/ticTacToe/TicTacToePhone";
+import { WishKartPhone } from "../features/wishKart/WishKartPhone";
+import { leaveKart } from "../features/wishKart/logic";
 import { useSound } from "../lib/audio";
 import { getJoinUrl } from "../lib/joinOrigin";
-import { isC4Activity, isRpsActivity, isTttActivity } from "./play/activityGuards";
+import {
+  isC4Activity,
+  isKartActivity,
+  isPartyActivity,
+  isRpsActivity,
+  isTttActivity,
+} from "./play/activityGuards";
 import { readOrCreatePlayerId, readStoredNickname, saveNickname } from "./play/nicknameStorage";
 
 type JoinPhase = "form" | "submitting" | "joined";
@@ -134,6 +145,20 @@ export default function PlayPage() {
         state: nextState,
       });
     }
+    if (isKartActivity(activity)) {
+      void publishRoomActivity(code, {
+        phase: activity.phase,
+        gameId: "wish-kart",
+        state: leaveKart(activity.state, playerId),
+      });
+    }
+    if (isPartyActivity(activity)) {
+      void publishRoomActivity(code, {
+        phase: activity.phase,
+        gameId: activity.gameId,
+        state: leaveParty(activity.state, playerId),
+      });
+    }
     setPlayer(null);
     setServerError(null);
     setPhase("form");
@@ -164,6 +189,26 @@ export default function PlayPage() {
     const published = await publishRoomActivity(code, {
       phase: activityPhase,
       gameId: "rock-paper-scissors",
+      state: next,
+    });
+    setActivity(published);
+  }
+
+  async function publishKartState(next: WishKartState) {
+    const activityPhase = next.status === "lobby" ? "kart-lobby" : "kart-play";
+    const published = await publishRoomActivity(code, {
+      phase: activityPhase,
+      gameId: "wish-kart",
+      state: next,
+    });
+    setActivity(published);
+  }
+
+  async function publishPartyState(next: PartyGameState) {
+    const activityPhase = next.status === "lobby" ? "party-lobby" : "party-play";
+    const published = await publishRoomActivity(code, {
+      phase: activityPhase,
+      gameId: next.gameId,
       state: next,
     });
     setActivity(published);
@@ -230,6 +275,52 @@ export default function PlayPage() {
             state={activity.state}
             onStateChange={(next) => {
               void publishRpsState(next);
+            }}
+            onLeave={handleLeave}
+          />
+        </motion.div>
+      </main>
+    );
+  }
+
+  if (phase === "joined" && player && isKartActivity(activity)) {
+    return (
+      <main className="flex min-h-screen items-center justify-center p-6">
+        <motion.div
+          className="w-full max-w-sm"
+          initial={reduceMotion ? false : { opacity: 0, y: 16 }}
+          animate={{ opacity: 1, y: 0 }}
+          transition={{ duration: reduceMotion ? 0 : 0.3 }}
+        >
+          <WishKartPhone
+            playerId={playerId}
+            playerName={player.name}
+            state={activity.state}
+            onStateChange={(next) => {
+              void publishKartState(next);
+            }}
+            onLeave={handleLeave}
+          />
+        </motion.div>
+      </main>
+    );
+  }
+
+  if (phase === "joined" && player && isPartyActivity(activity)) {
+    return (
+      <main className="flex min-h-screen items-center justify-center p-6">
+        <motion.div
+          className="w-full max-w-sm"
+          initial={reduceMotion ? false : { opacity: 0, y: 16 }}
+          animate={{ opacity: 1, y: 0 }}
+          transition={{ duration: reduceMotion ? 0 : 0.3 }}
+        >
+          <PartyGamePhone
+            playerId={playerId}
+            playerName={player.name}
+            state={activity.state}
+            onStateChange={(next) => {
+              void publishPartyState(next);
             }}
             onLeave={handleLeave}
           />
