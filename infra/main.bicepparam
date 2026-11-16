@@ -1,4 +1,4 @@
 using './main.bicep'
 
-param location = 'eastus'
+param location = 'canadacentral'
 param webPubSubSku = 'Free_F1'
