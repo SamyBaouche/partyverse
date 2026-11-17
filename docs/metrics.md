@@ -24,7 +24,7 @@ Only numbers that were measured go here. Resume bullets must match this table.
 | Server         | https://partyverse-server.whiteflower-731f831a.canadacentral.azurecontainerapps.io |
 | Web PubSub     | `partyverse-wps-ddb7gd5jsmffo` (Free_F1)                                           |
 
-> Container Apps currently run placeholder images until ACR push of Partyverse builds. Cost baseline (scale-to-zero + Free PubSub) is already measurable.
+> Container Apps still may run placeholder images until GitLab Registry images are wired (`scripts/push-gitlab-registry.sh` or Kaniko on `main`). Cost baseline (scale-to-zero + Free PubSub) is already measurable. Coverage gate **Z**: Vitest fails below 80% statements / 65% branches on `src/game/**`.
 
 ## Resume mapping
 
