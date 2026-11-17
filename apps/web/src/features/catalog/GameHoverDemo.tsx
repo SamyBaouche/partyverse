@@ -73,6 +73,11 @@ export function GameHoverDemo({ id, accent }: GameHoverDemoProps) {
           <div className="demo-flag h-12 w-8 origin-bottom-left bg-[#ff5a6a]" />
         </div>
       ) : null}
+      {id === "wish-kart" ? (
+        <div className="absolute inset-0 flex items-center justify-center bg-[#24523a] p-3">
+          <GameIcon id="wish-kart" className="h-full w-full" />
+        </div>
+      ) : null}
     </div>
   );
 }

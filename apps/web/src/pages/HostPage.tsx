@@ -12,6 +12,8 @@ import { HostLobby } from "../features/lobby/HostLobby";
 import { useMockLobby } from "../features/lobby/useMockLobby";
 import { LiveHostLobby } from "../features/host/LiveHostLobby";
 import { readInitialPhase, type HostPhase } from "../features/host/hostPhases";
+import { PartyGameHost } from "../features/partyGames/PartyGameHost";
+import { createPartyLobby, isPartyGameId, type PartyGameState } from "../features/partyGames/logic";
 import { PartyProvider, resolvePartyTransportMode } from "../features/realtime";
 import { RpsHost } from "../features/rps/RpsHost";
 import { RpsModePicker } from "../features/rps/RpsModePicker";
@@ -30,10 +32,14 @@ import type {
   RoomActivity,
   RpsState,
   TicTacToeState,
+  WishKartState,
 } from "../features/session/types";
 import { TicTacToeHost } from "../features/ticTacToe/TicTacToeHost";
 import { TicTacToeModePicker } from "../features/ticTacToe/TicTacToeModePicker";
 import { createTttLobby } from "../features/ticTacToe/logic";
+import { WishKartHost } from "../features/wishKart/WishKartHost";
+import { createWishKartLobby, mergeKartRemote } from "../features/wishKart/logic";
+import { WishKartModePicker } from "../features/wishKart/WishKartModePicker";
 import { useSound } from "../lib/audio";
 import { getJoinUrl } from "../lib/joinOrigin";
 
@@ -55,6 +61,8 @@ export default function HostPage() {
   const [c4State, setC4State] = useState<ConnectFourState | null>(null);
   const [tttState, setTttState] = useState<TicTacToeState | null>(null);
   const [rpsState, setRpsState] = useState<RpsState | null>(null);
+  const [kartState, setKartState] = useState<WishKartState | null>(null);
+  const [partyState, setPartyState] = useState<PartyGameState | null>(null);
 
   useEffect(() => {
     if (USE_MOCK_TRANSPORT || liveRoom) {
@@ -83,6 +91,17 @@ export default function HostPage() {
     setPhase(next);
   }, [params]);
 
+  // Catalog "Play →" lands here with ?phase=&game= — bootstrap lobbies the host owns.
+  useEffect(() => {
+    if (phase === "party-lobby" && !partyState) {
+      const game = params.get("game");
+      if (game && isPartyGameId(game)) {
+        void publishParty(createPartyLobby(game));
+      }
+    }
+    // publishParty is stable enough via closure; only boot once per empty lobby.
+  }, [phase, partyState, params]);
+
   useEffect(() => {
     if (phase === "catalog") {
       void publishRoomActivity(code, { phase: "catalog" });
@@ -96,11 +115,15 @@ export default function HostPage() {
       phase !== "ttt-lobby" &&
       phase !== "ttt-play" &&
       phase !== "rps-lobby" &&
-      phase !== "rps-play"
+      phase !== "rps-play" &&
+      phase !== "kart-lobby" &&
+      phase !== "kart-play" &&
+      phase !== "party-lobby" &&
+      phase !== "party-play"
     ) {
       return;
     }
-    void fetchRoomActivity(code).then((activity) => {
+    function applyActivity(activity: RoomActivity) {
       if (activity.phase === "c4-lobby" || activity.phase === "c4-play") {
         setC4State(activity.state);
         setPhase(activity.phase);
@@ -113,21 +136,17 @@ export default function HostPage() {
         setRpsState(activity.state);
         setPhase(activity.phase);
       }
-    });
-    return subscribeRoomActivity(code, (activity) => {
-      if (activity.phase === "c4-lobby" || activity.phase === "c4-play") {
-        setC4State(activity.state);
+      if (activity.phase === "kart-lobby" || activity.phase === "kart-play") {
+        setKartState((prev) => (prev ? mergeKartRemote(prev, activity.state) : activity.state));
         setPhase(activity.phase);
       }
-      if (activity.phase === "ttt-lobby" || activity.phase === "ttt-play") {
-        setTttState(activity.state);
+      if (activity.phase === "party-lobby" || activity.phase === "party-play") {
+        setPartyState(activity.state);
         setPhase(activity.phase);
       }
-      if (activity.phase === "rps-lobby" || activity.phase === "rps-play") {
-        setRpsState(activity.state);
-        setPhase(activity.phase);
-      }
-    });
+    }
+    void fetchRoomActivity(code).then(applyActivity);
+    return subscribeRoomActivity(code, applyActivity);
   }, [code, phase]);
 
   async function setActivity(activity: RoomActivity) {
@@ -170,6 +189,30 @@ export default function HostPage() {
     });
   }
 
+  async function publishKart(next: WishKartState) {
+    setKartState(next);
+    const activityPhase = next.status === "lobby" ? "kart-lobby" : "kart-play";
+    setPhase(activityPhase);
+    navigate(`/host?phase=${activityPhase}`, { replace: true });
+    await setActivity({
+      phase: activityPhase,
+      gameId: "wish-kart",
+      state: next,
+    });
+  }
+
+  async function publishParty(next: PartyGameState) {
+    setPartyState(next);
+    const activityPhase = next.status === "lobby" ? "party-lobby" : "party-play";
+    setPhase(activityPhase);
+    navigate(`/host?phase=${activityPhase}`, { replace: true });
+    await setActivity({
+      phase: activityPhase,
+      gameId: next.gameId,
+      state: next,
+    });
+  }
+
   async function handleSelectGame(gameId: CatalogGameId) {
     if (gameId === "draw-guess") {
       void play("correct");
@@ -197,6 +240,18 @@ export default function HostPage() {
       setPhase("rps-modes");
       navigate("/host?phase=rps-modes", { replace: true });
       await setActivity({ phase: "rps-modes", gameId: "rock-paper-scissors" });
+      return;
+    }
+    if (gameId === "wish-kart") {
+      void play("correct");
+      setPhase("kart-modes");
+      navigate("/host?phase=kart-modes", { replace: true });
+      await setActivity({ phase: "kart-modes", gameId: "wish-kart" });
+      return;
+    }
+    if (isPartyGameId(gameId)) {
+      void play("go");
+      await publishParty(createPartyLobby(gameId));
     }
   }
 
@@ -227,12 +282,19 @@ export default function HostPage() {
     await publishRps(createRpsLobby(mode));
   }
 
+  async function handleStartKart() {
+    void play("go");
+    await publishKart(createWishKartLobby());
+  }
+
   async function backToCatalog() {
     void play("click");
     setSelectedMode(null);
     setC4State(null);
     setTttState(null);
     setRpsState(null);
+    setKartState(null);
+    setPartyState(null);
     navigate("/", { replace: true });
   }
 
@@ -401,6 +463,70 @@ export default function HostPage() {
               state={rpsState}
               onStateChange={(next) => {
                 void publishRps(next);
+              }}
+              onBack={() => {
+                void backToCatalog();
+              }}
+            />
+          </motion.div>
+        ) : null}
+
+        {phase === "kart-modes" ? (
+          <motion.div
+            key="kart-modes"
+            className="w-full"
+            initial={reduceMotion ? false : { opacity: 0, y: 16 }}
+            animate={{ opacity: 1, y: 0 }}
+            exit={reduceMotion ? undefined : { opacity: 0, y: -12 }}
+            transition={{ duration: reduceMotion ? 0 : 0.3 }}
+          >
+            <WishKartModePicker
+              onStart={() => {
+                void handleStartKart();
+              }}
+              onBack={() => {
+                void backToCatalog();
+              }}
+            />
+          </motion.div>
+        ) : null}
+
+        {(phase === "kart-lobby" || phase === "kart-play") && kartState ? (
+          <motion.div
+            key="kart-host"
+            className="w-full"
+            initial={reduceMotion ? false : { opacity: 0, y: 16 }}
+            animate={{ opacity: 1, y: 0 }}
+            exit={reduceMotion ? undefined : { opacity: 0, y: -12 }}
+            transition={{ duration: reduceMotion ? 0 : 0.3 }}
+          >
+            <WishKartHost
+              joinUrl={joinUrl}
+              state={kartState}
+              onStateChange={(next) => {
+                void publishKart(next);
+              }}
+              onBack={() => {
+                void backToCatalog();
+              }}
+            />
+          </motion.div>
+        ) : null}
+
+        {(phase === "party-lobby" || phase === "party-play") && partyState ? (
+          <motion.div
+            key="party-host"
+            className="w-full"
+            initial={reduceMotion ? false : { opacity: 0, y: 16 }}
+            animate={{ opacity: 1, y: 0 }}
+            exit={reduceMotion ? undefined : { opacity: 0, y: -12 }}
+            transition={{ duration: reduceMotion ? 0 : 0.3 }}
+          >
+            <PartyGameHost
+              joinUrl={joinUrl}
+              state={partyState}
+              onStateChange={(next) => {
+                void publishParty(next);
               }}
               onBack={() => {
                 void backToCatalog();

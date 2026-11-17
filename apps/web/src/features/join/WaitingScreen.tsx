@@ -1,5 +1,6 @@
 import { motion, useReducedMotion } from "motion/react";
 import { Button, Card, PlayerAvatar } from "../../components/ui";
+import { partyTitle } from "../partyGames/logic";
 import type { RoomActivity } from "../session/types";
 
 type WaitingScreenProps = {
@@ -79,6 +80,31 @@ function activityCopy(activity: RoomActivity): { title: string; body: string } {
       return {
         title: "Rock Paper Scissors",
         body: "Match is live — lock in your move.",
+      };
+    case "kart-modes":
+      return {
+        title: "Wish Kart",
+        body: "Host is opening the race lobby…",
+      };
+    case "kart-lobby":
+      return {
+        title: "Wish Kart",
+        body: "Hop in a kart on the next screen.",
+      };
+    case "kart-play":
+      return {
+        title: "Wish Kart",
+        body: "Race is live — steer on your phone or gamepad.",
+      };
+    case "party-lobby":
+      return {
+        title: partyTitle(activity.state.gameId),
+        body: "Join the lobby on the next screen.",
+      };
+    case "party-play":
+      return {
+        title: partyTitle(activity.state.gameId),
+        body: "Round is live — use your phone as the controller.",
       };
   }
 }
