@@ -71,12 +71,16 @@ export function PartyGamePhone({
         </p>
         <h1 className="font-body text-xl font-extrabold text-ink">{playerName}</h1>
         <p className="font-body text-sm text-muted">Score {me.score}</p>
-        {privateHint ? <p className="font-body text-sm font-semibold text-ink">{privateHint}</p> : null}
+        {privateHint ? (
+          <p className="font-body text-sm font-semibold text-ink">{privateHint}</p>
+        ) : null}
       </Card>
 
       {state.status === "lobby" ? (
         <Card className="text-center">
-          <p className="font-body text-sm text-muted">You&apos;re in. Wait for the host to start.</p>
+          <p className="font-body text-sm text-muted">
+            You&apos;re in. Wait for the host to start.
+          </p>
         </Card>
       ) : null}
 

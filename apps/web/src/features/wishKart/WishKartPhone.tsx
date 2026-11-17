@@ -101,13 +101,21 @@ export function WishKartPhone({
               label="◀"
               color="#B8D4FF"
               className="h-28 text-2xl"
-              onHold={(down) => patch({ steer: down ? -1 : inputRef.current.steer === -1 ? 0 : inputRef.current.steer })}
+              onHold={(down) =>
+                patch({
+                  steer: down ? -1 : inputRef.current.steer === -1 ? 0 : inputRef.current.steer,
+                })
+              }
             />
             <HoldButton
               label="▶"
               color="#FFB4C8"
               className="h-28 text-2xl"
-              onHold={(down) => patch({ steer: down ? 1 : inputRef.current.steer === 1 ? 0 : inputRef.current.steer })}
+              onHold={(down) =>
+                patch({
+                  steer: down ? 1 : inputRef.current.steer === 1 ? 0 : inputRef.current.steer,
+                })
+              }
             />
           </div>
 

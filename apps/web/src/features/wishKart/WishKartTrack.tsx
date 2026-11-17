@@ -1,10 +1,5 @@
 import type { ReactNode } from "react";
-import {
-  cameraTarget,
-  type KartRacer,
-  type ObstacleKind,
-  type WishKartState,
-} from "./logic";
+import { cameraTarget, type KartRacer, type ObstacleKind, type WishKartState } from "./logic";
 
 type WishKartTrackProps = {
   state: WishKartState;
@@ -99,10 +94,26 @@ export function WishKartTrack({ state, className, fullscreen = false }: WishKart
       z: hazard.z,
       node:
         hazard.kind === "shell" ? (
-          <ellipse cx="0" cy="0" rx="0.55" ry="0.35" fill="#FF6B7A" stroke="#1a1a1a" strokeWidth="0.08" />
+          <ellipse
+            cx="0"
+            cy="0"
+            rx="0.55"
+            ry="0.35"
+            fill="#FF6B7A"
+            stroke="#1a1a1a"
+            strokeWidth="0.08"
+          />
         ) : (
           <g>
-            <ellipse cx="0" cy="0.1" rx="0.55" ry="0.32" fill="#FFE566" stroke="#1a1a1a" strokeWidth="0.08" />
+            <ellipse
+              cx="0"
+              cy="0.1"
+              rx="0.55"
+              ry="0.32"
+              fill="#FFE566"
+              stroke="#1a1a1a"
+              strokeWidth="0.08"
+            />
             <path d="M-0.3 0 Q0 -0.45 0.3 0" fill="none" stroke="#1a1a1a" strokeWidth="0.06" />
           </g>
         ),
@@ -166,8 +177,22 @@ export function WishKartTrack({ state, className, fullscreen = false }: WishKart
           const w = 0.012 + t * 0.04;
           return (
             <g key={`edge-${i}`}>
-              <rect x={0.18 - t * 0.25} y={y} width={w} height={0.02 + t * 0.02} fill="#FFE566" opacity="0.7" />
-              <rect x={0.82 + t * 0.2} y={y} width={w} height={0.02 + t * 0.02} fill="#FFE566" opacity="0.7" />
+              <rect
+                x={0.18 - t * 0.25}
+                y={y}
+                width={w}
+                height={0.02 + t * 0.02}
+                fill="#FFE566"
+                opacity="0.7"
+              />
+              <rect
+                x={0.82 + t * 0.2}
+                y={y}
+                width={w}
+                height={0.02 + t * 0.02}
+                fill="#FFE566"
+                opacity="0.7"
+              />
             </g>
           );
         })}
@@ -211,7 +236,15 @@ export function WishKartTrack({ state, className, fullscreen = false }: WishKart
 
         {finish ? (
           <g transform={`translate(${finish.x} ${finish.y}) scale(${finish.scale * 1.3})`}>
-            <rect x={-2.6} y={-1.4} width="5.2" height="1.6" fill="#1a1a1a" stroke="#f8fbff" strokeWidth="0.12" />
+            <rect
+              x={-2.6}
+              y={-1.4}
+              width="5.2"
+              height="1.6"
+              fill="#1a1a1a"
+              stroke="#f8fbff"
+              strokeWidth="0.12"
+            />
             <text
               textAnchor="middle"
               y="-0.2"
@@ -225,7 +258,10 @@ export function WishKartTrack({ state, className, fullscreen = false }: WishKart
         ) : null}
 
         {sprites.map((sprite) => (
-          <g key={sprite.key} transform={`translate(${sprite.x} ${sprite.y}) scale(${sprite.scale})`}>
+          <g
+            key={sprite.key}
+            transform={`translate(${sprite.x} ${sprite.y}) scale(${sprite.scale})`}
+          >
             {sprite.node}
           </g>
         ))}
@@ -249,7 +285,8 @@ export function WishKartTrack({ state, className, fullscreen = false }: WishKart
               />
             </div>
             <span className="inline-flex rounded-full border-[3px] border-ink bg-white/90 px-3 py-1 font-body text-xs font-bold text-ink">
-              {Math.min(100, Math.max(0, Math.round((cam.z / state.finishZ) * 100)))}% · dodge cones & rocks
+              {Math.min(100, Math.max(0, Math.round((cam.z / state.finishZ) * 100)))}% · dodge cones
+              & rocks
             </span>
           </div>
           <span
@@ -313,17 +350,78 @@ function CarSprite({ kart, hero }: { kart: KartRacer; hero: boolean }) {
         opacity="0.95"
       />
       {/* Spoiler */}
-      <rect x={-0.7} y={-0.22} width="1.4" height="0.16" rx="0.05" fill={dark} stroke="#1a1a1a" strokeWidth="0.05" />
-      <rect x={-0.55} y={-0.38} width="0.12" height="0.22" fill={light} stroke="#1a1a1a" strokeWidth="0.04" />
-      <rect x={0.43} y={-0.38} width="0.12" height="0.22" fill={light} stroke="#1a1a1a" strokeWidth="0.04" />
+      <rect
+        x={-0.7}
+        y={-0.22}
+        width="1.4"
+        height="0.16"
+        rx="0.05"
+        fill={dark}
+        stroke="#1a1a1a"
+        strokeWidth="0.05"
+      />
+      <rect
+        x={-0.55}
+        y={-0.38}
+        width="0.12"
+        height="0.22"
+        fill={light}
+        stroke="#1a1a1a"
+        strokeWidth="0.04"
+      />
+      <rect
+        x={0.43}
+        y={-0.38}
+        width="0.12"
+        height="0.22"
+        fill={light}
+        stroke="#1a1a1a"
+        strokeWidth="0.04"
+      />
 
       {/* Tail lights */}
-      <rect x={-0.95} y={0.35} width="0.28" height="0.16" rx="0.04" fill="#FF3B4A" stroke="#1a1a1a" strokeWidth="0.04" />
-      <rect x={0.67} y={0.35} width="0.28" height="0.16" rx="0.04" fill="#FF3B4A" stroke="#1a1a1a" strokeWidth="0.04" />
+      <rect
+        x={-0.95}
+        y={0.35}
+        width="0.28"
+        height="0.16"
+        rx="0.04"
+        fill="#FF3B4A"
+        stroke="#1a1a1a"
+        strokeWidth="0.04"
+      />
+      <rect
+        x={0.67}
+        y={0.35}
+        width="0.28"
+        height="0.16"
+        rx="0.04"
+        fill="#FF3B4A"
+        stroke="#1a1a1a"
+        strokeWidth="0.04"
+      />
 
       {/* Exhaust */}
-      <rect x={-0.2} y={0.78} width="0.14" height="0.1" rx="0.03" fill="#333" stroke="#1a1a1a" strokeWidth="0.03" />
-      <rect x={0.06} y={0.78} width="0.14" height="0.1" rx="0.03" fill="#333" stroke="#1a1a1a" strokeWidth="0.03" />
+      <rect
+        x={-0.2}
+        y={0.78}
+        width="0.14"
+        height="0.1"
+        rx="0.03"
+        fill="#333"
+        stroke="#1a1a1a"
+        strokeWidth="0.03"
+      />
+      <rect
+        x={0.06}
+        y={0.78}
+        width="0.14"
+        height="0.1"
+        rx="0.03"
+        fill="#333"
+        stroke="#1a1a1a"
+        strokeWidth="0.03"
+      />
 
       {/* Wheels */}
       <rect x={-1.15} y={0.45} width="0.28" height="0.42" rx="0.08" fill="#1a1a1a" />
@@ -332,7 +430,16 @@ function CarSprite({ kart, hero }: { kart: KartRacer; hero: boolean }) {
       <rect x={0.92} y={0.52} width="0.18" height="0.28" rx="0.04" fill="#555" />
 
       {/* Plate / number */}
-      <rect x={-0.28} y={0.48} width="0.56" height="0.2" rx="0.04" fill="#f8fbff" stroke="#1a1a1a" strokeWidth="0.04" />
+      <rect
+        x={-0.28}
+        y={0.48}
+        width="0.56"
+        height="0.2"
+        rx="0.04"
+        fill="#f8fbff"
+        stroke="#1a1a1a"
+        strokeWidth="0.04"
+      />
       <text
         y="0.64"
         textAnchor="middle"
@@ -376,7 +483,12 @@ function ObstacleSprite({ kind }: { kind: ObstacleKind }) {
   if (kind === "cone") {
     return (
       <g>
-        <polygon points="0,-1.1 -0.55,0.7 0.55,0.7" fill="#FF8A3D" stroke="#1a1a1a" strokeWidth="0.08" />
+        <polygon
+          points="0,-1.1 -0.55,0.7 0.55,0.7"
+          fill="#FF8A3D"
+          stroke="#1a1a1a"
+          strokeWidth="0.08"
+        />
         <rect x={-0.35} y={-0.15} width="0.7" height="0.18" fill="#f8fbff" />
         <ellipse cx="0" cy="0.75" rx="0.55" ry="0.12" fill="#1a1a1a" opacity="0.25" />
       </g>
@@ -399,10 +511,35 @@ function ObstacleSprite({ kind }: { kind: ObstacleKind }) {
   if (kind === "barrier") {
     return (
       <g>
-        <rect x={-1.1} y={-0.35} width="2.2" height="0.85" rx="0.1" fill="#FF6B7A" stroke="#1a1a1a" strokeWidth="0.08" />
+        <rect
+          x={-1.1}
+          y={-0.35}
+          width="2.2"
+          height="0.85"
+          rx="0.1"
+          fill="#FF6B7A"
+          stroke="#1a1a1a"
+          strokeWidth="0.08"
+        />
         <rect x={-1.1} y={-0.05} width="2.2" height="0.25" fill="#f8fbff" />
-        <rect x={-0.95} y={0.5} width="0.2" height="0.35" fill="#666" stroke="#1a1a1a" strokeWidth="0.04" />
-        <rect x={0.75} y={0.5} width="0.2" height="0.35" fill="#666" stroke="#1a1a1a" strokeWidth="0.04" />
+        <rect
+          x={-0.95}
+          y={0.5}
+          width="0.2"
+          height="0.35"
+          fill="#666"
+          stroke="#1a1a1a"
+          strokeWidth="0.04"
+        />
+        <rect
+          x={0.75}
+          y={0.5}
+          width="0.2"
+          height="0.35"
+          fill="#666"
+          stroke="#1a1a1a"
+          strokeWidth="0.04"
+        />
         <ellipse cx="0" cy="0.85" rx="1" ry="0.12" fill="#1a1a1a" opacity="0.22" />
       </g>
     );

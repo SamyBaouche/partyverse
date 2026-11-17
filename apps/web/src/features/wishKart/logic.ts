@@ -113,10 +113,7 @@ export function joinKart(state: WishKartState, id: string, name: string): WishKa
     return state;
   }
   const withoutExtraBots = state.players.filter((p) => !p.isBot);
-  const nextPlayers = [
-    ...withoutExtraBots,
-    makeRacer(id, name, withoutExtraBots.length, false),
-  ];
+  const nextPlayers = [...withoutExtraBots, makeRacer(id, name, withoutExtraBots.length, false)];
   return { ...state, players: fillWithBots(nextPlayers) };
 }
 
@@ -233,14 +230,7 @@ export function stepRace(state: WishKartState, now = Date.now()): WishKartState 
 
   const stepped: KartRacer[] = [];
   for (const racer of withBotInput) {
-    const result = integrate(
-      racer,
-      state.finishZ,
-      now,
-      hazards,
-      boxes,
-      state.obstacles ?? [],
-    );
+    const result = integrate(racer, state.finishZ, now, hazards, boxes, state.obstacles ?? []);
     hazards = result.hazards;
     boxes = result.boxes;
     stepped.push(result.racer);
@@ -462,7 +452,11 @@ function integrate(
   speed *= FRICTION;
 
   const steerRate = drifting ? DRIFT_STEER : STEER_RATE;
-  x = clamp(x + racer.input.steer * steerRate * (0.4 + speed / MAX_SPEED), -TRACK.halfWidth, TRACK.halfWidth);
+  x = clamp(
+    x + racer.input.steer * steerRate * (0.4 + speed / MAX_SPEED),
+    -TRACK.halfWidth,
+    TRACK.halfWidth,
+  );
 
   if (drifting) {
     driftCharge = Math.min(1, driftCharge + 0.04);

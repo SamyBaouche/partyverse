@@ -2,13 +2,7 @@ import type { CatalogGameId } from "../session/types";
 
 export type PartyGameId = Extract<
   CatalogGameId,
-  | "imposter"
-  | "word-rush"
-  | "bomb-party"
-  | "trivia-blitz"
-  | "charades"
-  | "spyfall"
-  | "red-flag"
+  "imposter" | "word-rush" | "bomb-party" | "trivia-blitz" | "charades" | "spyfall" | "red-flag"
 >;
 
 export type PartyPlayer = {
@@ -56,7 +50,13 @@ const TRIVIA = [
 
 const PLACES = ["Beach", "Airport", "School", "Hospital", "Casino", "Zoo", "Cinema", "Submarine"];
 
-const CHARADES = ["Cooking pasta", "Riding a bike", "Brushing teeth", "Flying a kite", "Playing piano"];
+const CHARADES = [
+  "Cooking pasta",
+  "Riding a bike",
+  "Brushing teeth",
+  "Flying a kite",
+  "Playing piano",
+];
 
 const RED_FLAGS = [
   "Says their ex is 'crazy' on date one",
@@ -232,7 +232,7 @@ function dealRound(
   players: PartyPlayer[];
 } {
   const reset = players.map((p) => ({ ...p, answer: "", ready: false, role: "crew" as const }));
-  const pick = <T,>(list: T[]) => list[(round - 1) % list.length] as T;
+  const pick = <T>(list: T[]) => list[(round - 1) % list.length] as T;
 
   if (gameId === "word-rush") {
     const word = pick(WORDS);
@@ -341,7 +341,11 @@ function shouldAutoScore(gameId: PartyGameId, answer: string, secret: string): b
 function scoreRound(state: PartyGameState): PartyGameState {
   const players = state.players.map((p) => {
     let score = p.score;
-    if (state.gameId === "word-rush" || state.gameId === "trivia-blitz" || state.gameId === "charades") {
+    if (
+      state.gameId === "word-rush" ||
+      state.gameId === "trivia-blitz" ||
+      state.gameId === "charades"
+    ) {
       if (normalize(p.answer) === normalize(state.secret)) {
         score += 1;
       }

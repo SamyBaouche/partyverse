@@ -13,11 +13,7 @@ import { useMockLobby } from "../features/lobby/useMockLobby";
 import { LiveHostLobby } from "../features/host/LiveHostLobby";
 import { readInitialPhase, type HostPhase } from "../features/host/hostPhases";
 import { PartyGameHost } from "../features/partyGames/PartyGameHost";
-import {
-  createPartyLobby,
-  isPartyGameId,
-  type PartyGameState,
-} from "../features/partyGames/logic";
+import { createPartyLobby, isPartyGameId, type PartyGameState } from "../features/partyGames/logic";
 import { PartyProvider, resolvePartyTransportMode } from "../features/realtime";
 import { RpsHost } from "../features/rps/RpsHost";
 import { RpsModePicker } from "../features/rps/RpsModePicker";
@@ -104,7 +100,6 @@ export default function HostPage() {
       }
     }
     // publishParty is stable enough via closure; only boot once per empty lobby.
-    // eslint-disable-next-line react-hooks/exhaustive-deps -- intentional bootstrap
   }, [phase, partyState, params]);
 
   useEffect(() => {

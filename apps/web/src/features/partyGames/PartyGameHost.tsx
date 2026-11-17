@@ -46,7 +46,9 @@ export function PartyGameHost({ joinUrl, state, onStateChange, onBack }: PartyGa
             <div className="toy-panel rounded-[1.8rem] bg-white p-5 sm:p-6">
               <QRCodeSVG value={joinUrl} size={280} aria-label="Scan to join" />
             </div>
-            <p className="max-w-md font-body text-lg text-ink/75 sm:text-xl">{partyBlurb(state.gameId)}</p>
+            <p className="max-w-md font-body text-lg text-ink/75 sm:text-xl">
+              {partyBlurb(state.gameId)}
+            </p>
           </section>
           <section className="flex flex-col gap-5 sm:gap-6">
             <h1 className="font-body text-3xl font-extrabold tracking-tight text-ink sm:text-4xl">

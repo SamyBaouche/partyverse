@@ -197,7 +197,11 @@ export function WishKartHost({ joinUrl, state, onStateChange, onBack }: WishKart
               <Button size="lg" onClick={() => onStateChange(rematchKart(state))}>
                 Rematch
               </Button>
-              <Button size="lg" variant="ghost" onClick={() => onStateChange(createWishKartLobby())}>
+              <Button
+                size="lg"
+                variant="ghost"
+                onClick={() => onStateChange(createWishKartLobby())}
+              >
                 New lobby
               </Button>
               <Button variant="secondary" size="lg" onClick={onBack}>
