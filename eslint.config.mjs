@@ -5,7 +5,9 @@ import globals from "globals";
 import { defineConfig } from "eslint/config";
 
 export default defineConfig([
-  { ignores: ["**/dist/**", "**/node_modules/**", "**/coverage/**", ".pnpm-store/**"] },
+  {
+    ignores: ["**/dist/**", "**/node_modules/**", "**/coverage/**", ".pnpm-store/**", "load/**"],
+  },
   js.configs.recommended,
   ...tseslint.configs.recommended,
   { languageOptions: { globals: { ...globals.node, ...globals.browser } } },
