@@ -176,6 +176,9 @@ dist
 # End of https://www.toptal.com/developers/gitignore/api/node,macos
 coverage/
 .pnpm-store/
+docs/metrics-raw/
+load/results*.json
+
 
 # draw.io temporary / backup files
 .$*.drawio*

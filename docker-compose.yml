@@ -1,0 +1,28 @@
+services:
+  server:
+    build:
+      context: .
+      dockerfile: apps/server/Dockerfile
+    ports:
+      - "3000:3000"
+    environment:
+      PORT: "3000"
+      WEBPUBSUB_HUB: partyverse
+      WEBPUBSUB_CONNECTION_STRING: ${WEBPUBSUB_CONNECTION_STRING:?set WEBPUBSUB_CONNECTION_STRING}
+    healthcheck:
+      test: ["CMD", "wget", "-qO-", "http://127.0.0.1:3000/health"]
+      interval: 10s
+      timeout: 3s
+      retries: 5
+
+  web:
+    build:
+      context: .
+      dockerfile: apps/web/Dockerfile
+      args:
+        VITE_USE_MOCK: "false"
+    ports:
+      - "8080:80"
+    depends_on:
+      server:
+        condition: service_healthy
