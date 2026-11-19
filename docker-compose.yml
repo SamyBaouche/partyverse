@@ -21,6 +21,9 @@ services:
       dockerfile: apps/web/Dockerfile
       args:
         VITE_USE_MOCK: "false"
+    environment:
+      API_SCHEME: http
+      API_UPSTREAM: server:3000
     ports:
       - "8080:80"
     depends_on:

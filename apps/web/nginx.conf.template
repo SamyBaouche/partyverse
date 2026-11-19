@@ -1,0 +1,38 @@
+server {
+  listen 80;
+  server_name _;
+  root /usr/share/nginx/html;
+  index index.html;
+
+  location / {
+    try_files $uri $uri/ /index.html;
+  }
+
+  # Azure: API_SCHEME=https API_UPSTREAM=<server-fqdn>
+  # Compose: API_SCHEME=http API_UPSTREAM=server:3000
+  location /api/ {
+    resolver 127.0.0.11 168.63.129.16 ipv6=off valid=30s;
+    set $scheme_up "${API_SCHEME}";
+    set $upstream "${API_UPSTREAM}";
+    proxy_pass $scheme_up://$upstream;
+    proxy_ssl_server_name on;
+    proxy_http_version 1.1;
+    proxy_set_header Host $upstream;
+    proxy_set_header X-Real-IP $remote_addr;
+    proxy_set_header X-Forwarded-Proto $scheme;
+  }
+
+  location /health {
+    resolver 127.0.0.11 168.63.129.16 ipv6=off valid=30s;
+    set $scheme_up "${API_SCHEME}";
+    set $upstream "${API_UPSTREAM}";
+    proxy_pass $scheme_up://$upstream/health;
+    proxy_ssl_server_name on;
+    proxy_set_header Host $upstream;
+  }
+
+  location = /healthz {
+    return 200 'ok';
+    add_header Content-Type text/plain;
+  }
+}
