@@ -6,7 +6,7 @@ workflow:
       when: never
     - if: $CI_COMMIT_BRANCH
 
-stages: [quality, test, build, image]
+stages: [quality, test, build, image, deploy]
 
 default:
   image: node:24-alpine
@@ -41,6 +41,8 @@ test:
       coverage_report:
         coverage_format: cobertura
         path: apps/server/coverage/cobertura-coverage.xml
+    paths:
+      - apps/server/coverage/
 
 build-web:
   stage: build
@@ -50,52 +52,78 @@ build-server:
   stage: build
   script: pnpm --filter @partyverse/server build
 
-# Docker image builds — main only until the self-hosted runner has privileged DinD.
-# (MR DinD was hanging forever on: Cannot connect to the Docker daemon at tcp://docker:2375)
-docker-server:
+# #25 — Kaniko push (no privileged DinD required on the self-hosted runner)
+.kaniko:
   stage: image
-  image: docker:27
-  services:
-    - name: docker:27-dind
-      alias: docker
-  variables:
-    DOCKER_TLS_CERTDIR: ""
-    DOCKER_HOST: tcp://docker:2375
-  timeout: 5m
-  allow_failure: true
+  image:
+    name: gcr.io/kaniko-project/executor:v1.23.2-debug
+    entrypoint: [""]
   before_script:
+    - mkdir -p /kaniko/.docker
     - |
-      i=0
-      until docker info; do
-        i=$((i + 1))
-        if [ "$i" -ge 30 ]; then echo "DinD not ready"; exit 1; fi
-        sleep 2
-      done
-  script:
-    - docker build -f apps/server/Dockerfile -t partyverse-server:$CI_COMMIT_SHORT_SHA .
-  rules:
-    - if: $CI_COMMIT_BRANCH == $CI_DEFAULT_BRANCH
+      AUTH="$(printf '%s:%s' "${CI_REGISTRY_USER}" "${CI_REGISTRY_PASSWORD}" | base64 | tr -d '\n')"
+      printf '{"auths":{"%s":{"auth":"%s"}}}\n' "${CI_REGISTRY}" "${AUTH}" > /kaniko/.docker/config.json
 
-docker-web:
-  stage: image
-  image: docker:27
-  services:
-    - name: docker:27-dind
-      alias: docker
-  variables:
-    DOCKER_TLS_CERTDIR: ""
-    DOCKER_HOST: tcp://docker:2375
-  timeout: 5m
-  allow_failure: true
-  before_script:
-    - |
-      i=0
-      until docker info; do
-        i=$((i + 1))
-        if [ "$i" -ge 30 ]; then echo "DinD not ready"; exit 1; fi
-        sleep 2
-      done
+kaniko-server:
+  extends: .kaniko
   script:
-    - docker build -f apps/web/Dockerfile -t partyverse-web:$CI_COMMIT_SHORT_SHA .
+    - |
+      /kaniko/executor \
+        --context "${CI_PROJECT_DIR}" \
+        --dockerfile "${CI_PROJECT_DIR}/apps/server/Dockerfile" \
+        --destination "${CI_REGISTRY_IMAGE}/server:${CI_COMMIT_SHORT_SHA}" \
+        --destination "${CI_REGISTRY_IMAGE}/server:latest"
   rules:
     - if: $CI_COMMIT_BRANCH == $CI_DEFAULT_BRANCH
+    - if: $CI_PIPELINE_SOURCE == "merge_request_event"
+      when: manual
+      allow_failure: true
+
+kaniko-web:
+  extends: .kaniko
+  script:
+    - |
+      /kaniko/executor \
+        --context "${CI_PROJECT_DIR}" \
+        --dockerfile "${CI_PROJECT_DIR}/apps/web/Dockerfile" \
+        --destination "${CI_REGISTRY_IMAGE}/web:${CI_COMMIT_SHORT_SHA}" \
+        --destination "${CI_REGISTRY_IMAGE}/web:latest"
+  rules:
+    - if: $CI_COMMIT_BRANCH == $CI_DEFAULT_BRANCH
+    - if: $CI_PIPELINE_SOURCE == "merge_request_event"
+      when: manual
+      allow_failure: true
+
+# Sprint 4 — Bicep what-if on MRs (needs AZURE_* CI variables / OIDC later)
+bicep-what-if:
+  stage: deploy
+  image: mcr.microsoft.com/azure-cli:2.67.0
+  before_script: []
+  script:
+    - az bicep build --file infra/main.bicep
+    - |
+      if [ -z "${AZURE_CLIENT_ID:-}" ]; then
+        echo "AZURE_* not configured yet — Bicep compile-only (OIDC deploy is #37)."
+        exit 0
+      fi
+      az login --service-principal -u "$AZURE_CLIENT_ID" -p "$AZURE_CLIENT_SECRET" --tenant "$AZURE_TENANT_ID"
+      az account set --subscription "$AZURE_SUBSCRIPTION_ID"
+      az deployment group what-if \
+        --resource-group "${AZURE_RESOURCE_GROUP:-partyverse-rg}" \
+        --template-file infra/main.bicep \
+        --parameters infra/main.bicepparam
+  rules:
+    - if: $CI_PIPELINE_SOURCE == "merge_request_event"
+    - if: $CI_COMMIT_BRANCH == $CI_DEFAULT_BRANCH
+  allow_failure: true
+
+# Record pipeline duration hint for metric Y (docs/metrics.md)
+measure-pipeline:
+  stage: deploy
+  image: alpine:3.20
+  before_script: []
+  script:
+    - echo "Pipeline ${CI_PIPELINE_ID} commit ${CI_COMMIT_SHORT_SHA} — paste duration from GitLab UI into docs/metrics.md as Y"
+  rules:
+    - if: $CI_COMMIT_BRANCH == $CI_DEFAULT_BRANCH
+  allow_failure: true

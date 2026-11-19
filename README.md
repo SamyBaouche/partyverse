@@ -211,13 +211,13 @@ Every MR on a self-hosted GitLab Runner (`node:24-alpine`):
 
 ## Roadmap (short)
 
-| Sprint | Focus                                  | Status      |
-| ------ | -------------------------------------- | ----------- |
-| 0–1    | Foundations, engine, arcade UI         | Done        |
-| **2**  | Front-end polish + Web PubSub + docs   | **Done**    |
-| **3**  | Docker + Bicep + first container build | **In repo** |
-| **4**  | CI image jobs + deploy timing          | **In repo** |
-| 5–8    | Cost, users, k6 prod, v1.0 freeze      | Next        |
+| Sprint | Focus                                  | Status                           |
+| ------ | -------------------------------------- | -------------------------------- |
+| 0–1    | Foundations, engine, arcade UI         | Done                             |
+| **2**  | Front-end polish + Web PubSub + docs   | **Done**                         |
+| **3**  | Docker + Bicep + KV/MI + Registry path | **Done** (see `docs/sprints.md`) |
+| **4**  | Kaniko + coverage gate; OIDC next      | **In progress**                  |
+| 5–8    | Cosmos, users, k6 prod, v1.0 freeze    | Next                             |
 
 Sprint board: [`docs/sprints.md`](docs/sprints.md) · Metrics log: [`docs/metrics.md`](docs/metrics.md)
 
