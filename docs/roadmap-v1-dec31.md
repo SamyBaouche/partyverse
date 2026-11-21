@@ -24,7 +24,7 @@
 ## Phase 1 progress
 
 - [x] GameMode registry (`@partyverse/shared` + server) + migrate Draw (#31 / ADR 0010)
-- [ ] Tic Tac Toe server-authoritative
+- [x] Tic Tac Toe server-authoritative (`POST /api/rooms/:code/ttt`)
 - [ ] RPS tournament server-authoritative
 - [ ] Four in a Row server-authoritative
 - [ ] Kart Rush 10 Hz (7-day timebox)

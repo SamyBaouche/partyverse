@@ -21,10 +21,10 @@ import type {
   ConnectFourState,
   RoomActivity,
   RpsState,
-  TicTacToeState,
   WishKartState,
 } from "../features/session/types";
 import { TicTacToePhone } from "../features/ticTacToe/TicTacToePhone";
+import { postTttCommand } from "../features/ticTacToe/tttApi";
 import { WishKartPhone } from "../features/wishKart/WishKartPhone";
 import { leaveKart } from "../features/wishKart/logic";
 import { useSound } from "../lib/audio";
@@ -145,15 +145,7 @@ export default function PlayPage() {
         state: nextState,
       });
     }
-    if (isTttActivity(activity)) {
-      const nextPlayers = activity.state.players.filter((entry) => entry.id !== playerId);
-      const nextState: TicTacToeState = { ...activity.state, players: nextPlayers };
-      void publishRoomActivity(code, {
-        phase: activity.phase,
-        gameId: "tic-tac-toe",
-        state: nextState,
-      });
-    }
+    // Tic-Tac-Toe leave: server owns lobby state; phone just exits the UI.
     if (isRpsActivity(activity)) {
       const nextPlayers = activity.state.players.filter((entry) => entry.id !== playerId);
       const nextState: RpsState = { ...activity.state, players: nextPlayers };
@@ -192,14 +184,17 @@ export default function PlayPage() {
     setActivity(published);
   }
 
-  async function publishTttState(next: TicTacToeState) {
-    const activityPhase = next.status === "lobby" ? "ttt-lobby" : "ttt-play";
-    const published = await publishRoomActivity(code, {
-      phase: activityPhase,
-      gameId: "tic-tac-toe",
-      state: next,
-    });
-    setActivity(published);
+  async function runTttCommand(command: Parameters<typeof postTttCommand>[1]) {
+    try {
+      const state = await postTttCommand(code, command);
+      const activityPhase = state.status === "lobby" ? "ttt-lobby" : "ttt-play";
+      setActivity({ phase: activityPhase, gameId: "tic-tac-toe", state });
+      if (command.type === "place") {
+        void play(state.winner ? "win" : "go");
+      }
+    } catch {
+      void play("wrong");
+    }
   }
 
   async function publishRpsState(next: RpsState) {
@@ -268,8 +263,16 @@ export default function PlayPage() {
             playerId={playerId}
             playerName={player.name}
             state={activity.state}
-            onStateChange={(next) => {
-              void publishTttState(next);
+            onJoinTeam={(team) => {
+              void runTttCommand({
+                type: "joinTeam",
+                playerId,
+                name: player.name,
+                team,
+              });
+            }}
+            onPlace={(index) => {
+              void runTttCommand({ type: "place", playerId, index });
             }}
             onLeave={handleLeave}
           />
