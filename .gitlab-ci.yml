@@ -50,6 +50,7 @@ playwright:
   image: mcr.microsoft.com/playwright:v1.51.0-jammy
   before_script:
     - corepack enable
+    - corepack prepare pnpm@12.18.0 --activate
     - pnpm config set store-dir .pnpm-store
     - pnpm install --frozen-lockfile
   script:
