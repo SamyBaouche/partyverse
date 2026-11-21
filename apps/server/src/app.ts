@@ -2,8 +2,9 @@ import Fastify from "fastify";
 import fastifyExpress from "@fastify/express";
 import { WebPubSubServiceClient } from "@azure/web-pubsub";
 import { isRoomActivity, RoomActivityBody } from "./activity/validateActivity.js";
-import { getRoomActivity, setRoomActivity } from "./session.js";
+import { configureRoomPersistence, loadRoomActivity, setRoomActivity } from "./session.js";
 import { GameSessionManager } from "./game/session.js";
+import type { RoomStore } from "./persist/roomStore.js";
 import {
   AzureRealtimePublisher,
   createAzureTokenFn,
@@ -17,6 +18,7 @@ export type BuildAppOptions = {
   sessions?: GameSessionManager;
   publisher?: RealtimePublisher;
   getClientAccessToken?: ClientAccessTokenFn;
+  roomStore?: RoomStore;
   /** When set, mounts the Azure Web PubSub event handler (skipped in pure unit tests). */
   webPubSub?: {
     connectionString: string;
@@ -47,6 +49,16 @@ export async function buildApp(options: BuildAppOptions = {}) {
 
   const sessions = options.sessions ?? new GameSessionManager({ publisher });
 
+  if (options.roomStore) {
+    configureRoomPersistence({
+      store: options.roomStore,
+      readMembership: (code) => {
+        const snap = sessions.membershipSnapshot(code);
+        return snap ? { id: code, code, ...snap } : null;
+      },
+    });
+  }
+
   app.addHook("onRequest", async (_request, reply) => {
     reply.header("Access-Control-Allow-Origin", "*");
     reply.header("Access-Control-Allow-Methods", "GET, POST, PUT, OPTIONS");
@@ -68,7 +80,7 @@ export async function buildApp(options: BuildAppOptions = {}) {
     if (!/^[A-Z]{4}$/.test(code)) {
       return reply.status(400).send({ error: "INVALID_ROOM_CODE" });
     }
-    return { activity: getRoomActivity(code) };
+    return { activity: await loadRoomActivity(code) };
   });
 
   app.put<{ Params: { code: string }; Body: unknown }>(

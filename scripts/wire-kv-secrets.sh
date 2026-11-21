@@ -37,22 +37,34 @@ echo "Reading secrets from Key Vault…"
 WPS_CS=$(az keyvault secret show --vault-name "${KV_NAME}" --name webpubsub-connection-string --query value -o tsv)
 AI_CS=$(az keyvault secret show --vault-name "${KV_NAME}" --name appinsights-connection-string --query value -o tsv)
 
+SECRET_ARGS=(
+  "webpubsub-connection-string=${WPS_CS}"
+  "appinsights-connection-string=${AI_CS}"
+)
+ENV_ARGS=(
+  "WEBPUBSUB_CONNECTION_STRING=secretref:webpubsub-connection-string"
+  "APPLICATIONINSIGHTS_CONNECTION_STRING=secretref:appinsights-connection-string"
+)
+
+if az keyvault secret show --vault-name "${KV_NAME}" --name cosmos-connection-string --query value -o tsv >/dev/null 2>&1; then
+  COSMOS_CS=$(az keyvault secret show --vault-name "${KV_NAME}" --name cosmos-connection-string --query value -o tsv)
+  SECRET_ARGS+=("cosmos-connection-string=${COSMOS_CS}")
+  ENV_ARGS+=("COSMOS_CONNECTION_STRING=secretref:cosmos-connection-string")
+  echo "  + cosmos-connection-string"
+fi
+
 echo "Writing ACA secrets (values; registry secret left untouched)…"
 az containerapp secret set \
   --name "${SERVER_APP}" \
   --resource-group "${RESOURCE_GROUP}" \
-  --secrets \
-    "webpubsub-connection-string=${WPS_CS}" \
-    "appinsights-connection-string=${AI_CS}" \
+  --secrets "${SECRET_ARGS[@]}" \
   --output none
 
 echo "Ensuring server env refs…"
 az containerapp update \
   --name "${SERVER_APP}" \
   --resource-group "${RESOURCE_GROUP}" \
-  --set-env-vars \
-    "WEBPUBSUB_CONNECTION_STRING=secretref:webpubsub-connection-string" \
-    "APPLICATIONINSIGHTS_CONNECTION_STRING=secretref:appinsights-connection-string" \
+  --set-env-vars "${ENV_ARGS[@]}" \
   --output none
 
 SERVER_FQDN=$(az containerapp show -n "${SERVER_APP}" -g "${RESOURCE_GROUP}" --query properties.configuration.ingress.fqdn -o tsv)

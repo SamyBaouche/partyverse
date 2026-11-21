@@ -1,6 +1,6 @@
 # ADR 0007 — Soft reconnect without Cosmos for v1.0
 
-- Status: Accepted
+- Status: Superseded by ADR 0012 (Dec 31 durable rooms)
 - Date: 2026-11-21
 
 ## Context

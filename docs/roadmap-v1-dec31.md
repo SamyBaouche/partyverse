@@ -32,7 +32,7 @@
 ## Phase 2 — Azure « cerveau » (on `partyverse-rg`)
 
 - [x] 2.1 Key Vault + Managed Identity + secrets wired into ACA (`infra/keyvault.bicep` + ADR 0011)
-- [ ] 2.2 Cosmos DB free + durable rooms / reconnect (#41; supersedes ADR 0007 for Dec 31)
+- [~] 2.2 Cosmos DB free + durable rooms / reconnect (#41; ADR 0012) — **code ready**; Azure CC capacity blocked 2026-11-21
 - [ ] 2.3 Storage Blob (drawings / thumbnails)
 - [ ] 2.4 Azure Functions (round-end + thumbnails)
 - [ ] 2.5 Event Grid (blob → thumbnails)

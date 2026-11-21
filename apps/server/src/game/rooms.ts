@@ -39,6 +39,35 @@ export class RoomManager {
   createRoom(): { code: string; hostId: string; modeId: typeof DEFAULT_ROOM_MODE } {
     const code = this.generateCode();
     const hostId = this.newId();
+    return this.bootstrapRoom(code, hostId);
+  }
+
+  /** Recreate a room after process recycle (Cosmos hydrate). */
+  hydrateRoom(
+    code: string,
+    hostId: string,
+    players: Player[],
+  ): { code: string; hostId: string; modeId: typeof DEFAULT_ROOM_MODE } {
+    const key = code.toUpperCase();
+    if (this.rooms.has(key)) {
+      return { code: key, hostId: this.rooms.get(key)!.hostId, modeId: DEFAULT_ROOM_MODE };
+    }
+    const created = this.bootstrapRoom(key, hostId);
+    const room = this.getRoom(key);
+    for (const player of players) {
+      room.actor.send({ type: "PLAYER_JOIN", player });
+    }
+    return created;
+  }
+
+  hasRoom(code: string): boolean {
+    return this.rooms.has(code.toUpperCase());
+  }
+
+  private bootstrapRoom(
+    code: string,
+    hostId: string,
+  ): { code: string; hostId: string; modeId: typeof DEFAULT_ROOM_MODE } {
     const mode = getServerGameMode(DEFAULT_ROOM_MODE);
     if (!mode.createEngine) {
       throw new Error(`Room mode ${DEFAULT_ROOM_MODE} has no server engine`);

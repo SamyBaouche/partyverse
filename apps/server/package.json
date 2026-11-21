@@ -3,6 +3,7 @@
   "version": "0.0.0",
   "private": true,
   "dependencies": {
+    "@azure/cosmos": "^4.10.2",
     "@azure/web-pubsub": "^1.2.0",
     "@azure/web-pubsub-express": "^1.1.0",
     "@fastify/express": "^4.0.9",

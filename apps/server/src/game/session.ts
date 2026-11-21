@@ -3,6 +3,13 @@ import { drawerId } from "./machine.js";
 import { RoomError, RoomManager } from "./rooms.js";
 import { DEFAULT_WORDS } from "./words.js";
 import type { RealtimePublisher } from "../realtime/publisher.js";
+import {
+  clearRoomActivity,
+  persistRoom,
+  setRoomActivity,
+  type RoomActivity,
+} from "../session.js";
+import type { StoredPlayer } from "../persist/roomStore.js";
 
 export const DRAWING_MS = 60_000;
 export const REVEAL_MS = 5_000;
@@ -62,12 +69,14 @@ export class GameSessionManager {
   createRoom(): { code: string; hostId: string; modeId: string } {
     const created = this.rooms.createRoom();
     this.userRooms.set(created.hostId, created.code);
+    persistRoom(created.code);
     return created;
   }
 
   join(code: string, name: string): { playerId: string } {
     const player = this.rooms.join(code, name);
     this.userRooms.set(player.id, code.toUpperCase());
+    persistRoom(code);
     void this.publisher.toRoom(code.toUpperCase(), {
       type: "playerJoined",
       player,
@@ -205,7 +214,7 @@ export class GameSessionManager {
 
   /**
    * Cancel a pending leave and keep membership for the same playerId.
-   * v1.0 soft reconnect — no Cosmos yet (see ADR 0007).
+   * Memory grace first; Cosmos hydrate when the replica recycled (ADR 0012).
    */
   reconnect(code: string, playerId: string, name: string): { playerId: string } {
     const normalized = code.toUpperCase();
@@ -213,6 +222,10 @@ export class GameSessionManager {
     if (pending) {
       this.clearSchedule(pending.timer);
       this.pendingLeaves.delete(playerId);
+    }
+
+    if (!this.rooms.hasRoom(normalized)) {
+      throw new RoomError("ROOM_NOT_FOUND", "Room not found");
     }
 
     const room = this.rooms.getRoom(normalized);
@@ -226,6 +239,38 @@ export class GameSessionManager {
     }
     this.userRooms.set(playerId, normalized);
     return { playerId };
+  }
+
+  /** Restore membership + activity from a Cosmos document after scale-to-zero. */
+  hydrateFromStore(doc: {
+    code: string;
+    hostId: string;
+    players: StoredPlayer[];
+    activity: RoomActivity;
+  }): void {
+    const code = doc.code.toUpperCase();
+    this.rooms.hydrateRoom(code, doc.hostId, doc.players);
+    this.userRooms.set(doc.hostId, code);
+    for (const player of doc.players) {
+      this.userRooms.set(player.id, code);
+    }
+    setRoomActivity(code, doc.activity);
+  }
+
+  membershipSnapshot(code: string): { hostId: string; players: StoredPlayer[] } | null {
+    try {
+      const room = this.rooms.getRoom(code);
+      return {
+        hostId: room.hostId,
+        players: this.rooms.players(code).map((p) => ({
+          id: p.id,
+          name: p.name,
+          score: p.score,
+        })),
+      };
+    } catch {
+      return null;
+    }
   }
 
   private async finalizeLeave(userId: string): Promise<void> {
@@ -271,6 +316,7 @@ export class GameSessionManager {
         throw error;
       }
     }
+    clearRoomActivity(code);
   }
 
   /** Exposed for tests: fire TIMER_END as the server would after a phase timeout. */

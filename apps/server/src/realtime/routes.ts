@@ -80,8 +80,22 @@ export async function registerApiRoutes(app: FastifyInstance, deps: ApiRouteDeps
       }
 
       try {
-        const result = sessions.reconnect(parsedCode.data, playerId, parsedName.data);
-        return { playerId: result.playerId };
+        try {
+          const result = sessions.reconnect(parsedCode.data, playerId, parsedName.data);
+          return { playerId: result.playerId };
+        } catch (error) {
+          if (!(error instanceof RoomError) || error.code !== "ROOM_NOT_FOUND") {
+            throw error;
+          }
+          const { loadRoomDocument } = await import("../session.js");
+          const doc = await loadRoomDocument(parsedCode.data);
+          if (!doc) {
+            throw error;
+          }
+          sessions.hydrateFromStore(doc);
+          const result = sessions.reconnect(parsedCode.data, playerId, parsedName.data);
+          return { playerId: result.playerId };
+        }
       } catch (error) {
         if (error instanceof RoomError) {
           return reply.status(statusForRoomError(error.code)).send({
