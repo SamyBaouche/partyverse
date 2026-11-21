@@ -4,7 +4,7 @@ import { AnimatePresence, motion, useReducedMotion } from "motion/react";
 import { Button } from "../components/ui";
 import { ConnectFourHost } from "../features/connectFour/ConnectFourHost";
 import { ConnectFourModePicker } from "../features/connectFour/ConnectFourModePicker";
-import { createLobbyState } from "../features/connectFour/logic";
+import { postC4Command } from "../features/connectFour/c4Api";
 import { DrawModePicker } from "../features/catalog/DrawModePicker";
 import { GameCatalog } from "../features/catalog/GameCatalog";
 import { createRoom } from "../features/join/joinRoom";
@@ -39,7 +39,7 @@ import type {
 import { TicTacToeHost } from "../features/ticTacToe/TicTacToeHost";
 import { TicTacToeModePicker } from "../features/ticTacToe/TicTacToeModePicker";
 import { postTttCommand } from "../features/ticTacToe/tttApi";
-import { rpsActivityPhase, tttActivityPhase } from "@partyverse/shared";
+import { c4ActivityPhase, rpsActivityPhase, tttActivityPhase } from "@partyverse/shared";
 import { WishKartHost } from "../features/wishKart/WishKartHost";
 import { createWishKartLobby, mergeKartRemote } from "../features/wishKart/logic";
 import { WishKartModePicker } from "../features/wishKart/WishKartModePicker";
@@ -160,16 +160,24 @@ export default function HostPage() {
     await publishRoomActivity(code, activity);
   }
 
-  async function publishC4(next: ConnectFourState) {
+  function applyC4(next: ConnectFourState) {
     setC4State(next);
-    const activityPhase = next.status === "lobby" ? "c4-lobby" : "c4-play";
+    const activityPhase = c4ActivityPhase(next);
     setPhase(activityPhase);
     navigate(`/host?phase=${activityPhase}`, { replace: true });
-    await setActivity({
-      phase: activityPhase,
-      gameId: "connect-four",
-      state: next,
-    });
+  }
+
+  async function runC4Command(
+    command: Parameters<typeof postC4Command>[1],
+  ): Promise<ConnectFourState | null> {
+    try {
+      const next = await postC4Command(code, command);
+      applyC4(next);
+      return next;
+    } catch {
+      void play("wrong");
+      return null;
+    }
   }
 
   function applyTtt(next: TicTacToeState) {
@@ -294,8 +302,7 @@ export default function HostPage() {
 
   async function handleSelectC4Mode(mode: ConnectFourMode) {
     void play("go");
-    const lobby = createLobbyState(mode);
-    await publishC4(lobby);
+    await runC4Command({ type: "bootstrap", mode });
   }
 
   async function handleSelectTttMode(mode: DuelMode) {
@@ -403,8 +410,11 @@ export default function HostPage() {
               code={code}
               joinUrl={joinUrl}
               state={c4State}
-              onStateChange={(next) => {
-                void publishC4(next);
+              onStart={() => {
+                void runC4Command({ type: "start" });
+              }}
+              onRematch={() => {
+                void runC4Command({ type: "rematch" });
               }}
               onBack={() => {
                 void backToCatalog();

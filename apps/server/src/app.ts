@@ -101,6 +101,15 @@ export async function buildApp(options: BuildAppOptions = {}) {
           message: "Use POST /api/rooms/:code/rps for Rock Paper Scissors",
         });
       }
+      if (
+        (request.body.phase === "c4-lobby" || request.body.phase === "c4-play") &&
+        "state" in request.body
+      ) {
+        return reply.status(400).send({
+          error: "USE_C4_COMMANDS",
+          message: "Use POST /api/rooms/:code/c4 for Four in a Row",
+        });
+      }
       const activity = setRoomActivity(code, request.body);
       return { activity };
     },

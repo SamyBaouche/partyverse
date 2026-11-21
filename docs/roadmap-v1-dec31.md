@@ -26,5 +26,5 @@
 - [x] GameMode registry (`@partyverse/shared` + server) + migrate Draw (#31 / ADR 0010)
 - [x] Tic Tac Toe server-authoritative (`POST /api/rooms/:code/ttt`)
 - [x] RPS first-to-N server-authoritative (`POST /api/rooms/:code/rps`)
-- [ ] Four in a Row server-authoritative
+- [x] Four in a Row server-authoritative (`POST /api/rooms/:code/c4`)
 - [ ] Kart Rush 10 Hz (7-day timebox)

@@ -4,20 +4,14 @@ import { PartyverseWordmark } from "../../components/brand/PartyverseWordmark";
 import { Button } from "../../components/ui";
 import type { ConnectFourColor, ConnectFourState } from "../session/types";
 import { ConnectFourBoard } from "./ConnectFourBoard";
-import {
-  formatConnectFourStatus,
-  isLobbyReady,
-  rematch,
-  requiredPlayers,
-  startPlaying,
-  teamCount,
-} from "./logic";
+import { formatConnectFourStatus, isLobbyReady, requiredPlayers, teamCount } from "./logic";
 
 type ConnectFourHostProps = {
   code: string;
   joinUrl: string;
   state: ConnectFourState;
-  onStateChange: (state: ConnectFourState) => void;
+  onStart: () => void;
+  onRematch: () => void;
   onBack: () => void;
 };
 
@@ -57,7 +51,13 @@ function TeamColumn({
   );
 }
 
-export function ConnectFourHost({ joinUrl, state, onStateChange, onBack }: ConnectFourHostProps) {
+export function ConnectFourHost({
+  joinUrl,
+  state,
+  onStart,
+  onRematch,
+  onBack,
+}: ConnectFourHostProps) {
   const capacity = state.mode === "1v1" ? 1 : 2;
   const yellow = state.players.filter((player) => player.team === "yellow").map((p) => p.name);
   const red = state.players.filter((player) => player.team === "red").map((p) => p.name);
@@ -95,7 +95,7 @@ export function ConnectFourHost({ joinUrl, state, onStateChange, onBack }: Conne
               size="lg"
               fullWidth
               disabled={!ready}
-              onClick={() => onStateChange(startPlaying(state))}
+              onClick={onStart}
               className="!h-16 !text-sm sm:!h-20 sm:!text-base"
             >
               Start match
@@ -181,7 +181,7 @@ export function ConnectFourHost({ joinUrl, state, onStateChange, onBack }: Conne
           Open phone mirror
         </Button>
         {state.status === "ended" ? (
-          <Button size="lg" variant="ghost" onClick={() => onStateChange(rematch(state))}>
+          <Button size="lg" variant="ghost" onClick={onRematch}>
             Rematch
           </Button>
         ) : null}

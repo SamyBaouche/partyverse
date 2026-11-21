@@ -2,6 +2,7 @@ import type { FastifyInstance } from "fastify";
 import { PlayerName, RoomCode } from "@partyverse/shared";
 import { listServerGameModes } from "../game/modes/registry.js";
 import { RoomError } from "../game/rooms.js";
+import { applyC4Command, type C4Command } from "../game/c4Commands.js";
 import { applyRpsCommand, type RpsCommand } from "../game/rpsCommands.js";
 import { applyTttCommand, type TttCommand } from "../game/tttCommands.js";
 import type { GameSessionManager } from "../game/session.js";
@@ -67,6 +68,28 @@ export async function registerApiRoutes(app: FastifyInstance, deps: ApiRouteDeps
       }
       try {
         const state = applyRpsCommand(parsedCode.data, request.body);
+        return { state };
+      } catch (error) {
+        if (error instanceof RoomError) {
+          return reply.status(statusForRoomError(error.code)).send({
+            error: error.code,
+            message: error.message,
+          });
+        }
+        throw error;
+      }
+    },
+  );
+
+  app.post<{ Params: { code: string }; Body: C4Command }>(
+    "/api/rooms/:code/c4",
+    async (request, reply) => {
+      const parsedCode = RoomCode.safeParse(request.params.code.toUpperCase());
+      if (!parsedCode.success || !request.body || typeof request.body !== "object") {
+        return reply.status(400).send({ error: "INVALID_INPUT", message: "Invalid C4 request" });
+      }
+      try {
+        const state = applyC4Command(parsedCode.data, request.body);
         return { state };
       } catch (error) {
         if (error instanceof RoomError) {

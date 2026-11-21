@@ -2,9 +2,8 @@ import { useEffect, useRef, useState } from "react";
 import { Button } from "../../components/ui";
 import { useSound } from "../../lib/audio";
 import { cn } from "../../lib/cn";
-import type { ConnectFourColor, ConnectFourPlayer, ConnectFourState } from "../session/types";
+import type { ConnectFourColor, ConnectFourState } from "../session/types";
 import {
-  applyDrop,
   canJoinTeam,
   C4_COLS,
   formatConnectFourStatus,
@@ -16,7 +15,9 @@ type ConnectFourPhoneProps = {
   playerId: string;
   playerName: string;
   state: ConnectFourState;
-  onStateChange: (state: ConnectFourState) => void;
+  onJoinTeam: (team: ConnectFourColor) => void;
+  onHover: (col: number) => void;
+  onDrop: (col: number) => void;
   onLeave: () => void;
 };
 
@@ -39,19 +40,26 @@ export function ConnectFourPhone({
   playerId,
   playerName,
   state,
-  onStateChange,
+  onJoinTeam,
+  onHover,
+  onDrop,
   onLeave,
 }: ConnectFourPhoneProps) {
   const { play } = useSound();
   const me = state.players.find((player) => player.id === playerId) ?? null;
   const [motionReady, setMotionReady] = useState(false);
+  const [localHover, setLocalHover] = useState(state.hoverCol);
   const padRef = useRef<HTMLButtonElement>(null);
   const lastPublishedCol = useRef(state.hoverCol);
   const publishTimer = useRef<number | null>(null);
-  const stateRef = useRef(state);
-  stateRef.current = state;
 
   const myTurn = !!me && state.status === "playing" && !state.winner && state.turn === me.team;
+  const hoverCol = myTurn ? localHover : state.hoverCol;
+
+  useEffect(() => {
+    setLocalHover(state.hoverCol);
+    lastPublishedCol.current = state.hoverCol;
+  }, [state.hoverCol, state.turn]);
 
   useEffect(() => {
     if (!myTurn || !motionReady) {
@@ -68,11 +76,12 @@ export function ConnectFourPhone({
         return;
       }
       lastPublishedCol.current = col;
+      setLocalHover(col);
       if (publishTimer.current !== null) {
         window.clearTimeout(publishTimer.current);
       }
       publishTimer.current = window.setTimeout(() => {
-        onStateChange({ ...stateRef.current, hoverCol: col });
+        onHover(col);
       }, 80);
     }
 
@@ -83,19 +92,14 @@ export function ConnectFourPhone({
         window.clearTimeout(publishTimer.current);
       }
     };
-  }, [myTurn, motionReady, onStateChange]);
+  }, [myTurn, motionReady, onHover]);
 
   function joinTeam(team: ConnectFourColor) {
-    const current = stateRef.current;
-    if (current.players.some((player) => player.id === playerId) || !canJoinTeam(current, team)) {
+    if (state.players.some((player) => player.id === playerId) || !canJoinTeam(state, team)) {
       return;
     }
-    const player: ConnectFourPlayer = { id: playerId, name: playerName, team };
     void play("join");
-    onStateChange({
-      ...current,
-      players: [...current.players, player],
-    });
+    onJoinTeam(team);
   }
 
   function aimFromPointer(clientX: number) {
@@ -112,32 +116,26 @@ export function ConnectFourPhone({
       return;
     }
     lastPublishedCol.current = col;
-    onStateChange({ ...stateRef.current, hoverCol: col });
+    setLocalHover(col);
+    onHover(col);
   }
 
   function nudge(delta: number) {
     if (!myTurn) {
       return;
     }
-    const current = stateRef.current;
-    const nextCol = Math.max(0, Math.min(C4_COLS - 1, current.hoverCol + delta));
+    const nextCol = Math.max(0, Math.min(C4_COLS - 1, hoverCol + delta));
     lastPublishedCol.current = nextCol;
+    setLocalHover(nextCol);
     void play("tick");
-    onStateChange({ ...current, hoverCol: nextCol });
+    onHover(nextCol);
   }
 
   function drop() {
     if (!myTurn) {
       return;
     }
-    const current = stateRef.current;
-    const next = applyDrop(current, current.hoverCol);
-    if (next === current) {
-      void play("wrong");
-      return;
-    }
-    void play(next.winner ? "win" : "go");
-    onStateChange(next);
+    onDrop(hoverCol);
   }
 
   if (state.status === "lobby" && !me) {
@@ -245,7 +243,7 @@ export function ConnectFourPhone({
           className="h-24 w-24 rounded-full border-[4px] border-ink shadow-[5px_5px_0_#1a1a1a] transition-transform duration-75"
           style={{
             backgroundColor: coinColor === "yellow" ? "#FFE566" : "#FF6B7A",
-            transform: `translateX(${(state.hoverCol - 3) * 14}px)`,
+            transform: `translateX(${(hoverCol - 3) * 14}px)`,
           }}
         />
         <p className="px-4 font-body text-sm text-ink/75">
@@ -254,7 +252,7 @@ export function ConnectFourPhone({
             : "Coin lives on the TV until your turn"}
         </p>
         <p className="font-display text-[9px] uppercase tracking-widest text-ink">
-          Column {state.hoverCol + 1}
+          Column {hoverCol + 1}
         </p>
       </button>
 

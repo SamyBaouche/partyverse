@@ -4,6 +4,7 @@ import { RoomCode, type Player } from "@partyverse/shared";
 import { AnimatePresence, motion, useReducedMotion } from "motion/react";
 import { Button, Card } from "../components/ui";
 import { ConnectFourPhone } from "../features/connectFour/ConnectFourPhone";
+import { postC4Command } from "../features/connectFour/c4Api";
 import { JoinForm } from "../features/join/JoinForm";
 import { joinRoom, reconnectRoom } from "../features/join/joinRoom";
 import { ROOM_ERROR_MESSAGES } from "../features/join/messages";
@@ -18,11 +19,7 @@ import {
   publishRoomActivity,
   subscribeRoomActivity,
 } from "../features/session/activityApi";
-import type {
-  ConnectFourState,
-  RoomActivity,
-  WishKartState,
-} from "../features/session/types";
+import type { RoomActivity, WishKartState } from "../features/session/types";
 import { TicTacToePhone } from "../features/ticTacToe/TicTacToePhone";
 import { postTttCommand } from "../features/ticTacToe/tttApi";
 import { WishKartPhone } from "../features/wishKart/WishKartPhone";
@@ -136,17 +133,7 @@ export default function PlayPage() {
   }
 
   function handleLeave() {
-    if (isC4Activity(activity)) {
-      const nextPlayers = activity.state.players.filter((entry) => entry.id !== playerId);
-      const nextState: ConnectFourState = { ...activity.state, players: nextPlayers };
-      void publishRoomActivity(code, {
-        phase: activity.phase,
-        gameId: "connect-four",
-        state: nextState,
-      });
-    }
-    // Tic-Tac-Toe leave: server owns lobby state; phone just exits the UI.
-    // RPS leave: server owns lobby state; phone just exits the UI.
+    // C4 / TTT / RPS leave: server owns lobby state; phone just exits the UI.
     if (isKartActivity(activity)) {
       void publishRoomActivity(code, {
         phase: activity.phase,
@@ -166,14 +153,17 @@ export default function PlayPage() {
     setPhase("form");
   }
 
-  async function publishC4State(next: ConnectFourState) {
-    const activityPhase = next.status === "lobby" ? "c4-lobby" : "c4-play";
-    const published = await publishRoomActivity(code, {
-      phase: activityPhase,
-      gameId: "connect-four",
-      state: next,
-    });
-    setActivity(published);
+  async function runC4Command(command: Parameters<typeof postC4Command>[1]) {
+    try {
+      const state = await postC4Command(code, command);
+      const activityPhase = state.status === "lobby" ? "c4-lobby" : "c4-play";
+      setActivity({ phase: activityPhase, gameId: "connect-four", state });
+      if (command.type === "drop") {
+        void play(state.winner ? "win" : "go");
+      }
+    } catch {
+      void play("wrong");
+    }
   }
 
   async function runTttCommand(command: Parameters<typeof postTttCommand>[1]) {
@@ -237,8 +227,19 @@ export default function PlayPage() {
             playerId={playerId}
             playerName={player.name}
             state={activity.state}
-            onStateChange={(next) => {
-              void publishC4State(next);
+            onJoinTeam={(team) => {
+              void runC4Command({
+                type: "joinTeam",
+                playerId,
+                name: player.name,
+                team,
+              });
+            }}
+            onHover={(col) => {
+              void runC4Command({ type: "hover", playerId, col });
+            }}
+            onDrop={(col) => {
+              void runC4Command({ type: "drop", playerId, col });
             }}
             onLeave={handleLeave}
           />
