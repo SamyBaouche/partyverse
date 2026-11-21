@@ -14,6 +14,7 @@ import { LiveHostLobby } from "../features/host/LiveHostLobby";
 import { readInitialPhase, type HostPhase } from "../features/host/hostPhases";
 import { PartyGameHost } from "../features/partyGames/PartyGameHost";
 import { createPartyLobby, isPartyGameId, type PartyGameState } from "../features/partyGames/logic";
+import { CATALOG_GAMES } from "../features/session/catalog";
 import { PartyProvider, resolvePartyTransportMode } from "../features/realtime";
 import { RpsHost } from "../features/rps/RpsHost";
 import { RpsModePicker } from "../features/rps/RpsModePicker";
@@ -95,7 +96,11 @@ export default function HostPage() {
   useEffect(() => {
     if (phase === "party-lobby" && !partyState) {
       const game = params.get("game");
-      if (game && isPartyGameId(game)) {
+      if (
+        game &&
+        isPartyGameId(game) &&
+        !CATALOG_GAMES.find((entry) => entry.id === game)?.locked
+      ) {
         void publishParty(createPartyLobby(game));
       }
     }
@@ -214,6 +219,9 @@ export default function HostPage() {
   }
 
   async function handleSelectGame(gameId: CatalogGameId) {
+    if (CATALOG_GAMES.find((game) => game.id === gameId)?.locked) {
+      return;
+    }
     if (gameId === "draw-guess") {
       void play("correct");
       setPhase("draw-modes");

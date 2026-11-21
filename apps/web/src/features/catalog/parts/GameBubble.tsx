@@ -1,12 +1,9 @@
 import { useRef, useState } from "react";
 import { motion, useReducedMotion } from "motion/react";
 import { cn } from "../../../lib/cn";
-import { CATALOG_GAMES } from "../../session/catalog";
 import type { CatalogGame, CatalogGameId } from "../../session/types";
 import { GameHoverDemo } from "../GameHoverDemo";
 import { ART_BUBBLE_GAMES, GameIcon } from "../GameIcons";
-
-const IMPOSTER_REEL_INDEX = CATALOG_GAMES.findIndex((game) => game.id === "imposter");
 
 export function PadlockIcon({ className }: { className?: string }) {
   return (
@@ -49,7 +46,7 @@ export function GameBubble({
   const hoverTimer = useRef<number | null>(null);
   const floatDelay = (index % 5) * 0.35;
   const floatAmp = 10 + (index % 3) * 4;
-  const showPadlock = game.locked && IMPOSTER_REEL_INDEX >= 0 && index >= IMPOSTER_REEL_INDEX;
+  const showPadlock = game.locked;
 
   function clearHoverTimer() {
     if (hoverTimer.current !== null) {
@@ -135,8 +132,7 @@ export function GameBubble({
           <motion.div
             className={cn(
               "relative flex aspect-square w-[13.5rem] items-center justify-center overflow-hidden rounded-full border-[3px] border-ink shadow-[6px_6px_0_var(--color-hard-shadow)] sm:w-[15.5rem] md:w-[17rem]",
-              game.locked && !showPadlock && "opacity-60 grayscale-[0.35]",
-              showPadlock && "opacity-90",
+              game.locked && "opacity-90 grayscale-[0.2]",
             )}
             style={{ backgroundColor: game.accent }}
             animate={

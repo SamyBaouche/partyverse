@@ -73,7 +73,7 @@ export function WishKartPhone({
   if (!me || me.isBot) {
     return (
       <Card className="flex w-full max-w-sm flex-col gap-4 text-center">
-        <h1 className="font-display text-sm uppercase text-ink">Wish Kart</h1>
+        <h1 className="font-display text-sm uppercase text-ink">Kart Rush</h1>
         <p className="font-body text-sm text-muted">Lobby full or race already started.</p>
         <Button onClick={onLeave}>Leave</Button>
       </Card>
@@ -85,7 +85,7 @@ export function WishKartPhone({
   return (
     <div className="flex w-full max-w-sm flex-col gap-3">
       <Card className="space-y-2 text-center" style={{ backgroundColor: me.color }}>
-        <p className="font-display text-[10px] uppercase tracking-widest text-ink/70">Wish Kart</p>
+        <p className="font-display text-[10px] uppercase tracking-widest text-ink/70">Kart Rush</p>
         <h1 className="font-body text-xl font-extrabold text-ink">{playerName}</h1>
         <p className="font-body text-sm text-ink/80">
           {Math.min(100, Math.max(0, Math.round((me.z / state.finishZ) * 100)))}% to finish

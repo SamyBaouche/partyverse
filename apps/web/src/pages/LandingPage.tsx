@@ -5,6 +5,7 @@ import { SplashIntro } from "../components/SplashIntro";
 import { GameCatalog } from "../features/catalog/GameCatalog";
 import { isPartyGameId } from "../features/partyGames/logic";
 import { publishRoomActivity } from "../features/session/activityApi";
+import { CATALOG_GAMES } from "../features/session/catalog";
 import type { CatalogGameId } from "../features/session/types";
 import { useSound } from "../lib/audio";
 
@@ -74,6 +75,10 @@ export default function LandingPage() {
 
   const openGame = useCallback(
     (gameId: CatalogGameId) => {
+      const entry = CATALOG_GAMES.find((game) => game.id === gameId);
+      if (entry?.locked) {
+        return;
+      }
       void play("correct");
 
       if (gameId === "draw-guess") {

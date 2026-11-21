@@ -145,7 +145,7 @@ export function ConnectFourPhone({
       <div className="brutal-panel flex w-full max-w-sm flex-col gap-5 rounded-[1.6rem] p-5">
         <div className="space-y-2 text-center">
           <p className="font-display text-[10px] uppercase tracking-[0.2em] text-ink/70">
-            Connect Four · {state.mode}
+            Four in a Row · {state.mode}
           </p>
           <h1 className="font-display text-sm uppercase text-ink">Join a team</h1>
           <p className="font-body text-sm text-ink/75">Hey {playerName} — pick your color.</p>

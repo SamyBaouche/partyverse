@@ -15,7 +15,7 @@ export function WishKartModePicker({ onStart, onBack }: WishKartModePickerProps)
           Controller friendly
         </p>
         <h1 className="font-body text-3xl font-extrabold tracking-tight text-ink sm:text-5xl">
-          Wish Kart
+          Kart Rush
         </h1>
         <p className="mx-auto max-w-lg font-body text-base text-ink/80 sm:text-lg">
           Fullscreen forward race with real cars. Dodge cones, rocks, barriers and oil. Phones or

@@ -71,7 +71,7 @@ export function ConnectFourHost({ joinUrl, state, onStateChange, onBack }: Conne
         <div className="grid items-start gap-10 lg:grid-cols-[1.05fr_1fr] lg:gap-12">
           <section className="flex flex-col items-center gap-6 text-center sm:gap-7">
             <p className="inline-flex rounded-full border-[3px] border-ink bg-[#86e3c2] px-5 py-2.5 font-display text-sm uppercase tracking-[0.18em] text-ink sm:text-base">
-              Connect Four · {state.mode}
+              Four in a Row · {state.mode}
             </p>
             <div className="toy-panel rounded-[1.8rem] bg-white p-5 sm:p-6">
               <QRCodeSVG value={joinUrl} size={280} aria-label="Scan to join" />

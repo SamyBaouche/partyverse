@@ -128,7 +128,7 @@ export function ConnectFourModePicker({ onSelect, onBack }: ConnectFourModePicke
 
       <div className="space-y-3 sm:space-y-4">
         <p className="font-display text-xs uppercase tracking-[0.22em] text-ink/70 sm:text-sm">
-          Connect Four
+          Four in a Row
         </p>
         <h1 className="font-body text-4xl font-extrabold leading-tight tracking-tight text-ink sm:text-5xl md:text-6xl">
           Choose a match
