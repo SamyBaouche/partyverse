@@ -2,62 +2,51 @@ import { Button } from "../../components/ui";
 import { useSound } from "../../lib/audio";
 import { cn } from "../../lib/cn";
 import type { RpsChoice, RpsState, RpsTeam } from "../session/types";
-import {
-  formatRpsStatus,
-  joinRpsTeam,
-  lockRpsPick,
-  RPS_LABELS,
-  rpsCanJoin,
-  setRpsPick,
-} from "./logic";
+import { formatRpsStatus, RPS_LABELS, rpsCanJoin } from "./logic";
 
 type Props = {
   playerId: string;
   playerName: string;
   state: RpsState;
-  onStateChange: (state: RpsState) => void;
+  onJoinTeam: (team: RpsTeam) => void;
+  onPick: (choice: RpsChoice) => void;
+  onLock: () => void;
   onLeave: () => void;
 };
 
 const CHOICES: RpsChoice[] = ["rock", "paper", "scissors"];
 
-export function RpsPhone({ playerId, playerName, state, onStateChange, onLeave }: Props) {
+export function RpsPhone({
+  playerId,
+  playerName,
+  state,
+  onJoinTeam,
+  onPick,
+  onLock,
+  onLeave,
+}: Props) {
   const { play } = useSound();
   const me = state.players.find((player) => player.id === playerId) ?? null;
   const canPick = !!me && state.status === "picking" && !state.locked[me.team];
 
   function joinTeam(team: RpsTeam) {
-    const next = joinRpsTeam(state, { id: playerId, name: playerName }, team);
-    if (!next) {
-      return;
-    }
     void play("join");
-    onStateChange(next);
+    onJoinTeam(team);
   }
 
   function pick(choice: RpsChoice) {
     if (!me || !canPick) {
       return;
     }
-    const next = setRpsPick(state, me.team, choice);
-    if (!next) {
-      return;
-    }
     void play("click");
-    onStateChange(next);
+    onPick(choice);
   }
 
   function lock() {
     if (!me) {
       return;
     }
-    const next = lockRpsPick(state, me.team);
-    if (!next) {
-      void play("wrong");
-      return;
-    }
-    void play(next.status === "ended" || next.status === "reveal" ? "go" : "tick");
-    onStateChange(next);
+    onLock();
   }
 
   if (state.status === "lobby" && !me) {

@@ -19,7 +19,7 @@ import { CATALOG_GAMES } from "../features/session/catalog";
 import { PartyProvider, resolvePartyTransportMode } from "../features/realtime";
 import { RpsHost } from "../features/rps/RpsHost";
 import { RpsModePicker } from "../features/rps/RpsModePicker";
-import { createRpsLobby } from "../features/rps/logic";
+import { postRpsCommand } from "../features/rps/rpsApi";
 import {
   fetchRoomActivity,
   publishRoomActivity,
@@ -39,7 +39,7 @@ import type {
 import { TicTacToeHost } from "../features/ticTacToe/TicTacToeHost";
 import { TicTacToeModePicker } from "../features/ticTacToe/TicTacToeModePicker";
 import { postTttCommand } from "../features/ticTacToe/tttApi";
-import { tttActivityPhase } from "@partyverse/shared";
+import { rpsActivityPhase, tttActivityPhase } from "@partyverse/shared";
 import { WishKartHost } from "../features/wishKart/WishKartHost";
 import { createWishKartLobby, mergeKartRemote } from "../features/wishKart/logic";
 import { WishKartModePicker } from "../features/wishKart/WishKartModePicker";
@@ -192,16 +192,24 @@ export default function HostPage() {
     }
   }
 
-  async function publishRps(next: RpsState) {
+  function applyRps(next: RpsState) {
     setRpsState(next);
-    const activityPhase = next.status === "lobby" ? "rps-lobby" : "rps-play";
+    const activityPhase = rpsActivityPhase(next);
     setPhase(activityPhase);
     navigate(`/host?phase=${activityPhase}`, { replace: true });
-    await setActivity({
-      phase: activityPhase,
-      gameId: "rock-paper-scissors",
-      state: next,
-    });
+  }
+
+  async function runRpsCommand(
+    command: Parameters<typeof postRpsCommand>[1],
+  ): Promise<RpsState | null> {
+    try {
+      const next = await postRpsCommand(code, command);
+      applyRps(next);
+      return next;
+    } catch {
+      void play("wrong");
+      return null;
+    }
   }
 
   async function publishKart(next: WishKartState) {
@@ -297,7 +305,7 @@ export default function HostPage() {
 
   async function handleSelectRpsMode(mode: DuelMode) {
     void play("go");
-    await publishRps(createRpsLobby(mode));
+    await runRpsCommand({ type: "bootstrap", mode });
   }
 
   async function handleStartKart() {
@@ -482,8 +490,14 @@ export default function HostPage() {
             <RpsHost
               joinUrl={joinUrl}
               state={rpsState}
-              onStateChange={(next) => {
-                void publishRps(next);
+              onStart={() => {
+                void runRpsCommand({ type: "start" });
+              }}
+              onNextRound={() => {
+                void runRpsCommand({ type: "nextRound" });
+              }}
+              onRematch={() => {
+                void runRpsCommand({ type: "rematch" });
               }}
               onBack={() => {
                 void backToCatalog();

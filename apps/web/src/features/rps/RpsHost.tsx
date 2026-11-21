@@ -5,19 +5,18 @@ import { Button } from "../../components/ui";
 import type { RpsState } from "../session/types";
 import {
   formatRpsStatus,
-  nextRpsRound,
-  rematchRps,
   RPS_LABELS,
   rpsLobbyReady,
   rpsRequiredPlayers,
   rpsTeamCount,
-  startRps,
 } from "./logic";
 
 type Props = {
   joinUrl: string;
   state: RpsState;
-  onStateChange: (state: RpsState) => void;
+  onStart: () => void;
+  onNextRound: () => void;
+  onRematch: () => void;
   onBack: () => void;
 };
 
@@ -54,7 +53,14 @@ function TeamColumn({
   );
 }
 
-export function RpsHost({ joinUrl, state, onStateChange, onBack }: Props) {
+export function RpsHost({
+  joinUrl,
+  state,
+  onStart,
+  onNextRound,
+  onRematch,
+  onBack,
+}: Props) {
   const capacity = state.mode === "1v1" ? 1 : 2;
   const yellow = state.players.filter((p) => p.team === "yellow").map((p) => p.name);
   const red = state.players.filter((p) => p.team === "red").map((p) => p.name);
@@ -90,7 +96,7 @@ export function RpsHost({ joinUrl, state, onStateChange, onBack }: Props) {
               size="lg"
               fullWidth
               disabled={!ready}
-              onClick={() => onStateChange(startRps(state))}
+              onClick={onStart}
               className="!h-16 !text-sm sm:!h-20 sm:!text-base"
             >
               Start match
@@ -143,12 +149,12 @@ export function RpsHost({ joinUrl, state, onStateChange, onBack }: Props) {
       </div>
 
       {state.status === "reveal" ? (
-        <Button size="lg" onClick={() => onStateChange(nextRpsRound(state))}>
+        <Button size="lg" onClick={onNextRound}>
           Next round
         </Button>
       ) : null}
       {state.status === "ended" ? (
-        <Button size="lg" onClick={() => onStateChange(rematchRps(state))}>
+        <Button size="lg" onClick={onRematch}>
           Rematch
         </Button>
       ) : null}

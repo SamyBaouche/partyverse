@@ -82,7 +82,7 @@ export async function buildApp(options: BuildAppOptions = {}) {
       if (!isRoomActivity(request.body)) {
         return reply.status(400).send({ error: "INVALID_ACTIVITY" });
       }
-      // Tic-Tac-Toe mutations must go through POST /api/rooms/:code/ttt (server rules).
+      // Tic-Tac-Toe / RPS mutations must go through command endpoints (server rules).
       if (
         (request.body.phase === "ttt-lobby" || request.body.phase === "ttt-play") &&
         "state" in request.body
@@ -90,6 +90,15 @@ export async function buildApp(options: BuildAppOptions = {}) {
         return reply.status(400).send({
           error: "USE_TTT_COMMANDS",
           message: "Use POST /api/rooms/:code/ttt for Tic-Tac-Toe",
+        });
+      }
+      if (
+        (request.body.phase === "rps-lobby" || request.body.phase === "rps-play") &&
+        "state" in request.body
+      ) {
+        return reply.status(400).send({
+          error: "USE_RPS_COMMANDS",
+          message: "Use POST /api/rooms/:code/rps for Rock Paper Scissors",
         });
       }
       const activity = setRoomActivity(code, request.body);

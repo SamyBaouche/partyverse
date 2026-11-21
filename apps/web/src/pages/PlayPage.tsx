@@ -12,6 +12,7 @@ import { PartyGamePhone } from "../features/partyGames/PartyGamePhone";
 import { leaveParty, type PartyGameState } from "../features/partyGames/logic";
 import { DrawGuessSession, PartyProvider, resolvePartyTransportMode } from "../features/realtime";
 import { RpsPhone } from "../features/rps/RpsPhone";
+import { postRpsCommand } from "../features/rps/rpsApi";
 import {
   fetchRoomActivity,
   publishRoomActivity,
@@ -20,7 +21,6 @@ import {
 import type {
   ConnectFourState,
   RoomActivity,
-  RpsState,
   WishKartState,
 } from "../features/session/types";
 import { TicTacToePhone } from "../features/ticTacToe/TicTacToePhone";
@@ -146,15 +146,7 @@ export default function PlayPage() {
       });
     }
     // Tic-Tac-Toe leave: server owns lobby state; phone just exits the UI.
-    if (isRpsActivity(activity)) {
-      const nextPlayers = activity.state.players.filter((entry) => entry.id !== playerId);
-      const nextState: RpsState = { ...activity.state, players: nextPlayers };
-      void publishRoomActivity(code, {
-        phase: activity.phase,
-        gameId: "rock-paper-scissors",
-        state: nextState,
-      });
-    }
+    // RPS leave: server owns lobby state; phone just exits the UI.
     if (isKartActivity(activity)) {
       void publishRoomActivity(code, {
         phase: activity.phase,
@@ -197,14 +189,19 @@ export default function PlayPage() {
     }
   }
 
-  async function publishRpsState(next: RpsState) {
-    const activityPhase = next.status === "lobby" ? "rps-lobby" : "rps-play";
-    const published = await publishRoomActivity(code, {
-      phase: activityPhase,
-      gameId: "rock-paper-scissors",
-      state: next,
-    });
-    setActivity(published);
+  async function runRpsCommand(command: Parameters<typeof postRpsCommand>[1]) {
+    try {
+      const state = await postRpsCommand(code, command);
+      const activityPhase = state.status === "lobby" ? "rps-lobby" : "rps-play";
+      setActivity({ phase: activityPhase, gameId: "rock-paper-scissors", state });
+      if (command.type === "lock") {
+        void play(
+          state.status === "ended" || state.status === "reveal" ? "go" : "tick",
+        );
+      }
+    } catch {
+      void play("wrong");
+    }
   }
 
   async function publishKartState(next: WishKartState) {
@@ -294,8 +291,19 @@ export default function PlayPage() {
             playerId={playerId}
             playerName={player.name}
             state={activity.state}
-            onStateChange={(next) => {
-              void publishRpsState(next);
+            onJoinTeam={(team) => {
+              void runRpsCommand({
+                type: "joinTeam",
+                playerId,
+                name: player.name,
+                team,
+              });
+            }}
+            onPick={(choice) => {
+              void runRpsCommand({ type: "pick", playerId, choice });
+            }}
+            onLock={() => {
+              void runRpsCommand({ type: "lock", playerId });
             }}
             onLeave={handleLeave}
           />
