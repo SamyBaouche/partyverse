@@ -184,3 +184,8 @@ load/results*.json
 .$*.drawio*
 .$*.svg.*
 *.dtmp
+
+test-results/
+playwright-report/
+e2e-results.xml
+.trivycache/

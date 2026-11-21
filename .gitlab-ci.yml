@@ -96,7 +96,33 @@ kaniko-web:
       when: manual
       allow_failure: true
 
-# Sprint 4 — Bicep what-if on MRs (needs AZURE_* CI variables / OIDC later)
+# #36 / #61 — Trivy filesystem + IaC config scan (no DinD / no registry pull required)
+trivy:
+  stage: image
+  image:
+    name: aquasec/trivy:0.58.1
+    entrypoint: [""]
+  before_script: []
+  variables:
+    TRIVY_NO_PROGRESS: "true"
+    TRIVY_CACHE_DIR: ".trivycache"
+  cache:
+    key: trivy
+    paths: [.trivycache]
+  script:
+    - trivy fs --scanners vuln,secret,misconfig --severity HIGH,CRITICAL --exit-code 1 .
+    - trivy config --severity HIGH,CRITICAL --exit-code 1 infra
+  rules:
+    - if: $CI_PIPELINE_SOURCE == "merge_request_event"
+    - if: $CI_COMMIT_BRANCH == $CI_DEFAULT_BRANCH
+  allow_failure: true
+  artifacts:
+    when: always
+    paths:
+      - .trivycache/
+    expire_in: 1 day
+
+# Sprint 4 — Bicep what-if on MRs (needs AZURE_* CI variables / OIDC later — ADR 0009)
 bicep-what-if:
   stage: deploy
   image: mcr.microsoft.com/azure-cli:2.67.0
