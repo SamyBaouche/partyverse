@@ -22,6 +22,40 @@ export async function createRoom(): Promise<{ code: string; hostId: string }> {
   return (await response.json()) as { code: string; hostId: string };
 }
 
+/** Soft-reconnect after refresh / brief drop (15s grace on server). */
+export async function reconnectRoom(
+  code: string,
+  playerId: string,
+  name: string,
+): Promise<JoinRoomResult> {
+  const parsedName = PlayerName.safeParse(name);
+  if (!parsedName.success || !playerId) {
+    return { ok: false, error: "INVALID_INPUT" };
+  }
+
+  try {
+    const response = await fetchJson(`/api/rooms/${encodeURIComponent(code)}/reconnect`, {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({ playerId, name: parsedName.data }),
+    });
+
+    if (!response.ok) {
+      const body = (await response.json().catch(() => null)) as { error?: string } | null;
+      const parsed = RoomErrorCode.safeParse(body?.error);
+      return { ok: false, error: parsed.success ? parsed.data : "PLAYER_NOT_FOUND" };
+    }
+
+    const body = (await response.json()) as { playerId: string };
+    return {
+      ok: true,
+      player: { id: body.playerId, name: parsedName.data, score: 0 },
+    };
+  } catch {
+    return { ok: false, error: "ROOM_NOT_FOUND" };
+  }
+}
+
 /** Join a room via HTTP; PubSub negotiate comes after with the returned playerId. */
 export async function joinRoom(code: string, name: string): Promise<JoinRoomResult> {
   const parsedName = PlayerName.safeParse(name);

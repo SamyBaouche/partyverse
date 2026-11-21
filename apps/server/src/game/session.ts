@@ -6,10 +6,17 @@ import type { RealtimePublisher } from "../realtime/publisher.js";
 
 export const DRAWING_MS = 60_000;
 export const REVEAL_MS = 5_000;
+/** Soft reconnect window after PubSub disconnect / phone refresh (#59). */
+export const RECONNECT_GRACE_MS = 15_000;
 
 type RoomTimers = {
   drawing?: ReturnType<typeof setTimeout>;
   reveal?: ReturnType<typeof setTimeout>;
+};
+
+type PendingLeave = {
+  code: string;
+  timer: ReturnType<typeof setTimeout>;
 };
 
 type SessionOptions = {
@@ -39,6 +46,8 @@ export class GameSessionManager {
   private readonly timers = new Map<string, RoomTimers>();
   /** Reverse lookup: userId → room code (host + players). */
   private readonly userRooms = new Map<string, string>();
+  /** Disconnects waiting for reconnect before PLAYER_LEAVE. */
+  private readonly pendingLeaves = new Map<string, PendingLeave>();
 
   constructor(options: SessionOptions) {
     this.publisher = options.publisher;
@@ -182,6 +191,51 @@ export class GameSessionManager {
       return;
     }
 
+    const existing = this.pendingLeaves.get(userId);
+    if (existing) {
+      this.clearSchedule(existing.timer);
+      this.pendingLeaves.delete(userId);
+    }
+
+    const timer = this.schedule(() => {
+      void this.finalizeLeave(userId);
+    }, RECONNECT_GRACE_MS);
+    this.pendingLeaves.set(userId, { code, timer });
+  }
+
+  /**
+   * Cancel a pending leave and keep membership for the same playerId.
+   * v1.0 soft reconnect — no Cosmos yet (see ADR 0007).
+   */
+  reconnect(code: string, playerId: string, name: string): { playerId: string } {
+    const normalized = code.toUpperCase();
+    const pending = this.pendingLeaves.get(playerId);
+    if (pending) {
+      this.clearSchedule(pending.timer);
+      this.pendingLeaves.delete(playerId);
+    }
+
+    const room = this.rooms.getRoom(normalized);
+    const isHost = room.hostId === playerId;
+    const player = this.rooms.players(normalized).find((entry) => entry.id === playerId);
+    if (!isHost && !player) {
+      throw new RoomError("PLAYER_NOT_FOUND", "Reconnect window expired — join again");
+    }
+    if (player && player.name.toLowerCase() !== name.trim().toLowerCase()) {
+      throw new RoomError("INVALID_INPUT", "Nickname does not match this player");
+    }
+    this.userRooms.set(playerId, normalized);
+    return { playerId };
+  }
+
+  private async finalizeLeave(userId: string): Promise<void> {
+    const pending = this.pendingLeaves.get(userId);
+    this.pendingLeaves.delete(userId);
+    const code = pending?.code ?? this.userRooms.get(userId);
+    if (!code) {
+      return;
+    }
+
     try {
       const room = this.rooms.getRoom(code);
       const isPlayer = this.rooms.players(code).some((player) => player.id === userId);
@@ -193,7 +247,6 @@ export class GameSessionManager {
 
       this.userRooms.delete(userId);
 
-      // Delete once the party is empty (no players left).
       if (this.rooms.players(code).length === 0) {
         this.deleteRoom(code);
       }

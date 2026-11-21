@@ -123,12 +123,18 @@ describe("GameSessionManager event routing", () => {
     expect(reveal).toBeTruthy();
   });
 
-  it("deletes the room when it becomes empty", async () => {
+  it("keeps players during reconnect grace then deletes when empty", async () => {
     const { code, playerA, playerB } = seedLobby();
     await sessions.handleDisconnect(playerA);
-    expect(() => sessions.rooms.getRoom(code)).not.toThrow();
+    expect(sessions.rooms.players(code).some((p) => p.id === playerA)).toBe(true);
 
+    sessions.reconnect(code, playerA, "Ada");
+    await vi.advanceTimersByTimeAsync(20_000);
+    expect(sessions.rooms.players(code).some((p) => p.id === playerA)).toBe(true);
+
+    await sessions.handleDisconnect(playerA);
     await sessions.handleDisconnect(playerB);
+    await vi.advanceTimersByTimeAsync(20_000);
     expect(() => sessions.rooms.getRoom(code)).toThrow(/not found/i);
   });
 });

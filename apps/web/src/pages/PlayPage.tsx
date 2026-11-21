@@ -5,7 +5,7 @@ import { AnimatePresence, motion, useReducedMotion } from "motion/react";
 import { Button, Card } from "../components/ui";
 import { ConnectFourPhone } from "../features/connectFour/ConnectFourPhone";
 import { JoinForm } from "../features/join/JoinForm";
-import { joinRoom } from "../features/join/joinRoom";
+import { joinRoom, reconnectRoom } from "../features/join/joinRoom";
 import { ROOM_ERROR_MESSAGES } from "../features/join/messages";
 import { mockJoin } from "../features/join/mockJoin";
 import { PartyGamePhone } from "../features/partyGames/PartyGamePhone";
@@ -36,7 +36,13 @@ import {
   isRpsActivity,
   isTttActivity,
 } from "./play/activityGuards";
-import { readOrCreatePlayerId, readStoredNickname, saveNickname } from "./play/nicknameStorage";
+import {
+  readOrCreatePlayerId,
+  readStoredNickname,
+  readStoredPlayerId,
+  saveNickname,
+  savePlayerId,
+} from "./play/nicknameStorage";
 
 type JoinPhase = "form" | "submitting" | "joined";
 type MockRole = "drawer" | "guesser";
@@ -96,7 +102,18 @@ export default function PlayPage() {
     setPhase("submitting");
 
     try {
-      const result = forceMock ? await mockJoin(code, nickname) : await joinRoom(code, nickname);
+      const storedId = readStoredPlayerId();
+      let result = forceMock
+        ? await mockJoin(code, nickname)
+        : storedId
+          ? await reconnectRoom(code, storedId, nickname)
+          : await joinRoom(code, nickname);
+
+      // Soft reconnect failed (grace expired) → normal join.
+      if (!forceMock && !result.ok && storedId) {
+        result = await joinRoom(code, nickname);
+      }
+
       if (!result.ok) {
         void play("wrong");
         setServerError(ROOM_ERROR_MESSAGES[result.error] ?? result.error);
@@ -105,6 +122,7 @@ export default function PlayPage() {
       }
 
       saveNickname(result.player.name);
+      savePlayerId(result.player.id);
       setPlayer(result.player);
       setPlayerId(result.player.id);
       setName(result.player.name);

@@ -9,6 +9,8 @@ Only numbers that were measured go here. Resume bullets must match this table.
 | 2026-11-16 | GitLab CI duration (main #102)       | **75 s ≈ 1 min**   | Pipeline `3068906958` duration field → **Y**                                |
 | 2026-11-16 | Manual Azure Bicep deploy (first)    | **PT2M3s ≈ 2 min** | `az deployment group create -g partyverse-rg -n partyverse-sprint3` → **X** |
 | 2026-11-16 | Azure idle cost (MTD, partyverse-rg) | **$0**             | Cost Management ActualCost query, empty/zero rows → **$N**                  |
+| 2026-11-21 | Budget alert                         | **$5**/mo @ 80%    | Consumption budget `partyverse-monthly-5` on `partyverse-rg`                |
+| 2026-11-21 | App Insights                         | **wired**          | Resource `partyverse-insights` → server env secret                          |
 | 2026-11-16 | Docker server image (cold)           | **18 s**           | `docker build -f apps/server/Dockerfile`                                    |
 | 2026-11-16 | Docker web image (cold)              | **12 s**           | `docker build -f apps/web/Dockerfile`                                       |
 | 2026-11-16 | `/health` p95 @ 20 VUs               | **3.7 ms**         | `k6 run -e VUS=20 -e DURATION=30s load/health.js` (localhost)               |
