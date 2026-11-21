@@ -207,7 +207,7 @@ export class GameSessionManager {
    * Cancel a pending leave and keep membership for the same playerId.
    * v1.0 soft reconnect — no Cosmos yet (see ADR 0007).
    */
-  reconnect(code: string, playerId: string, _name: string): { playerId: string } {
+  reconnect(code: string, playerId: string, name: string): { playerId: string } {
     const normalized = code.toUpperCase();
     const pending = this.pendingLeaves.get(playerId);
     if (pending) {
@@ -217,9 +217,12 @@ export class GameSessionManager {
 
     const room = this.rooms.getRoom(normalized);
     const isHost = room.hostId === playerId;
-    const isPlayer = this.rooms.players(normalized).some((player) => player.id === playerId);
-    if (!isHost && !isPlayer) {
+    const player = this.rooms.players(normalized).find((entry) => entry.id === playerId);
+    if (!isHost && !player) {
       throw new RoomError("PLAYER_NOT_FOUND", "Reconnect window expired — join again");
+    }
+    if (player && player.name.toLowerCase() !== name.trim().toLowerCase()) {
+      throw new RoomError("INVALID_INPUT", "Nickname does not match this player");
     }
     this.userRooms.set(playerId, normalized);
     return { playerId };
