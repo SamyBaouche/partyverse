@@ -11,6 +11,7 @@ import { ThemeProvider } from "./lib/theme";
 import BackgroundPicker from "./pages/BackgroundPicker";
 import DrawDemo from "./pages/DrawDemo";
 import HostPage from "./pages/HostPage";
+import HowToPlayPage from "./pages/HowToPlayPage";
 import ConnectFourMirrorPage from "./pages/ConnectFourMirrorPage";
 import LandingPage from "./pages/LandingPage";
 import PlayPage from "./pages/PlayPage";
@@ -25,6 +26,7 @@ createRoot(document.getElementById("root")!).render(
             <SettingsMenu />
             <Routes>
               <Route path="/" element={<LandingPage />} />
+              <Route path="/how-to-play" element={<HowToPlayPage />} />
               <Route path="/host" element={<HostPage />} />
               <Route path="/c4-phone" element={<ConnectFourMirrorPage />} />
               <Route path="/play/:code" element={<PlayPage />} />

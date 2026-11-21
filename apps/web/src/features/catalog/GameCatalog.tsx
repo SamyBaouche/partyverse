@@ -49,7 +49,13 @@ export function GameCatalog({ onSelect, onLogoClick }: GameCatalogProps) {
           </div>
           <p className="mt-10 max-w-xl font-body text-lg leading-relaxed text-ink/75 sm:mt-12 sm:text-xl md:mt-14 md:text-[1.35rem]">
             Quick mini-games for the living room. Every move shows up on phones and the TV. No
-            accounts, no downloads.
+            accounts, no downloads.{" "}
+            <a
+              href="/how-to-play"
+              className="font-semibold text-ink underline decoration-ink/30 underline-offset-4 hover:decoration-ink"
+            >
+              How to play
+            </a>
           </p>
         </div>
 

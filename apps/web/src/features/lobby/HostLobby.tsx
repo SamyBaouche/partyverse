@@ -39,6 +39,7 @@ function LobbyPlayerRow({ player, index }: { player: Player; index: number }) {
 }
 
 export function HostLobby({
+  code,
   joinUrl,
   players,
   maxPlayers,
@@ -80,6 +81,12 @@ export function HostLobby({
               aria-label="Scan to join"
             />
           </div>
+          <p
+            className="font-display text-2xl uppercase tracking-[0.35em] text-ink"
+            data-testid="room-code"
+          >
+            {code}
+          </p>
           <p className="max-w-sm break-all font-body text-xs text-muted">{joinUrl}</p>
           <p className="max-w-xs font-body text-sm text-ink/75 sm:text-base">
             Friends open the camera on their phone and scan this code. Same Wi‑Fi as the TV.

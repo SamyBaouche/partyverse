@@ -178,6 +178,11 @@ coverage/
 .pnpm-store/
 docs/metrics-raw/
 load/results*.json
+test-results/
+playwright-report/
+e2e-results.xml
+blob-report/
+.trivycache/
 
 
 # draw.io temporary / backup files
