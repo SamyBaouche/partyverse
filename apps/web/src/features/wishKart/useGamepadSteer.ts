@@ -2,7 +2,7 @@ import { useEffect, useRef } from "react";
 import type { KartInput } from "./logic";
 
 /**
- * Reads a connected gamepad into Mario Kart–style controls.
+ * Reads a connected gamepad into arcade racing controls (steer / accelerate).
  * Left stick / d-pad = steer · A/RT = gas · B/LT = brake · LB = drift · X/RB = item
  */
 export function useGamepadSteer(

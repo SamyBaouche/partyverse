@@ -38,17 +38,17 @@ function activityCopy(activity: RoomActivity): { title: string; body: string } {
       };
     case "c4-modes":
       return {
-        title: "Connect Four",
+        title: "Four in a Row",
         body: "Host is choosing 1v1 or 2v2…",
       };
     case "c4-lobby":
       return {
-        title: "Connect Four",
+        title: "Four in a Row",
         body: "Pick a team on the next screen.",
       };
     case "c4-play":
       return {
-        title: "Connect Four",
+        title: "Four in a Row",
         body: "Match is live — use your phone as the controller.",
       };
     case "ttt-modes":
@@ -83,17 +83,17 @@ function activityCopy(activity: RoomActivity): { title: string; body: string } {
       };
     case "kart-modes":
       return {
-        title: "Wish Kart",
+        title: "Kart Rush",
         body: "Host is opening the race lobby…",
       };
     case "kart-lobby":
       return {
-        title: "Wish Kart",
+        title: "Kart Rush",
         body: "Hop in a kart on the next screen.",
       };
     case "kart-play":
       return {
-        title: "Wish Kart",
+        title: "Kart Rush",
         body: "Race is live — steer on your phone or gamepad.",
       };
     case "party-lobby":

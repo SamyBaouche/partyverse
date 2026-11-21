@@ -60,7 +60,7 @@ export function ConnectFourMirror({ state, onStateChange, onOpenTv }: ConnectFou
     <div className="mx-auto flex w-full max-w-md flex-col items-center gap-5 px-4 py-8">
       <div className="text-center">
         <p className="font-display text-[10px] uppercase tracking-[0.22em] text-ink/70">
-          Phone mirror · Connect Four
+          Phone mirror · Four in a Row
         </p>
         <h1 className="mt-2 font-body text-2xl font-extrabold text-ink">Controller</h1>
         <p className="mt-1 font-body text-sm text-ink/75">

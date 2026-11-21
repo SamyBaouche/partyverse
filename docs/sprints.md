@@ -9,7 +9,9 @@ Goal: fill resume placeholders with **measured** numbers only.
 | 5      | Resilience + cost                    | **$N = 0**/month           | Baseline idle done; Cosmos/Functions still open                      |
 | 6      | App Insights + E2E                   | **M = 3** seats            | Ship game night on public URL (host + 2 players)                     |
 | 7      | k6 load test                         | **p95 3.7 ms** @ **20** VU | Done locally                                                         |
-| 8      | Docs / demo / v1.0                   | Freeze 3 bullets           | Done — CV bullets in `metrics.md`; tag `v1.0`                        |
+| 8      | Docs / demo / interim MVP            | Freeze 3 bullets           | Interim tag `v1.0` (=v0.9); final DoD → milestone Dec 31             |
+
+See also [`roadmap-v1-dec31.md`](./roadmap-v1-dec31.md).
 
 ## How to refresh numbers
 

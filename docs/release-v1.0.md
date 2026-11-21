@@ -1,6 +1,8 @@
-# Partyverse v1.0
+# Partyverse v1.0 (interim MVP — treat as v0.9)
 
 Tagged: `v1.0` · Milestone: Ship by Sunday Nov 22
+
+> **Dec 31 path:** full DoD lives in milestone **v1.0 — Ship by Dec 31 2026**. See [`roadmap-v1-dec31.md`](./roadmap-v1-dec31.md).
 
 ## Public URLs
 

@@ -20,10 +20,11 @@ Scan a QR, join in one tap, play mini-games together — no app install, no acco
 | Game                    | Status                          | How it works                                                |
 | ----------------------- | ------------------------------- | ----------------------------------------------------------- |
 | **Draw Guess**          | Live (mock or Azure Web PubSub) | Drawer paints, others guess. Server owns the word & timers. |
-| **Connect Four**        | Local sync via room activity    | 1v1 / 2v2 lobbies, QR join.                                 |
-| **Tic-Tac-Toe**         | Local sync                      | Same duel flow as C4.                                       |
-| **Rock Paper Scissors** | Local sync                      | Same duel flow as C4.                                       |
-| Imposter+               | Locked                          | Coming later.                                               |
+| **Four in a Row**       | Local sync via room activity    | 1v1 / 2v2 lobbies, QR join.                                 |
+| **Tic-Tac-Toe**         | Local sync                      | Same duel flow as Four in a Row.                            |
+| **Rock Paper Scissors** | Local sync                      | Same duel flow.                                             |
+| **Kart Rush**           | Local sync                      | Oval race, phone / gamepad input.                           |
+| Impostor, Quiz Rush, …  | Locked                          | Coming soon (v1 catalog).                                   |
 
 ---
 
