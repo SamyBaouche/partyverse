@@ -27,6 +27,10 @@ param registryUsername string = ''
 @secure()
 param registryPassword string = ''
 
+@description('Application Insights connection string (stored in Key Vault)')
+@secure()
+param appInsightsConnectionString string = ''
+
 var tags = {
   project: 'partyverse'
   env: 'dev'
@@ -121,6 +125,32 @@ resource webPubSubSecret 'Microsoft.KeyVault/vaults/secrets@2023-07-01' = {
   ]
 }
 
+resource appInsightsSecret 'Microsoft.KeyVault/vaults/secrets@2023-07-01' = if (!empty(appInsightsConnectionString)) {
+  parent: keyVault
+  name: 'appinsights-connection-string'
+  properties: {
+    value: appInsightsConnectionString
+  }
+  dependsOn: [
+    kvSecretsOfficer
+  ]
+}
+
+var appInsightsSecretRefs = empty(appInsightsConnectionString) ? [] : [
+  {
+    name: 'appinsights-connection-string'
+    keyVaultUrl: '${keyVault.properties.vaultUri}secrets/appinsights-connection-string'
+    identity: identity.id
+  }
+]
+
+var appInsightsEnv = empty(appInsightsConnectionString) ? [] : [
+  {
+    name: 'APPLICATIONINSIGHTS_CONNECTION_STRING'
+    secretRef: 'appinsights-connection-string'
+  }
+]
+
 resource containerEnv 'Microsoft.App/managedEnvironments@2024-03-01' = {
   name: envName
   location: location
@@ -170,13 +200,17 @@ resource serverApp 'Microsoft.App/containerApps@2024-03-01' = {
         transport: 'http'
       }
       registries: registryConfig
-      secrets: union(registrySecrets, [
-        {
-          name: 'webpubsub-connection-string'
-          keyVaultUrl: '${keyVault.properties.vaultUri}secrets/webpubsub-connection-string'
-          identity: identity.id
-        }
-      ])
+      secrets: union(
+        registrySecrets,
+        [
+          {
+            name: 'webpubsub-connection-string'
+            keyVaultUrl: '${keyVault.properties.vaultUri}secrets/webpubsub-connection-string'
+            identity: identity.id
+          }
+        ],
+        appInsightsSecretRefs,
+      )
     }
     template: {
       scale: {
@@ -209,14 +243,17 @@ resource serverApp 'Microsoft.App/containerApps@2024-03-01' = {
               periodSeconds: 10
             }
           ]
-          env: [
-            { name: 'PORT', value: '3000' }
-            { name: 'WEBPUBSUB_HUB', value: 'partyverse' }
-            {
-              name: 'WEBPUBSUB_CONNECTION_STRING'
-              secretRef: 'webpubsub-connection-string'
-            }
-          ]
+          env: union(
+            [
+              { name: 'PORT', value: '3000' }
+              { name: 'WEBPUBSUB_HUB', value: 'partyverse' }
+              {
+                name: 'WEBPUBSUB_CONNECTION_STRING'
+                secretRef: 'webpubsub-connection-string'
+              }
+            ],
+            appInsightsEnv,
+          )
           resources: {
             cpu: json('0.25')
             memory: '0.5Gi'
@@ -261,6 +298,13 @@ resource webApp 'Microsoft.App/containerApps@2024-03-01' = {
         {
           name: 'web'
           image: webImage
+          env: [
+            {
+              name: 'API_UPSTREAM'
+              value: serverApp.properties.configuration.ingress.fqdn
+            }
+            { name: 'API_SCHEME', value: 'https' }
+          ]
           resources: {
             cpu: json('0.25')
             memory: '0.5Gi'
@@ -276,6 +320,7 @@ resource webPubSubHub 'Microsoft.SignalRService/webPubSub/hubs@2024-03-01' = {
   parent: webPubSub
   name: 'partyverse'
   properties: {
+    anonymousConnectPolicy: 'allow'
     eventHandlers: [
       {
         urlTemplate: 'https://${serverApp.properties.configuration.ingress.fqdn}/eventhandler'

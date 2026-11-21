@@ -27,6 +27,8 @@ Only numbers that were measured go here. Resume bullets must match this table.
 | Web            | https://partyverse-web.whiteflower-731f831a.canadacentral.azurecontainerapps.io    |
 | Server         | https://partyverse-server.whiteflower-731f831a.canadacentral.azurecontainerapps.io |
 | Web PubSub     | `partyverse-wps-ddb7gd5jsmffo` (Free_F1)                                           |
+| Key Vault      | `pv-kv-ddb7gd5jsmffo` (secrets SoT; ACA value-sync — ADR 0011)                      |
+| Managed ID     | `partyverse-mi-ddb7gd5jsmffo`                                                       |
 
 > Images: GitLab Container Registry (`registry.gitlab.com/samybaouche/partyverse/...`). Coverage gate **Z**: Vitest fails below 80% statements / 65% branches on `src/game/**`.
 
