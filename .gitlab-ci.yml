@@ -71,6 +71,7 @@ kaniko-server:
       /kaniko/executor \
         --context "${CI_PROJECT_DIR}" \
         --dockerfile "${CI_PROJECT_DIR}/apps/server/Dockerfile" \
+        --custom-platform=linux/amd64 \
         --destination "${CI_REGISTRY_IMAGE}/server:${CI_COMMIT_SHORT_SHA}" \
         --destination "${CI_REGISTRY_IMAGE}/server:latest"
   rules:
@@ -86,6 +87,7 @@ kaniko-web:
       /kaniko/executor \
         --context "${CI_PROJECT_DIR}" \
         --dockerfile "${CI_PROJECT_DIR}/apps/web/Dockerfile" \
+        --custom-platform=linux/amd64 \
         --destination "${CI_REGISTRY_IMAGE}/web:${CI_COMMIT_SHORT_SHA}" \
         --destination "${CI_REGISTRY_IMAGE}/web:latest"
   rules:

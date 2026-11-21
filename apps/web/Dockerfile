@@ -11,7 +11,10 @@ RUN pnpm install --frozen-lockfile --filter @partyverse/web... \
   && pnpm --filter @partyverse/web build
 
 FROM nginx:1.27-alpine
-COPY apps/web/nginx.conf /etc/nginx/conf.d/default.conf
+# envsubst at start → /etc/nginx/conf.d/default.conf
+ENV API_SCHEME=http
+ENV API_UPSTREAM=server:3000
+COPY apps/web/nginx.conf.template /etc/nginx/templates/default.conf.template
 COPY --from=build /app/apps/web/dist /usr/share/nginx/html
 EXPOSE 80
 HEALTHCHECK --interval=15s --timeout=3s --start-period=5s --retries=3 \
