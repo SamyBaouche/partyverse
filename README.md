@@ -239,13 +239,13 @@ No Azure secrets belong in git. Local `az login` + registry token are enough for
 
 ## Roadmap (short)
 
-| Sprint | Focus                                  | Status                           |
-| ------ | -------------------------------------- | -------------------------------- |
-| 0–1    | Foundations, engine, arcade UI         | Done                             |
-| **2**  | Front-end polish + Web PubSub + docs   | **Done**                         |
-| **3**  | Docker + Bicep + KV/MI + Registry path | **Done** (see `docs/sprints.md`) |
-| **4**  | Kaniko + Trivy + manual deploy path    | **In progress** (OIDC → ADR 0009)|
-| 5–8    | Cosmos, users, k6 prod, v1.0 freeze    | Next                             |
+| Sprint | Focus                                  | Status                            |
+| ------ | -------------------------------------- | --------------------------------- |
+| 0–1    | Foundations, engine, arcade UI         | Done                              |
+| **2**  | Front-end polish + Web PubSub + docs   | **Done**                          |
+| **3**  | Docker + Bicep + KV/MI + Registry path | **Done** (see `docs/sprints.md`)  |
+| **4**  | Kaniko + Trivy + manual deploy path    | **In progress** (OIDC → ADR 0009) |
+| 5–8    | Cosmos, users, k6 prod, v1.0 freeze    | Next                              |
 
 Sprint board: [`docs/sprints.md`](docs/sprints.md) · Metrics log: [`docs/metrics.md`](docs/metrics.md)
 
