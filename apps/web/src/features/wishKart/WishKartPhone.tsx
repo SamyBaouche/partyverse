@@ -1,14 +1,15 @@
 import { useEffect, useRef, useState } from "react";
 import { Button, Card } from "../../components/ui";
 import type { KartInput, WishKartState } from "./logic";
-import { emptyInput, joinKart, setKartInput } from "./logic";
+import { emptyInput } from "./logic";
 import { useGamepadSteer } from "./useGamepadSteer";
 
 type WishKartPhoneProps = {
   playerId: string;
   playerName: string;
   state: WishKartState;
-  onStateChange: (next: WishKartState) => void;
+  onJoin: () => void;
+  onInput: (input: Partial<KartInput>) => void;
   onLeave: () => void;
 };
 
@@ -22,16 +23,17 @@ export function WishKartPhone({
   playerId,
   playerName,
   state,
-  onStateChange,
+  onJoin,
+  onInput,
   onLeave,
 }: WishKartPhoneProps) {
-  const me = state.players.find((p) => p.id === playerId);
+  const me = state.players.find((p) => p.id === playerId && !p.isBot);
   const [input, setInput] = useState<KartInput>(emptyInput());
-  const stateRef = useRef(state);
-  stateRef.current = state;
   const joinedRef = useRef(false);
   const inputRef = useRef(input);
   inputRef.current = input;
+  const onInputRef = useRef(onInput);
+  onInputRef.current = onInput;
 
   useEffect(() => {
     if (joinedRef.current || state.status !== "lobby") {
@@ -42,8 +44,8 @@ export function WishKartPhone({
       return;
     }
     joinedRef.current = true;
-    onStateChange(joinKart(state, playerId, playerName));
-  }, [state, playerId, playerName, onStateChange]);
+    onJoin();
+  }, [state, playerId, onJoin]);
 
   useGamepadSteer(Boolean(me) && state.status !== "lobby", (pad) => {
     setInput((prev) => ({
@@ -57,20 +59,20 @@ export function WishKartPhone({
   });
 
   useEffect(() => {
-    if (!me || me.isBot || state.status === "lobby") {
+    if (!me || state.status === "lobby") {
       return;
     }
-    onStateChange(setKartInput(stateRef.current, playerId, input));
+    onInputRef.current(input);
     if (input.useItem) {
       setInput((prev) => ({ ...prev, useItem: false }));
     }
-  }, [input, playerId, me, state.status, onStateChange]);
+  }, [input, me, state.status]);
 
   function patch(partial: Partial<KartInput>) {
     setInput((prev) => ({ ...prev, ...partial }));
   }
 
-  if (!me || me.isBot) {
+  if (!me) {
     return (
       <Card className="flex w-full max-w-sm flex-col gap-4 text-center">
         <h1 className="font-display text-sm uppercase text-ink">Kart Rush</h1>

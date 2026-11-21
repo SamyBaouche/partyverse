@@ -27,4 +27,4 @@
 - [x] Tic Tac Toe server-authoritative (`POST /api/rooms/:code/ttt`)
 - [x] RPS first-to-N server-authoritative (`POST /api/rooms/:code/rps`)
 - [x] Four in a Row server-authoritative (`POST /api/rooms/:code/c4`)
-- [ ] Kart Rush 10 Hz (7-day timebox)
+- [x] Kart Rush 10 Hz server sim (`POST /api/rooms/:code/kart` + loop)

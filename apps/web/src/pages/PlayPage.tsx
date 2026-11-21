@@ -19,11 +19,11 @@ import {
   publishRoomActivity,
   subscribeRoomActivity,
 } from "../features/session/activityApi";
-import type { RoomActivity, WishKartState } from "../features/session/types";
+import type { RoomActivity } from "../features/session/types";
 import { TicTacToePhone } from "../features/ticTacToe/TicTacToePhone";
 import { postTttCommand } from "../features/ticTacToe/tttApi";
 import { WishKartPhone } from "../features/wishKart/WishKartPhone";
-import { leaveKart } from "../features/wishKart/logic";
+import { postKartCommand } from "../features/wishKart/kartApi";
 import { useSound } from "../lib/audio";
 import { getJoinUrl } from "../lib/joinOrigin";
 import {
@@ -133,13 +133,9 @@ export default function PlayPage() {
   }
 
   function handleLeave() {
-    // C4 / TTT / RPS leave: server owns lobby state; phone just exits the UI.
+    // C4 / TTT / RPS / Kart leave: server owns lobby state; phone just exits the UI.
     if (isKartActivity(activity)) {
-      void publishRoomActivity(code, {
-        phase: activity.phase,
-        gameId: "wish-kart",
-        state: leaveKart(activity.state, playerId),
-      });
+      void postKartCommand(code, { type: "leave", playerId }).catch(() => undefined);
     }
     if (isPartyActivity(activity)) {
       void publishRoomActivity(code, {
@@ -194,14 +190,14 @@ export default function PlayPage() {
     }
   }
 
-  async function publishKartState(next: WishKartState) {
-    const activityPhase = next.status === "lobby" ? "kart-lobby" : "kart-play";
-    const published = await publishRoomActivity(code, {
-      phase: activityPhase,
-      gameId: "wish-kart",
-      state: next,
-    });
-    setActivity(published);
+  async function runKartCommand(command: Parameters<typeof postKartCommand>[1]) {
+    try {
+      const state = await postKartCommand(code, command);
+      const activityPhase = state.status === "lobby" ? "kart-lobby" : "kart-play";
+      setActivity({ phase: activityPhase, gameId: "wish-kart", state });
+    } catch {
+      void play("wrong");
+    }
   }
 
   async function publishPartyState(next: PartyGameState) {
@@ -326,8 +322,15 @@ export default function PlayPage() {
             playerId={playerId}
             playerName={player.name}
             state={activity.state}
-            onStateChange={(next) => {
-              void publishKartState(next);
+            onJoin={() => {
+              void runKartCommand({
+                type: "join",
+                playerId,
+                name: player.name,
+              });
+            }}
+            onInput={(input) => {
+              void runKartCommand({ type: "input", playerId, input });
             }}
             onLeave={handleLeave}
           />

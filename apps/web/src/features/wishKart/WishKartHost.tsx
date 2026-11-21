@@ -3,34 +3,37 @@ import { QRCodeSVG } from "qrcode.react";
 import { ModeScreenHeader } from "../../components/brand/ModeScreenHeader";
 import { PartyverseWordmark } from "../../components/brand/PartyverseWordmark";
 import { Button } from "../../components/ui";
-import type { WishKartState } from "./logic";
-import {
-  createWishKartLobby,
-  emptyInput,
-  rematchKart,
-  setKartInput,
-  standingsOf,
-  startCountdown,
-  stepRace,
-} from "./logic";
+import type { KartInput, WishKartState } from "./logic";
+import { emptyInput, standingsOf } from "./logic";
 import { useGamepadSteer } from "./useGamepadSteer";
 import { WishKartTrack } from "./WishKartTrack";
 
 type WishKartHostProps = {
   joinUrl: string;
   state: WishKartState;
-  onStateChange: (state: WishKartState) => void;
+  onStart: () => void;
+  onRematch: () => void;
+  onNewLobby: () => void;
+  onInput: (playerId: string, input: Partial<KartInput>) => void;
   onBack: () => void;
 };
 
-export function WishKartHost({ joinUrl, state, onStateChange, onBack }: WishKartHostProps) {
+export function WishKartHost({
+  joinUrl,
+  state,
+  onStart,
+  onRematch,
+  onNewLobby,
+  onInput,
+  onBack,
+}: WishKartHostProps) {
   const stateRef = useRef(state);
   stateRef.current = state;
-  const onChangeRef = useRef(onStateChange);
-  onChangeRef.current = onStateChange;
+  const onInputRef = useRef(onInput);
+  onInputRef.current = onInput;
 
   // Local P1 on the TV: keyboard + first gamepad (handy for solo testing).
-  const localId = state.players.find((p) => !p.isBot)?.id ?? state.players[0]?.id;
+  const localId = state.players.find((p) => !p.isBot)?.id ?? null;
 
   useGamepadSteer(
     Boolean(localId) && (state.status === "countdown" || state.status === "racing"),
@@ -38,12 +41,12 @@ export function WishKartHost({ joinUrl, state, onStateChange, onBack }: WishKart
       if (!localId) {
         return;
       }
-      onChangeRef.current(setKartInput(stateRef.current, localId, input));
+      onInputRef.current(localId, input);
     },
   );
 
   useEffect(() => {
-    if (state.status !== "countdown" && state.status !== "racing") {
+    if (!localId || (state.status !== "countdown" && state.status !== "racing")) {
       return;
     }
     function onKey(event: KeyboardEvent, down: boolean) {
@@ -70,7 +73,7 @@ export function WishKartHost({ joinUrl, state, onStateChange, onBack }: WishKart
       if (down && (event.code === "Space" || event.code === "KeyE")) {
         next.useItem = true;
       }
-      onChangeRef.current(setKartInput(stateRef.current, localId, next));
+      onInputRef.current(localId, next);
     }
     const down = (event: KeyboardEvent) => onKey(event, true);
     const up = (event: KeyboardEvent) => onKey(event, false);
@@ -81,26 +84,6 @@ export function WishKartHost({ joinUrl, state, onStateChange, onBack }: WishKart
       window.removeEventListener("keyup", up);
     };
   }, [localId, state.status]);
-
-  useEffect(() => {
-    if (state.status !== "countdown" && state.status !== "racing") {
-      return;
-    }
-    let raf = 0;
-    let last = performance.now();
-    function tick(now: number) {
-      if (now - last >= 50) {
-        last = now;
-        const next = stepRace(stateRef.current, Date.now());
-        if (next.tick !== stateRef.current.tick || next.status !== stateRef.current.status) {
-          onChangeRef.current(next);
-        }
-      }
-      raf = window.requestAnimationFrame(tick);
-    }
-    raf = window.requestAnimationFrame(tick);
-    return () => window.cancelAnimationFrame(raf);
-  }, [state.status]);
 
   if (state.status === "lobby") {
     const humans = state.players.filter((p) => !p.isBot);
@@ -144,7 +127,7 @@ export function WishKartHost({ joinUrl, state, onStateChange, onBack }: WishKart
             <Button
               size="lg"
               fullWidth
-              onClick={() => onStateChange(startCountdown(state))}
+              onClick={onStart}
               className="!h-16 !text-sm sm:!h-20 sm:!text-base"
             >
               {humans.length > 0 ? "Start race" : "Start with CPUs"}
@@ -194,14 +177,10 @@ export function WishKartHost({ joinUrl, state, onStateChange, onBack }: WishKart
             </p>
             <p className="mt-2 font-body text-sm text-ink/75">Podium locked. Rematch or catalog.</p>
             <div className="mt-5 flex flex-wrap justify-center gap-3">
-              <Button size="lg" onClick={() => onStateChange(rematchKart(state))}>
+              <Button size="lg" onClick={onRematch}>
                 Rematch
               </Button>
-              <Button
-                size="lg"
-                variant="ghost"
-                onClick={() => onStateChange(createWishKartLobby())}
-              >
+              <Button size="lg" variant="ghost" onClick={onNewLobby}>
                 New lobby
               </Button>
               <Button variant="secondary" size="lg" onClick={onBack}>

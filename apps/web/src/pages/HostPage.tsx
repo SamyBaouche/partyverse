@@ -39,9 +39,14 @@ import type {
 import { TicTacToeHost } from "../features/ticTacToe/TicTacToeHost";
 import { TicTacToeModePicker } from "../features/ticTacToe/TicTacToeModePicker";
 import { postTttCommand } from "../features/ticTacToe/tttApi";
-import { c4ActivityPhase, rpsActivityPhase, tttActivityPhase } from "@partyverse/shared";
+import {
+  c4ActivityPhase,
+  kartActivityPhase,
+  rpsActivityPhase,
+  tttActivityPhase,
+} from "@partyverse/shared";
 import { WishKartHost } from "../features/wishKart/WishKartHost";
-import { createWishKartLobby, mergeKartRemote } from "../features/wishKart/logic";
+import { postKartCommand } from "../features/wishKart/kartApi";
 import { WishKartModePicker } from "../features/wishKart/WishKartModePicker";
 import { useSound } from "../lib/audio";
 import { getJoinUrl } from "../lib/joinOrigin";
@@ -144,7 +149,7 @@ export default function HostPage() {
         setPhase(activity.phase);
       }
       if (activity.phase === "kart-lobby" || activity.phase === "kart-play") {
-        setKartState((prev) => (prev ? mergeKartRemote(prev, activity.state) : activity.state));
+        setKartState(activity.state);
         setPhase(activity.phase);
       }
       if (activity.phase === "party-lobby" || activity.phase === "party-play") {
@@ -220,16 +225,24 @@ export default function HostPage() {
     }
   }
 
-  async function publishKart(next: WishKartState) {
+  function applyKart(next: WishKartState) {
     setKartState(next);
-    const activityPhase = next.status === "lobby" ? "kart-lobby" : "kart-play";
+    const activityPhase = kartActivityPhase(next);
     setPhase(activityPhase);
     navigate(`/host?phase=${activityPhase}`, { replace: true });
-    await setActivity({
-      phase: activityPhase,
-      gameId: "wish-kart",
-      state: next,
-    });
+  }
+
+  async function runKartCommand(
+    command: Parameters<typeof postKartCommand>[1],
+  ): Promise<WishKartState | null> {
+    try {
+      const next = await postKartCommand(code, command);
+      applyKart(next);
+      return next;
+    } catch {
+      void play("wrong");
+      return null;
+    }
   }
 
   async function publishParty(next: PartyGameState) {
@@ -317,7 +330,7 @@ export default function HostPage() {
 
   async function handleStartKart() {
     void play("go");
-    await publishKart(createWishKartLobby());
+    await runKartCommand({ type: "bootstrap" });
   }
 
   async function backToCatalog() {
@@ -548,8 +561,17 @@ export default function HostPage() {
             <WishKartHost
               joinUrl={joinUrl}
               state={kartState}
-              onStateChange={(next) => {
-                void publishKart(next);
+              onStart={() => {
+                void runKartCommand({ type: "start" });
+              }}
+              onRematch={() => {
+                void runKartCommand({ type: "rematch" });
+              }}
+              onNewLobby={() => {
+                void runKartCommand({ type: "bootstrap" });
+              }}
+              onInput={(playerId, input) => {
+                void runKartCommand({ type: "input", playerId, input });
               }}
               onBack={() => {
                 void backToCatalog();

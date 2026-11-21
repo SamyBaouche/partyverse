@@ -10,6 +10,7 @@ import {
   type ClientAccessTokenFn,
   type RealtimePublisher,
 } from "./realtime/publisher.js";
+import { startKartLoop } from "./game/kartLoop.js";
 import { registerApiRoutes } from "./realtime/routes.js";
 import { createWebPubSubEventHandler } from "./realtime/eventHandler.js";
 
@@ -62,6 +63,7 @@ export async function buildApp(options: BuildAppOptions = {}) {
   });
 
   await registerApiRoutes(app, { sessions, getClientAccessToken });
+  startKartLoop();
 
   app.get<{ Params: { code: string } }>("/api/rooms/:code/activity", async (request, reply) => {
     const code = request.params.code.toUpperCase();
@@ -108,6 +110,15 @@ export async function buildApp(options: BuildAppOptions = {}) {
         return reply.status(400).send({
           error: "USE_C4_COMMANDS",
           message: "Use POST /api/rooms/:code/c4 for Four in a Row",
+        });
+      }
+      if (
+        (request.body.phase === "kart-lobby" || request.body.phase === "kart-play") &&
+        "state" in request.body
+      ) {
+        return reply.status(400).send({
+          error: "USE_KART_COMMANDS",
+          message: "Use POST /api/rooms/:code/kart for Kart Rush",
         });
       }
       const activity = setRoomActivity(code, request.body);

@@ -72,3 +72,14 @@ export function setRoomActivity(code: string, activity: RoomActivity): RoomActiv
   rooms.set(key, { activity, updatedAt: Date.now() });
   return activity;
 }
+
+/** Room codes currently in a Kart Rush lobby/race (for the 10 Hz sim loop). */
+export function listKartRoomCodes(): string[] {
+  const codes: string[] = [];
+  for (const [code, session] of rooms) {
+    if (session.activity.phase === "kart-lobby" || session.activity.phase === "kart-play") {
+      codes.push(code);
+    }
+  }
+  return codes;
+}
