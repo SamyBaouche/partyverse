@@ -181,12 +181,34 @@ resource serverApp 'Microsoft.App/containerApps@2024-03-01' = {
     template: {
       scale: {
         minReplicas: 0
-        maxReplicas: 3
+        maxReplicas: 1
       }
       containers: [
         {
           name: 'server'
           image: serverImage
+          probes: [
+            {
+              type: 'Liveness'
+              httpGet: {
+                path: '/health'
+                port: 3000
+                scheme: 'HTTP'
+              }
+              initialDelaySeconds: 10
+              periodSeconds: 15
+            }
+            {
+              type: 'Readiness'
+              httpGet: {
+                path: '/health'
+                port: 3000
+                scheme: 'HTTP'
+              }
+              initialDelaySeconds: 3
+              periodSeconds: 10
+            }
+          ]
           env: [
             { name: 'PORT', value: '3000' }
             { name: 'WEBPUBSUB_HUB', value: 'partyverse' }
@@ -233,7 +255,7 @@ resource webApp 'Microsoft.App/containerApps@2024-03-01' = {
     template: {
       scale: {
         minReplicas: 0
-        maxReplicas: 3
+        maxReplicas: 1
       }
       containers: [
         {
@@ -256,7 +278,7 @@ resource webPubSubHub 'Microsoft.SignalRService/webPubSub/hubs@2024-03-01' = {
   properties: {
     eventHandlers: [
       {
-        urlTemplate: 'https://${serverApp.properties.configuration.ingress.fqdn}/api/webpubsub/eventhandler'
+        urlTemplate: 'https://${serverApp.properties.configuration.ingress.fqdn}/eventhandler'
         userEventPattern: '*'
         systemEvents: [
           'connect'
