@@ -189,7 +189,7 @@ Phone / TV                  Azure Web PubSub              Server
 
 ## Architecture (Azure target)
 
-> Target layout for `v1.0` — not fully deployed yet.
+> Live on Azure Container Apps (canadacentral). See [Deploy to Azure](#deploy-to-azure-manual-v10).
 
 ![Partyverse Azure target architecture](docs/architecture/overview.drawio.svg)
 
@@ -204,8 +204,36 @@ Every MR on a self-hosted GitLab Runner (`node:24-alpine`):
 1. **quality** — format, lint, typecheck
 2. **test** — server coverage
 3. **build** — web + server
+4. **image** — Kaniko (manual on MRs) + Trivy fs/config scan
+5. **deploy** — Bicep compile / what-if (Azure login when `AZURE_*` set)
 
-`main` is protected: green pipeline required.
+`main` is protected: green pipeline required. Azure deploy from CI via OIDC is deferred (ADR 0009).
+
+---
+
+## Deploy to Azure (manual, v1.0)
+
+Live apps (canadacentral):
+
+- Web: `https://partyverse-web.whiteflower-731f831a.canadacentral.azurecontainerapps.io`
+- API: `https://partyverse-server.whiteflower-731f831a.canadacentral.azurecontainerapps.io`
+
+```bash
+az login
+docker login registry.gitlab.com   # deploy token — never commit it
+./scripts/deploy-azure.sh          # build+push linux/amd64 images, update ACA
+# or reuse an existing tag:
+# SKIP_PUSH=1 TAG=amd64-<sha> ./scripts/deploy-azure.sh
+```
+
+Infra-only (probes, KV, budget, PubSub):
+
+```bash
+az deployment group create -g partyverse-rg -n partyverse-$(date +%Y%m%d) \
+  --template-file infra/main.bicep --parameters infra/main.bicepparam
+```
+
+No Azure secrets belong in git. Local `az login` + registry token are enough for Sunday ship.
 
 ---
 
@@ -216,7 +244,7 @@ Every MR on a self-hosted GitLab Runner (`node:24-alpine`):
 | 0–1    | Foundations, engine, arcade UI         | Done                             |
 | **2**  | Front-end polish + Web PubSub + docs   | **Done**                         |
 | **3**  | Docker + Bicep + KV/MI + Registry path | **Done** (see `docs/sprints.md`) |
-| **4**  | Kaniko + coverage gate; OIDC next      | **In progress**                  |
+| **4**  | Kaniko + Trivy + manual deploy path    | **In progress** (OIDC → ADR 0009)|
 | 5–8    | Cosmos, users, k6 prod, v1.0 freeze    | Next                             |
 
 Sprint board: [`docs/sprints.md`](docs/sprints.md) · Metrics log: [`docs/metrics.md`](docs/metrics.md)
