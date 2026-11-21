@@ -44,6 +44,29 @@ test:
     paths:
       - apps/server/coverage/
 
+# #62 — Playwright smoke (mock realtime; no PubSub required)
+playwright:
+  stage: test
+  image: mcr.microsoft.com/playwright:v1.51.0-jammy
+  before_script:
+    - corepack enable
+    - pnpm config set store-dir .pnpm-store
+    - pnpm install --frozen-lockfile
+  script:
+    - pnpm test:e2e
+  artifacts:
+    when: always
+    reports:
+      junit: e2e-results.xml
+    paths:
+      - test-results/
+      - playwright-report/
+    expire_in: 7 days
+  rules:
+    - if: $CI_PIPELINE_SOURCE == "merge_request_event"
+    - if: $CI_COMMIT_BRANCH == $CI_DEFAULT_BRANCH
+  allow_failure: true
+
 build-web:
   stage: build
   script: pnpm --filter @partyverse/web build

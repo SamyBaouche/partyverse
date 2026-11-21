@@ -45,7 +45,18 @@ pnpm dev
 **Tip:** open the host on the **Network** URL so the QR works on phones.  
 `localhost` on a phone means the phone itself — not your Mac.
 
+New here? Open **`/how-to-play`** in the app — TV hosts, phones scan, no accounts.  
+Demo GIF: record on game night (#64) and drop as `docs/demo.gif` (linked here once captured).
+
 Vite proxies `/api` → `http://127.0.0.1:3000`, so phones share the same origin as the TV.
+
+### E2E smoke (Playwright)
+
+```bash
+pnpm test:e2e          # mock realtime — host + 2 players + Draw Vote
+```
+
+CI job `playwright` runs the same suite (`allow_failure` until the runner image is warm).
 
 ### Mock vs real realtime
 
@@ -177,13 +188,13 @@ Phone / TV                  Azure Web PubSub              Server
 
 ## Tech stack
 
-| Layer    | Choices                                             |
-| -------- | --------------------------------------------------- |
-| UI       | React 19, Vite 8, Tailwind v4, Motion, React Router |
-| API      | Node 24, Fastify 5, XState 5                        |
-| Contract | Zod 4 (`@partyverse/shared`)                        |
-| Realtime | Azure Web PubSub (authoritative server)             |
-| Quality  | Vitest, ESLint, Prettier, GitLab CI                 |
+| Layer    | Choices                                               |
+| -------- | ----------------------------------------------------- |
+| UI       | React 19, Vite 8, Tailwind v4, Motion, React Router   |
+| API      | Node 24, Fastify 5, XState 5                          |
+| Contract | Zod 4 (`@partyverse/shared`)                          |
+| Realtime | Azure Web PubSub (authoritative server)               |
+| Quality  | Vitest, Playwright smoke, ESLint, Prettier, GitLab CI |
 
 ---
 
