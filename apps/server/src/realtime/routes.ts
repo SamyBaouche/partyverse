@@ -60,6 +60,35 @@ export async function registerApiRoutes(app: FastifyInstance, deps: ApiRouteDeps
     },
   );
 
+  app.post<{ Params: { code: string }; Body: { playerId?: unknown; name?: unknown } }>(
+    "/api/rooms/:code/reconnect",
+    async (request, reply) => {
+      const parsedCode = RoomCode.safeParse(request.params.code.toUpperCase());
+      const playerId =
+        typeof request.body?.playerId === "string" ? request.body.playerId.trim() : "";
+      const parsedName = PlayerName.safeParse(request.body?.name);
+      if (!parsedCode.success || !playerId || !parsedName.success) {
+        return reply.status(400).send({
+          error: "INVALID_INPUT",
+          message: "code, playerId and name are required",
+        });
+      }
+
+      try {
+        const result = sessions.reconnect(parsedCode.data, playerId, parsedName.data);
+        return { playerId: result.playerId };
+      } catch (error) {
+        if (error instanceof RoomError) {
+          return reply.status(statusForRoomError(error.code)).send({
+            error: error.code,
+            message: error.message,
+          });
+        }
+        throw error;
+      }
+    },
+  );
+
   app.get<{ Querystring: { code?: string; userId?: string } }>(
     "/api/negotiate",
     async (request, reply) => {

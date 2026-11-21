@@ -66,6 +66,28 @@ describe("API routes", () => {
     expect((missing.json() as { error: string }).error).toBe("ROOM_NOT_FOUND");
   });
 
+  it("POST /api/rooms/:code/reconnect restores membership during grace", async () => {
+    const { app, sessions } = await makeApp();
+    const created = await app.inject({ method: "POST", url: "/api/rooms" });
+    const { code } = created.json() as { code: string };
+    const joined = await app.inject({
+      method: "POST",
+      url: `/api/rooms/${code}/players`,
+      payload: { name: "Ada" },
+    });
+    const { playerId } = joined.json() as { playerId: string };
+
+    await sessions.handleDisconnect(playerId);
+
+    const re = await app.inject({
+      method: "POST",
+      url: `/api/rooms/${code}/reconnect`,
+      payload: { playerId, name: "Ada" },
+    });
+    expect(re.statusCode).toBe(200);
+    expect((re.json() as { playerId: string }).playerId).toBe(playerId);
+  });
+
   it("GET /api/negotiate returns a stubbed url for room members", async () => {
     const { app } = await makeApp();
     const created = await app.inject({ method: "POST", url: "/api/rooms" });

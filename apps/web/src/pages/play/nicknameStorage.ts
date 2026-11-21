@@ -30,3 +30,20 @@ export function readOrCreatePlayerId(): string {
     return `p-${Math.random().toString(36).slice(2, 10)}`;
   }
 }
+
+/** Persist the server-issued player id so refresh can soft-reconnect (#59). */
+export function savePlayerId(id: string): void {
+  try {
+    localStorage.setItem(PLAYER_ID_KEY, id);
+  } catch {
+    // Ignore quota / private mode failures
+  }
+}
+
+export function readStoredPlayerId(): string | null {
+  try {
+    return localStorage.getItem(PLAYER_ID_KEY);
+  } catch {
+    return null;
+  }
+}
