@@ -9,7 +9,9 @@ Scan a QR, join in one tap, play mini-games together — no app install, no acco
 [![license](https://img.shields.io/badge/license-MIT-blue.svg)](LICENSE)
 
 > Source of truth: **[GitLab](https://gitlab.com/SamyBaouche/partyverse)**.  
-> GitHub is a read-only mirror.
+> GitHub is a read-only mirror.  
+> **v1.0** — [release notes](docs/release-v1.0.md) · live web:
+> https://partyverse-web.whiteflower-731f831a.canadacentral.azurecontainerapps.io
 
 ---
 
@@ -250,15 +252,15 @@ No Azure secrets belong in git. Local `az login` + registry token are enough for
 
 ## Roadmap (short)
 
-| Sprint | Focus                                  | Status                            |
-| ------ | -------------------------------------- | --------------------------------- |
-| 0–1    | Foundations, engine, arcade UI         | Done                              |
-| **2**  | Front-end polish + Web PubSub + docs   | **Done**                          |
-| **3**  | Docker + Bicep + KV/MI + Registry path | **Done** (see `docs/sprints.md`)  |
-| **4**  | Kaniko + Trivy + manual deploy path    | **In progress** (OIDC → ADR 0009) |
-| 5–8    | Cosmos, users, k6 prod, v1.0 freeze    | Next                              |
+| Sprint  | Focus                                  | Status                            |
+| ------- | -------------------------------------- | --------------------------------- |
+| 0–1     | Foundations, engine, arcade UI         | Done                              |
+| **2**   | Front-end polish + Web PubSub + docs   | **Done**                          |
+| **3**   | Docker + Bicep + KV/MI + Registry path | **Done**                          |
+| **4**   | Kaniko + Trivy + manual deploy path    | **Done** (OIDC deferred ADR 0009) |
+| **5–8** | Soft reconnect, budget, E2E, v1.0      | **Done** — tag `v1.0`             |
 
-Sprint board: [`docs/sprints.md`](docs/sprints.md) · Metrics log: [`docs/metrics.md`](docs/metrics.md)
+Sprint board: [`docs/sprints.md`](docs/sprints.md) · Metrics: [`docs/metrics.md`](docs/metrics.md) · Release: [`docs/release-v1.0.md`](docs/release-v1.0.md)
 
 ---
 

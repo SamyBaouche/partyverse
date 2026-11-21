@@ -15,8 +15,10 @@ Only numbers that were measured go here. Resume bullets must match this table.
 | 2026-11-16 | Docker web image (cold)              | **12 s**           | `docker build -f apps/web/Dockerfile`                                       |
 | 2026-11-16 | `/health` p95 @ 20 VUs               | **3.7 ms**         | `k6 run -e VUS=20 -e DURATION=30s load/health.js` (localhost)               |
 | 2026-11-16 | Concurrent VUs sustained             | **20**             | k6 health scenario                                                          |
+| 2026-11-21 | Ship game night (live API)           | **3** seats        | Host room `MQTG` + Alice + Bob on public ACA → **M** (not invented MAU)     |
+| 2026-11-21 | Live `/health`                       | **200**            | `curl` public server FQDN                                                   |
 
-## Live Azure (Sprint 3)
+## Live Azure (v1.0)
 
 | Resource       | Value                                                                              |
 | -------------- | ---------------------------------------------------------------------------------- |
@@ -26,19 +28,25 @@ Only numbers that were measured go here. Resume bullets must match this table.
 | Server         | https://partyverse-server.whiteflower-731f831a.canadacentral.azurecontainerapps.io |
 | Web PubSub     | `partyverse-wps-ddb7gd5jsmffo` (Free_F1)                                           |
 
-> Container Apps still may run placeholder images until GitLab Registry images are wired (`scripts/push-gitlab-registry.sh` or Kaniko on `main`). Cost baseline (scale-to-zero + Free PubSub) is already measurable. Coverage gate **Z**: Vitest fails below 80% statements / 65% branches on `src/game/**`.
+> Images: GitLab Container Registry (`registry.gitlab.com/samybaouche/partyverse/...`). Coverage gate **Z**: Vitest fails below 80% statements / 65% branches on `src/game/**`.
 
 ## Resume mapping
 
-| Placeholder        | Value       | Notes                                                    |
-| ------------------ | ----------- | -------------------------------------------------------- |
-| `$N` /month        | **0**       | Cost Management MTD = $0 on idle Free_F1 + scale-to-zero |
-| `M` MAU            | leave **M** | Need real players on the public URL (not inventable)     |
-| Deploy `X` min     | **2**       | Timed first `az deployment group create`                 |
-| Deploy `Y` min     | **1**       | Timed GitLab CI green pipeline                           |
-| Coverage           | **86%**     | Measured                                                 |
-| Latency sub-`X` ms | **50**      | Localhost 3.7 ms; conservative prod gate                 |
-| Concurrent `Y`     | **20**      | k6 VUs / Free PubSub unit                                |
+| Placeholder        | Value   | Notes                                                       |
+| ------------------ | ------- | ----------------------------------------------------------- |
+| `$N` /month        | **0**   | Cost Management MTD = $0 on idle Free_F1 + scale-to-zero    |
+| `M` concurrent     | **3**   | 1 recorded ship game night (host + 2 players) on public URL |
+| Deploy `X` min     | **2**   | Timed first `az deployment group create`                    |
+| Deploy `Y` min     | **1**   | Timed GitLab CI green pipeline                              |
+| Coverage           | **86%** | Measured                                                    |
+| Latency sub-`X` ms | **50**  | Localhost 3.7 ms; conservative prod gate                    |
+| Concurrent load    | **20**  | k6 VUs / Free PubSub unit                                   |
+
+## CV bullets (frozen for v1.0)
+
+1. Shipped a TV+phone party game on Azure Container Apps + Free Web PubSub with soft reconnect, **\$0**/mo idle and a **\$5** budget alert — deploy **~2 min** (Bicep) / CI **~1 min**.
+2. Authoritative Node/Fastify + XState game server with **86%** engine coverage, k6 **p95 3.7 ms** @ **20** VUs, and Playwright host+2-player smoke in GitLab CI.
+3. End-to-end living-room loop (QR join, Draw Guess) live in Canada Central; measured ship game night **M=3** concurrent seats on the public URL.
 
 ## Commands to refresh
 
