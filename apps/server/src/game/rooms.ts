@@ -1,11 +1,13 @@
 import { randomUUID } from "node:crypto";
-import { createActor, type Actor } from "xstate";
+import type { Actor } from "xstate";
 import { PlayerName, RoomCode, type Player, type RoomErrorCode } from "@partyverse/shared";
 import { gameMachine } from "./machine.js";
+import { DEFAULT_ROOM_MODE, getServerGameMode } from "./modes/registry.js";
 
 // No I or O to avoid confusion with 1 and 0
 const ALPHABET = "ABCDEFGHJKLMNPQRSTUVWXYZ";
-export const MAX_PLAYERS = 8;
+/** @deprecated Prefer getServerGameMode("draw-guess").meta.maxPlayers */
+export const MAX_PLAYERS = getServerGameMode(DEFAULT_ROOM_MODE).meta.maxPlayers;
 
 export type { RoomErrorCode };
 
@@ -21,6 +23,7 @@ export class RoomError extends Error {
 type Room = {
   code: string;
   hostId: string;
+  modeId: typeof DEFAULT_ROOM_MODE;
   actor: Actor<typeof gameMachine>;
 };
 
@@ -33,13 +36,16 @@ export class RoomManager {
     private readonly newId: () => string = randomUUID,
   ) {}
 
-  createRoom(): { code: string; hostId: string } {
+  createRoom(): { code: string; hostId: string; modeId: typeof DEFAULT_ROOM_MODE } {
     const code = this.generateCode();
     const hostId = this.newId();
-    const actor = createActor(gameMachine, { input: { words: this.words } });
-    actor.start();
-    this.rooms.set(code, { code, hostId, actor });
-    return { code, hostId };
+    const mode = getServerGameMode(DEFAULT_ROOM_MODE);
+    if (!mode.createEngine) {
+      throw new Error(`Room mode ${DEFAULT_ROOM_MODE} has no server engine`);
+    }
+    const actor = mode.createEngine(this.words);
+    this.rooms.set(code, { code, hostId, modeId: DEFAULT_ROOM_MODE, actor });
+    return { code, hostId, modeId: DEFAULT_ROOM_MODE };
   }
 
   join(code: string, name: string): Player {
@@ -55,7 +61,8 @@ export class RoomManager {
     if (!snapshot.matches("lobby")) {
       throw new RoomError("GAME_STARTED", "The game has already started");
     }
-    if (snapshot.context.players.length >= MAX_PLAYERS) {
+    const maxPlayers = getServerGameMode(room.modeId).meta.maxPlayers;
+    if (snapshot.context.players.length >= maxPlayers) {
       throw new RoomError("ROOM_FULL", "The room is full");
     }
     const wanted = parsedName.data.toLowerCase();

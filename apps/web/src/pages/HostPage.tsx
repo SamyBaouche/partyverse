@@ -14,6 +14,7 @@ import { LiveHostLobby } from "../features/host/LiveHostLobby";
 import { readInitialPhase, type HostPhase } from "../features/host/hostPhases";
 import { PartyGameHost } from "../features/partyGames/PartyGameHost";
 import { createPartyLobby, isPartyGameId, type PartyGameState } from "../features/partyGames/logic";
+import { getGameMode } from "../features/gameModes";
 import { CATALOG_GAMES } from "../features/session/catalog";
 import { PartyProvider, resolvePartyTransportMode } from "../features/realtime";
 import { RpsHost } from "../features/rps/RpsHost";
@@ -566,7 +567,7 @@ export default function HostPage() {
                   code={code}
                   joinUrl={joinUrl}
                   players={players}
-                  maxPlayers={8}
+                  maxPlayers={getGameMode("draw-guess").maxPlayers}
                   startLabel="Continue"
                   onStart={() => {
                     void finishLobby();

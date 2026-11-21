@@ -21,6 +21,10 @@
 - Non-v1 catalog games: **locked** + “Coming soon”.
 - Padlock shown for every locked bubble.
 
-## Next
+## Phase 1 progress
 
-Phase 1 — GameMode plugin (#31) → TTT → RPS → Four in a Row → Kart Rush (7-day timebox).
+- [x] GameMode registry (`@partyverse/shared` + server) + migrate Draw (#31 / ADR 0010)
+- [ ] Tic Tac Toe server-authoritative
+- [ ] RPS tournament server-authoritative
+- [ ] Four in a Row server-authoritative
+- [ ] Kart Rush 10 Hz (7-day timebox)
