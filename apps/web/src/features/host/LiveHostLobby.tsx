@@ -1,5 +1,8 @@
+import { getGameMode } from "../gameModes";
 import { HostDrawBoard, usePartyPhase, usePartyPlayers, useSendMessage } from "../realtime";
 import { HostLobby } from "../lobby/HostLobby";
+
+const DRAW = getGameMode("draw-guess");
 
 export function LiveHostLobby({
   code,
@@ -32,7 +35,7 @@ export function LiveHostLobby({
         code={code}
         joinUrl={joinUrl}
         players={players}
-        maxPlayers={8}
+        maxPlayers={DRAW.maxPlayers}
         startLabel="Start match"
         onStart={() => {
           actions.startGame();

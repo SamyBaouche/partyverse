@@ -59,7 +59,7 @@ export class GameSessionManager {
     this.rooms = new RoomManager(options.words ?? [...DEFAULT_WORDS]);
   }
 
-  createRoom(): { code: string; hostId: string } {
+  createRoom(): { code: string; hostId: string; modeId: string } {
     const created = this.rooms.createRoom();
     this.userRooms.set(created.hostId, created.code);
     return created;

@@ -27,13 +27,24 @@ describe("API routes", () => {
     return built;
   }
 
-  it("POST /api/rooms creates a room", async () => {
+  it("GET /api/game-modes lists GameMode plugins", async () => {
+    const { app } = await makeApp();
+    const res = await app.inject({ method: "GET", url: "/api/game-modes" });
+    expect(res.statusCode).toBe(200);
+    const body = res.json() as { modes: Array<{ id: string; authority: string }> };
+    expect(body.modes.some((mode) => mode.id === "draw-guess" && mode.authority === "server")).toBe(
+      true,
+    );
+  });
+
+  it("POST /api/rooms creates a draw-guess room", async () => {
     const { app } = await makeApp();
     const res = await app.inject({ method: "POST", url: "/api/rooms" });
     expect(res.statusCode).toBe(200);
-    const body = res.json() as { code: string; hostId: string };
+    const body = res.json() as { code: string; hostId: string; modeId: string };
     expect(body.code).toMatch(/^[A-Z]{4}$/);
     expect(body.hostId.length).toBeGreaterThan(0);
+    expect(body.modeId).toBe("draw-guess");
   });
 
   it("POST /api/rooms/:code/players joins and maps RoomError codes", async () => {

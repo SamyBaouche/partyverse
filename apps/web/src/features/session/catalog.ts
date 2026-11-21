@@ -1,46 +1,8 @@
+import { GAME_MODES } from "@partyverse/shared";
 import type { CatalogGame, DrawMode } from "./types";
 
-export const CATALOG_GAMES: CatalogGame[] = [
-  {
-    id: "draw-guess",
-    title: "Draw Guess",
-    tagline: "DRAW & GUESS",
-    blurb: "One draws the secret word. Everyone else races to guess it live.",
-    accent: "#5E9E6C",
-    locked: false,
-  },
-  {
-    id: "tic-tac-toe",
-    title: "Tic-Tac-Toe",
-    tagline: "THREE IN A ROW",
-    blurb: "The classic 30-second showdown. Loser picks the next game.",
-    accent: "#E8EEF5",
-    locked: false,
-  },
-  {
-    id: "rock-paper-scissors",
-    title: "Rock Paper Scissors",
-    tagline: "PICK IN SECRET",
-    blurb: "Both lock in at once, then reveal. Settle any argument.",
-    accent: "#76A2AF",
-    locked: false,
-  },
-  {
-    id: "connect-four",
-    title: "Four in a Row",
-    tagline: "DROP & STACK",
-    blurb: "Drop discs, block sneaky diagonals, line up four first.",
-    accent: "#2452FF",
-    locked: false,
-  },
-  {
-    id: "wish-kart",
-    title: "Kart Rush",
-    tagline: "OVAL SPRINT",
-    blurb: "Oval track, phone or gamepad. Four karts, zero shame.",
-    accent: "#FFE566",
-    locked: false,
-  },
+/** Coming-soon catalog entries (not GameMode plugins yet). */
+const LOCKED_GAMES: CatalogGame[] = [
   {
     id: "imposter",
     title: "Impostor",
@@ -97,6 +59,19 @@ export const CATALOG_GAMES: CatalogGame[] = [
     accent: "#E8C4FF",
     locked: true,
   },
+];
+
+/** Lobby picker: GameMode registry first, then locked Coming soon. */
+export const CATALOG_GAMES: CatalogGame[] = [
+  ...GAME_MODES.map((mode): CatalogGame => ({
+    id: mode.id,
+    title: mode.title,
+    tagline: mode.tagline,
+    blurb: mode.blurb,
+    accent: mode.accent,
+    locked: false,
+  })),
+  ...LOCKED_GAMES,
 ];
 
 export type DrawModeOption = {

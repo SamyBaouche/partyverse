@@ -1,5 +1,6 @@
 import type { FastifyInstance } from "fastify";
 import { PlayerName, RoomCode } from "@partyverse/shared";
+import { listServerGameModes } from "../game/modes/registry.js";
 import { RoomError } from "../game/rooms.js";
 import type { GameSessionManager } from "../game/session.js";
 import { roomGroupName, type ClientAccessTokenFn } from "./publisher.js";
@@ -29,9 +30,13 @@ export type ApiRouteDeps = {
 export async function registerApiRoutes(app: FastifyInstance, deps: ApiRouteDeps): Promise<void> {
   const { sessions, getClientAccessToken } = deps;
 
+  app.get("/api/game-modes", async () => ({
+    modes: listServerGameModes().map((entry) => entry.meta),
+  }));
+
   app.post("/api/rooms", async () => {
-    const { code, hostId } = sessions.createRoom();
-    return { code, hostId };
+    const { code, hostId, modeId } = sessions.createRoom();
+    return { code, hostId, modeId };
   });
 
   app.post<{ Params: { code: string }; Body: { name?: unknown } }>(
