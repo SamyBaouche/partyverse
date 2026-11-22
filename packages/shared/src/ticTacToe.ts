@@ -166,8 +166,6 @@ export function formatTttStatus(state: TicTacToeState): string {
   return state.turn === "x" ? "X to play" : "O to play";
 }
 
-export function tttActivityPhase(
-  state: TicTacToeState,
-): "ttt-lobby" | "ttt-play" {
+export function tttActivityPhase(state: TicTacToeState): "ttt-lobby" | "ttt-play" {
   return state.status === "lobby" ? "ttt-lobby" : "ttt-play";
 }

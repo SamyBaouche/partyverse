@@ -7,13 +7,13 @@ describe("applyTttCommand", () => {
     let state = applyTttCommand(code, { type: "bootstrap", mode: "1v1" });
     expect(state.status).toBe("lobby");
 
-    state = applyTttCommand(code, {
+    applyTttCommand(code, {
       type: "joinTeam",
       playerId: "p1",
       name: "Ada",
       team: "x",
     });
-    state = applyTttCommand(code, {
+    applyTttCommand(code, {
       type: "joinTeam",
       playerId: "p2",
       name: "Bea",
@@ -24,8 +24,8 @@ describe("applyTttCommand", () => {
 
     state = applyTttCommand(code, { type: "place", playerId: "p1", index: 0 });
     expect(state.board[0]).toBe("x");
-    expect(() =>
-      applyTttCommand(code, { type: "place", playerId: "p1", index: 1 }),
-    ).toThrow(/Illegal|INVALID/);
+    expect(() => applyTttCommand(code, { type: "place", playerId: "p1", index: 1 })).toThrow(
+      /Illegal|INVALID/,
+    );
   });
 });

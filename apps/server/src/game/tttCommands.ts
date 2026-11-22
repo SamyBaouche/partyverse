@@ -54,7 +54,7 @@ export function applyTttCommand(code: string, command: TttCommand): TttState {
     throw new RoomError("INVALID_INPUT", "Tic-Tac-Toe is not active in this room");
   }
 
-  let next: TttState | null = null;
+  let next: TttState | null;
   switch (command.type) {
     case "joinTeam": {
       const team = TicTacToeMark.safeParse(command.team);
