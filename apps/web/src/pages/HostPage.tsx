@@ -38,7 +38,8 @@ import type {
 } from "../features/session/types";
 import { TicTacToeHost } from "../features/ticTacToe/TicTacToeHost";
 import { TicTacToeModePicker } from "../features/ticTacToe/TicTacToeModePicker";
-import { createTttLobby } from "../features/ticTacToe/logic";
+import { postTttCommand } from "../features/ticTacToe/tttApi";
+import { tttActivityPhase } from "@partyverse/shared";
 import { WishKartHost } from "../features/wishKart/WishKartHost";
 import { createWishKartLobby, mergeKartRemote } from "../features/wishKart/logic";
 import { WishKartModePicker } from "../features/wishKart/WishKartModePicker";
@@ -171,16 +172,24 @@ export default function HostPage() {
     });
   }
 
-  async function publishTtt(next: TicTacToeState) {
+  function applyTtt(next: TicTacToeState) {
     setTttState(next);
-    const activityPhase = next.status === "lobby" ? "ttt-lobby" : "ttt-play";
+    const activityPhase = tttActivityPhase(next);
     setPhase(activityPhase);
     navigate(`/host?phase=${activityPhase}`, { replace: true });
-    await setActivity({
-      phase: activityPhase,
-      gameId: "tic-tac-toe",
-      state: next,
-    });
+  }
+
+  async function runTttCommand(
+    command: Parameters<typeof postTttCommand>[1],
+  ): Promise<TicTacToeState | null> {
+    try {
+      const next = await postTttCommand(code, command);
+      applyTtt(next);
+      return next;
+    } catch {
+      void play("wrong");
+      return null;
+    }
   }
 
   async function publishRps(next: RpsState) {
@@ -283,7 +292,7 @@ export default function HostPage() {
 
   async function handleSelectTttMode(mode: DuelMode) {
     void play("go");
-    await publishTtt(createTttLobby(mode));
+    await runTttCommand({ type: "bootstrap", mode });
   }
 
   async function handleSelectRpsMode(mode: DuelMode) {
@@ -428,8 +437,11 @@ export default function HostPage() {
             <TicTacToeHost
               joinUrl={joinUrl}
               state={tttState}
-              onStateChange={(next) => {
-                void publishTtt(next);
+              onStart={() => {
+                void runTttCommand({ type: "start" });
+              }}
+              onRematch={() => {
+                void runTttCommand({ type: "rematch" });
               }}
               onBack={() => {
                 void backToCatalog();

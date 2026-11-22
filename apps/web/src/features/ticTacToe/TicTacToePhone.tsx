@@ -2,41 +2,39 @@ import { Button } from "../../components/ui";
 import { useSound } from "../../lib/audio";
 import { cn } from "../../lib/cn";
 import type { TicTacToeMark, TicTacToeState } from "../session/types";
-import { formatTttStatus, joinTttTeam, placeTttMark, tttCanJoin } from "./logic";
+import { formatTttStatus, tttCanJoin } from "./logic";
 
 type Props = {
   playerId: string;
   playerName: string;
   state: TicTacToeState;
-  onStateChange: (state: TicTacToeState) => void;
+  onJoinTeam: (team: TicTacToeMark) => void;
+  onPlace: (index: number) => void;
   onLeave: () => void;
 };
 
-export function TicTacToePhone({ playerId, playerName, state, onStateChange, onLeave }: Props) {
+export function TicTacToePhone({
+  playerId,
+  playerName,
+  state,
+  onJoinTeam,
+  onPlace,
+  onLeave,
+}: Props) {
   const { play } = useSound();
   const me = state.players.find((player) => player.id === playerId) ?? null;
   const myTurn = !!me && state.status === "playing" && !state.winner && state.turn === me.team;
 
   function joinTeam(team: TicTacToeMark) {
-    const next = joinTttTeam(state, { id: playerId, name: playerName }, team);
-    if (!next) {
-      return;
-    }
     void play("join");
-    onStateChange(next);
+    onJoinTeam(team);
   }
 
   function tapCell(index: number) {
     if (!myTurn) {
       return;
     }
-    const next = placeTttMark(state, index);
-    if (!next) {
-      void play("wrong");
-      return;
-    }
-    void play(next.winner ? "win" : "go");
-    onStateChange(next);
+    onPlace(index);
   }
 
   if (state.status === "lobby" && !me) {

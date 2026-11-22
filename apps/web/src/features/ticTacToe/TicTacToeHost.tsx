@@ -3,19 +3,13 @@ import { ModeScreenHeader } from "../../components/brand/ModeScreenHeader";
 import { PartyverseWordmark } from "../../components/brand/PartyverseWordmark";
 import { Button } from "../../components/ui";
 import type { TicTacToeMark, TicTacToeState } from "../session/types";
-import {
-  formatTttStatus,
-  rematchTtt,
-  startTtt,
-  tttLobbyReady,
-  tttRequiredPlayers,
-  tttTeamCount,
-} from "./logic";
+import { formatTttStatus, tttLobbyReady, tttRequiredPlayers, tttTeamCount } from "./logic";
 
 type Props = {
   joinUrl: string;
   state: TicTacToeState;
-  onStateChange: (state: TicTacToeState) => void;
+  onStart: () => void;
+  onRematch: () => void;
   onBack: () => void;
 };
 
@@ -52,7 +46,7 @@ function TeamColumn({
   );
 }
 
-export function TicTacToeHost({ joinUrl, state, onStateChange, onBack }: Props) {
+export function TicTacToeHost({ joinUrl, state, onStart, onRematch, onBack }: Props) {
   const capacity = state.mode === "1v1" ? 1 : 2;
   const xs = state.players.filter((p) => p.team === "x").map((p) => p.name);
   const os = state.players.filter((p) => p.team === "o").map((p) => p.name);
@@ -88,7 +82,7 @@ export function TicTacToeHost({ joinUrl, state, onStateChange, onBack }: Props) 
               size="lg"
               fullWidth
               disabled={!ready}
-              onClick={() => onStateChange(startTtt(state))}
+              onClick={onStart}
               className="!h-16 !text-sm sm:!h-20 sm:!text-base"
             >
               Start match
@@ -124,7 +118,7 @@ export function TicTacToeHost({ joinUrl, state, onStateChange, onBack }: Props) 
       </div>
 
       {state.status === "ended" ? (
-        <Button size="lg" onClick={() => onStateChange(rematchTtt(state))}>
+        <Button size="lg" onClick={onRematch}>
           Rematch
         </Button>
       ) : null}

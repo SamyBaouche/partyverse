@@ -82,6 +82,16 @@ export async function buildApp(options: BuildAppOptions = {}) {
       if (!isRoomActivity(request.body)) {
         return reply.status(400).send({ error: "INVALID_ACTIVITY" });
       }
+      // Tic-Tac-Toe mutations must go through POST /api/rooms/:code/ttt (server rules).
+      if (
+        (request.body.phase === "ttt-lobby" || request.body.phase === "ttt-play") &&
+        "state" in request.body
+      ) {
+        return reply.status(400).send({
+          error: "USE_TTT_COMMANDS",
+          message: "Use POST /api/rooms/:code/ttt for Tic-Tac-Toe",
+        });
+      }
       const activity = setRoomActivity(code, request.body);
       return { activity };
     },

@@ -2,6 +2,7 @@ import type { FastifyInstance } from "fastify";
 import { PlayerName, RoomCode } from "@partyverse/shared";
 import { listServerGameModes } from "../game/modes/registry.js";
 import { RoomError } from "../game/rooms.js";
+import { applyTttCommand, type TttCommand } from "../game/tttCommands.js";
 import type { GameSessionManager } from "../game/session.js";
 import { roomGroupName, type ClientAccessTokenFn } from "./publisher.js";
 
@@ -33,6 +34,28 @@ export async function registerApiRoutes(app: FastifyInstance, deps: ApiRouteDeps
   app.get("/api/game-modes", async () => ({
     modes: listServerGameModes().map((entry) => entry.meta),
   }));
+
+  app.post<{ Params: { code: string }; Body: TttCommand }>(
+    "/api/rooms/:code/ttt",
+    async (request, reply) => {
+      const parsedCode = RoomCode.safeParse(request.params.code.toUpperCase());
+      if (!parsedCode.success || !request.body || typeof request.body !== "object") {
+        return reply.status(400).send({ error: "INVALID_INPUT", message: "Invalid TTT request" });
+      }
+      try {
+        const state = applyTttCommand(parsedCode.data, request.body);
+        return { state };
+      } catch (error) {
+        if (error instanceof RoomError) {
+          return reply.status(statusForRoomError(error.code)).send({
+            error: error.code,
+            message: error.message,
+          });
+        }
+        throw error;
+      }
+    },
+  );
 
   app.post("/api/rooms", async () => {
     const { code, hostId, modeId } = sessions.createRoom();

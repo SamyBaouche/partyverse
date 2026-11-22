@@ -51,7 +51,7 @@ export const GAME_MODES: readonly GameModeMeta[] = [
     accent: "#E8EEF5",
     minPlayers: 2,
     maxPlayers: 2,
-    authority: "activity",
+    authority: "server",
   },
   {
     id: "rock-paper-scissors",
